@@ -1,0 +1,12 @@
+<div class="container py-4">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Welcome to the University Management System</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p *ngIf="user">Hello, {{ user.prenom }} {{ user.nom }} ({{ user.email }})!</p>
+      <p *ngIf="user">Role: {{ user.role }}</p>
+      <button mat-raised-button color="warn" (click)="logout()">Logout</button>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -25,6 +25,7 @@
               "src/assets"
             ],
             "styles": [
+              "@angular/material/prebuilt-themes/pink-bluegrey.css",
               "src/styles.css"
             ],
             "scripts": []
@@ -85,14 +86,23 @@
             "assets": [
               "src/favicon.ico",
               "src/assets"
-            ],
-            "styles": [
-              "src/styles.css"
-            ],
-            "scripts": []
+            ]
+              ,"styles": [
+                "@angular/material/prebuilt-themes/pink-bluegrey.css",
+                "node_modules/bootstrap/dist/css/bootstrap.min.css",
+                "src/styles.scss"
+              ],
+            "scripts": [
+               "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+     ],
+            "main": "src/test.ts",
+            "karmaConfig": "karma.conf.js"
           }
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "6e3426e8-45f1-4009-9739-50c4efc3a5fe"
   }
 }
