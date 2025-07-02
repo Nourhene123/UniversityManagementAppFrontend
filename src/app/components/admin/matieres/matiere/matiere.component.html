@@ -1,0 +1,35 @@
+<div class="matieres-list">
+  <h2>Subjects List </h2>
+  <button mat-raised-button  routerLink="/admin/matieres/new">Add New Subject</button>
+  <mat-table [dataSource]="matieres" class="mat-elevation-z8">
+    <ng-container matColumnDef="id">
+      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="nom">
+      <mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="volumeHoraire">
+      <mat-header-cell *matHeaderCellDef>Hours</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.volumeHoraire }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="coefficient">
+      <mat-header-cell *matHeaderCellDef>Coefficient</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.coefficient }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+      <mat-cell *matCellDef="let element">
+        <button mat-icon-button color="accent" [routerLink]="['/admin/matieres', element.id]">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deleteMatiere(element.id)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-cell>
+    </ng-container>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+  </mat-table>
+</div>

@@ -1,17 +1,14 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { LoginComponent } from './Component/Auth/login/login.component';
-import { RegisterComponent } from './Component/Auth/register/register.component';
-import { AdminDashboardComponent } from './Component/Dashboard/admin-dashboard/admin-dashboard.component';
-import { SidebarComponent } from './Component/Dashboard/sidebar/sidebar.component';
 import { authGuard } from './AuthGuard/auth.guard';
+import { LoginComponent } from './components/auth/login/login.component';
+import { RegisterComponent } from './components/auth/register/register.component';
+import { AdminDashboardComponent } from './components/admin/dashboard/admin-dashboard/admin-dashboard.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
-  { path: 'dashboard', component: AdminDashboardComponent , canActivate: [authGuard]},
-   { path: 'SiderBar', component: SidebarComponent , canActivate: [authGuard]}
+ 
+  { path: 'admin', loadChildren: () => import('./components/admin/admin.module').then(m => m.AdminModule) }
 ];
 
 @NgModule({

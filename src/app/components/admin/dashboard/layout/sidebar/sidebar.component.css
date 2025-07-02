@@ -1,0 +1,312 @@
+/* CSS Variables */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-glass: rgba(255, 255, 255, 0.1);
+  --hover-bg: rgba(79, 172, 254, 0.05);
+  --text-primary: #1a202c;
+  --text-secondary: #718096;
+  --primary-color: #4f46e5;
+  --primary-gradient: linear-gradient(45deg, #4f46e5, #7c3aed);
+  --success-gradient: linear-gradient(45deg, #10b981, #34d399);
+  --danger-gradient: linear-gradient(45deg, #ce7c7c, #f87171);
+  --border-color: #e2e8f0;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark-theme {
+  --bg-primary: #1a202c;
+  --bg-secondary: #2d3748;
+  --bg-glass: rgba(45, 55, 72, 0.1);
+  --hover-bg: rgba(79, 172, 254, 0.1);
+  --text-primary: #f7fafc;
+  --text-secondary: #a0aec0;
+  --border-color: #4a5568;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  width: 280px;
+  height: 100vh;
+  background: var(--bg-secondary);
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  border-right: 1px solid var(--border-color);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  animation: sidebarSlideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.toggle-btn:hover {
+  color: var(--primary-color);
+  transform: rotate(90deg);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  width: 45px;
+  height: 45px;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.logo:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-lg);
+}
+
+.brand-text {
+  font-size: 1.4rem;
+  font-weight: 700;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.user-info {
+  padding: 1.5rem;
+  margin: 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-glass);
+  text-align: center;
+  transition: var(--transition);
+}
+
+.user-info:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.user-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--success-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+  margin: 0 auto 0.75rem;
+}
+
+.user-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.user-role {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Navigation Menu */
+.nav-menu {
+  flex: 1;
+  padding: 1rem 0;
+  overflow-y: auto;
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.nav-item {
+  margin: 0.25rem 1rem;
+  animation: slideInLeft 0.5s ease-out forwards;
+}
+
+.nav-item:nth-child(n) {
+  animation-delay: calc(0.1s * var(--index));
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem 1.25rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--text-primary);
+  background: var(--hover-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary-gradient);
+}
+
+.nav-icon {
+  width: 20px;
+  margin-right: 1rem;
+  font-size: 1.1rem;
+}
+
+.submenu-toggle {
+  margin-left: auto;
+  transition: var(--transition);
+}
+
+.nav-link[aria-expanded="true"] .submenu-toggle {
+  transform: rotate(180deg);
+}
+
+.submenu {
+  padding-left: 2.5rem;
+  background: var(--bg-glass);
+  border-radius: var(--radius-md);
+}
+
+.sub-nav-link {
+  display: block;
+  padding: 0.6rem 1rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-radius: var(--radius-md);
+}
+
+.sub-nav-link:hover, .sub-nav-link.active {
+  color: var(--text-primary);
+  background: var(--hover-bg);
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: auto;
+}
+
+.theme-toggle, .logout-btn {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle {
+  background: var(--bg-glass);
+  color: var(--text-primary);
+}
+
+.logout-btn {
+  background: var(--primary-gradient);
+  color: white;
+}
+
+.theme-toggle:hover, .logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Animations */
+@keyframes sidebarSlideIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 260px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .nav-menu {
+    animation: fadeInRight 0.6s ease-out forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .nav-menu, .nav-item, .nav-link {
+    animation: none !important;
+    transition: none !important;
+  }
+}

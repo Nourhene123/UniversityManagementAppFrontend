@@ -1,0 +1,112 @@
+.parcours-list {
+  padding: 20px;
+  background-color: #1a252f;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+  color: #ecf0f1;
+}
+
+.mat-elevation-z8 {
+  overflow: auto;
+  max-height: 600px;
+  border-radius: 8px;
+  background-color: #2c3e50;
+  border: 1px solid #34495e;
+}
+
+mat-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+mat-header-cell,
+mat-cell {
+  padding: 12px 15px;
+  border-bottom: 1px solid #34495e;
+  font-size: 1em;
+  color: #ecf0f1;
+  text-align: left;
+  transition: all 0.3s ease;
+}
+
+mat-header-cell {
+  background-color: #2c3e50;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+mat-cell {
+  background-color: #2c3e50;
+}
+
+mat-row:hover mat-cell {
+  background-color: #34495e;
+  cursor: pointer;
+}
+
+.mat-elevation-z8::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mat-elevation-z8::-webkit-scrollbar-track {
+  background: #2c3e50;
+  border-radius: 4px;
+}
+
+.mat-elevation-z8::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.mat-elevation-z8::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
+}
+
+button[mat-raised-button] {
+  background-color: #3498db;
+  color: #fff;
+  border-radius: 4px;
+  padding: 8px 16px;
+  margin-bottom: 15px;
+}
+
+button[mat-raised-button]:hover {
+  background-color: #2980b9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .parcours-list {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  mat-header-cell,
+  mat-cell {
+    padding: 10px 12px;
+    font-size: 0.9em;
+  }
+
+  .mat-elevation-z8 {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .parcours-list {
+    padding: 10px;
+  }
+
+  mat-header-cell,
+  mat-cell {
+    padding: 8px 10px;
+    font-size: 0.85em;
+  }
+
+  .mat-elevation-z8 {
+    max-height: 300px;
+  }
+}

@@ -1,0 +1,52 @@
+<aside class="sidebar" [ngClass]="{'open': isSidebarOpen, 'dark-theme': isDarkTheme}" #sidebar>
+  <div class="sidebar-header">
+    <div class="logo-container">
+      <div class="logo">EDX</div>
+      <div class="brand-text">EduPlatform</div>
+    </div>
+    <button class="toggle-btn" (click)="toggleSidebar()" aria-label="Toggle sidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
+
+  <div class="user-info" role="region" aria-label="User information">
+    <div class="user-avatar">{{ getUserInitials() }}</div>
+    <div class="user-name">{{ currentUser.prenom }} {{ currentUser.nom }}</div>
+    <div class="user-role">{{ currentUser.role || currentUser.departement }}</div>
+  </div>
+
+  <nav class="nav-menu" [ngClass]="{'loading': isLoading}" role="navigation" aria-label="Main navigation">
+    <div class="nav-item" *ngFor="let item of menuItems; let i = index" [ngClass]="{'animate-in': isAnimated}">
+      <a class="nav-link" 
+         [routerLink]="item.route" 
+         routerLinkActive="active" 
+         [routerLinkActiveOptions]="{exact: item.exact}"
+         (click)="toggleSubMenu(i)"
+         [attr.aria-expanded]="item.expanded"
+         [attr.aria-label]="item.label">
+        <i class="nav-icon {{item.icon}}"></i>
+        <span>{{item.label}}</span>
+        <i class="fas fa-chevron-down submenu-toggle" *ngIf="item.submenu"></i>
+      </a>
+      <div class="submenu" *ngIf="item.submenu && item.expanded" @submenuAnimation>
+        <a class="sub-nav-link" 
+           *ngFor="let subitem of item.submenu" 
+           [routerLink]="subitem.route"
+           routerLinkActive="active"
+           [attr.aria-label]="subitem.label">
+          {{subitem.label}}
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle theme">
+      <i class="fas" [ngClass]="isDarkTheme ? 'fa-sun' : 'fa-moon'"></i>
+      {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
+    </button>
+    <button class="logout-btn" (click)="logout()" aria-label="Logout">
+      <i class="fas fa-sign-out-alt"></i> Déconnexion
+    </button>
+  </div>
+</aside>

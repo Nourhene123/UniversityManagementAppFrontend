@@ -8,7 +8,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent  {
   loginForm: FormGroup;
 
   constructor(
@@ -31,7 +31,8 @@ export class LoginComponent implements OnInit {
       this.authService.login({ email, password, staySignedIn }).subscribe({
         next: (response) => {
           console.log('Login successful', response);
-          this.router.navigate(['/dashboard']);
+         this.router.navigate(['/admin/dashboard']);
+
         },
         error: (error) => {
           console.error('Login failed', error);

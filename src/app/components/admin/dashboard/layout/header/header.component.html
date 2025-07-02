@@ -1,0 +1,59 @@
+<header class="header" [ngClass]="{'dark-theme': isDarkTheme}" role="banner">
+  <div class="header-left">
+    <button class="mobile-menu-toggle" (click)="toggleMobileMenu()" aria-label="Toggle mobile menu" *ngIf="isMobile">
+      <i class="fas fa-bars"></i>
+    </button>
+    <h1>{{ currentPageTitle }}</h1>
+  </div>
+
+  <div class="header-right">
+    <div class="search-container" (clickOutside)="closeSearchSuggestions()">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" 
+             class="search-input" 
+             placeholder="Rechercher des étudiants, cours, enseignants..."
+             [(ngModel)]="searchQuery"
+             (input)="onSearchInput()"
+             (focus)="onSearchFocus($event)"
+             (blur)="onSearchBlur($event)"
+             aria-label="Search"
+             autocomplete="off">
+      <div class="search-suggestions" *ngIf="showSuggestions && searchSuggestions.length" @suggestionsAnimation>
+        <div class="suggestion-item" 
+             *ngFor="let suggestion of searchSuggestions"
+             (click)="selectSuggestion(suggestion)">
+          {{ suggestion }}
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="action-btn notifications" 
+              (click)="toggleNotifications()"
+              aria-label="Notifications"
+              [attr.aria-expanded]="showNotifications">
+        <i class="fas fa-bell"></i>
+        <span class="notification-badge" *ngIf="notificationsCount > 0">{{ notificationsCount }}</span>
+      </button>
+      <div class="notifications-dropdown" *ngIf="showNotifications" @dropdownAnimation>
+        <div class="notification-item" *ngFor="let notification of notifications">
+          <span class="notification-text">{{ notification.text }}</span>
+          <span class="notification-time">{{ notification.time | date:'shortTime' }}</span>
+        </div>
+      </div>
+
+      <button class="action-btn theme-toggle" 
+              (click)="toggleTheme()"
+              aria-label="Toggle theme">
+        <i class="fas" [ngClass]="isDarkTheme ? 'fa-sun' : 'fa-moon'"></i>
+      </button>
+
+      
+      <div class="user-menu-dropdown" *ngIf="showUserMenu" @dropdownAnimation>
+        <button class="dropdown-item" (click)="navigateToProfile()">Profile</button>
+        <button class="dropdown-item" (click)="navigateToSettings()">Settings</button>
+        <button class="dropdown-item logout" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </div>
+</header>
