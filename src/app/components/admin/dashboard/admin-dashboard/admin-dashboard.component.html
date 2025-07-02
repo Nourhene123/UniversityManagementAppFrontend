@@ -1,0 +1,23 @@
+<div class="dashboard-container">
+  <h1>Welcome,Back!</h1>
+
+  <div class="cards-container" *ngIf="!isLoading; else loading">
+    <div class="card">
+      <mat-icon>people</mat-icon>
+      <h3>Enseignants</h3>
+      <p>{{ enseignantCount }}</p>
+    </div>
+    <div class="card">
+      <mat-icon>school</mat-icon>
+      <h3>Étudiants</h3>
+      <p>{{ etudiantCount }}</p>
+    </div>
+    
+  </div>
+
+  <ng-template #loading>
+    <div class="loading">Loading data...</div>
+  </ng-template>
+
+  
+</div>

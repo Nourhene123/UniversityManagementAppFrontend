@@ -1,0 +1,69 @@
+<div class="etudiants-management">
+  <h2>Étudiant Management</h2>
+
+  <!-- Add/Edit Form -->
+  <form #etudiantForm="ngForm" *ngIf="showForm" (ngSubmit)="onSubmit(etudiantForm.value)" class="etudiant-form">
+    <mat-form-field appearance="fill">
+      <mat-label>Nom</mat-label>
+      <input matInput name="nom" ngModel [value]="selectedEtudiant?.nom" required>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Prénom</mat-label>
+      <input matInput name="prenom" ngModel [value]="selectedEtudiant?.prenom" required>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Email</mat-label>
+      <input matInput name="email" ngModel [value]="selectedEtudiant?.email" required type="email">
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Password</mat-label>
+      <input matInput name="password" ngModel [value]="selectedEtudiant?.password" required type="password">
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Numéro d'Inscription</mat-label>
+      <input matInput name="numeroInscription" ngModel [value]="selectedEtudiant?.numeroInscription" required>
+    </mat-form-field>
+    <button mat-raised-button color="primary" type="submit" [disabled]="!etudiantForm.valid">Save</button>
+    <button mat-raised-button type="button" (click)="cancelForm()">Cancel</button>
+  </form>
+
+  <!-- Add Button -->
+  <button mat-raised-button (click)="openForm()" style="margin-top: 10px;">Add New Étudiant</button>
+
+  <!-- Table -->
+  <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <ng-container matColumnDef="id">
+      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="nom">
+      <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="prenom">
+      <mat-header-cell *matHeaderCellDef>Prénom</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.prenom }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="email">
+      <mat-header-cell *matHeaderCellDef>Email</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.email }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="numeroInscription">
+      <mat-header-cell *matHeaderCellDef>Numéro d'Inscription</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.numeroInscription }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+      <mat-cell *matCellDef="let element">
+        <button mat-icon-button color="primary" (click)="getEtudiant(element.id)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deleteEtudiant(element.id)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-cell>
+    </ng-container>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+  </mat-table>
+</div>

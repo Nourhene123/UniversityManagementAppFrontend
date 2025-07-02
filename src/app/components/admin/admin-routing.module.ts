@@ -3,8 +3,10 @@ import { RouterModule, Routes } from '@angular/router';
 import { AdminDashboardComponent } from './dashboard/admin-dashboard/admin-dashboard.component';
 import { authGuard } from 'src/app/AuthGuard/auth.guard';
 import { LayoutComponent } from './dashboard/layout/layout.component';
-import { MatiereComponent } from './matieres/matiere/matiere.component';
 import { ParcourComponent } from './parcours/parcour/parcour.component';
+import { MatiereComponent } from './matiere/matiere/matiere.component';
+import { SemestreComponent } from './semestres/semestre/semestre.component';
+import { EtudiantsComponent } from './UserManagement/etudiants/etudiants.component';
 
 const routes: Routes = [
    {
@@ -13,8 +15,10 @@ const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: 'dashboard', component: AdminDashboardComponent },
-        { path: 'Matier', component:MatiereComponent },
-         { path: 'Parcour', component:ParcourComponent },
+      { path: 'Matier', component:MatiereComponent },
+      { path: 'Parcour', component:ParcourComponent },
+      { path: 'Semestre', component:SemestreComponent},
+      { path: 'Etudiant', component:EtudiantsComponent},
 
         
 

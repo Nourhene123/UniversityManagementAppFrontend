@@ -1,13 +1,13 @@
-.semestres-list {
+.etudiants-management {
   padding: 20px;
   background-color: #1a252f;
+  color: #ecf0f1;
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   margin-bottom: 20px;
-  color: #ecf0f1;
 }
 
-.semestre-form {
+.etudiant-form {
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -17,11 +17,11 @@
   border-radius: 8px;
 }
 
-.semestre-form mat-form-field {
+.etudiant-form mat-form-field {
   width: 100%;
 }
 
-.semestre-form button {
+.etudiant-form button {
   margin-right: 10px;
 }
 

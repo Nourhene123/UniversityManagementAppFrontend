@@ -15,7 +15,7 @@
   min-height: calc(100vh - 80px);
 }
 
-/* Responsive Design for Layout */
+
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;

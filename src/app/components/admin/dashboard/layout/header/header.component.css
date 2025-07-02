@@ -1,4 +1,4 @@
-/* CSS Variables (extending existing ones) */
+
 :root {
   --bg-primary: #ffffff;
   --bg-secondary: #f8fafc;
@@ -92,7 +92,6 @@
   gap: 1.5rem;
 }
 
-/* Search Styles */
 .search-container {
   position: relative;
   width: 350px;
@@ -149,7 +148,7 @@
   color: var(--text-primary);
 }
 
-/* Header Actions */
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -194,7 +193,6 @@
   animation: pulse 2s infinite;
 }
 
-/* Notifications Dropdown */
 .notifications-dropdown {
   position: absolute;
   top: 100%;
@@ -228,7 +226,6 @@
   color: var(--text-secondary);
 }
 
-/* User Menu */
 .user-menu {
   display: flex;
   align-items: center;
@@ -308,7 +305,7 @@
   color: var(--danger-gradient);
 }
 
-/* Animations */
+
 @keyframes slideInDown {
   from {
     transform: translateY(-100%);
@@ -325,7 +322,6 @@
   50% { transform: scale(1.2); }
 }
 
-/* Responsive Design */
 @media (max-width: 1024px) {
   .search-container {
     width: 250px;
@@ -357,7 +353,6 @@
   }
 }
 
-/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
   .header, .action-btn, .user-menu, .search-input {
     animation: none !important;

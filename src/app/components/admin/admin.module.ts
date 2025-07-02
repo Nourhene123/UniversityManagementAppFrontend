@@ -8,7 +8,6 @@ import { HeaderComponent } from './dashboard/layout/header/header.component';
 import { PanierComponent } from './paniers/panier/panier.component';
 import { SemestreComponent } from './semestres/semestre/semestre.component';
 import { ParcourComponent } from './parcours/parcour/parcour.component';
-import { MatiereComponent } from './matieres/matiere/matiere.component';
 import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,6 +15,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatiereComponent } from './matiere/matiere/matiere.component';
+import { EnseignantsComponent } from './UserManagement/enseignants/enseignants.component';
+import { EtudiantsComponent } from './UserManagement/etudiants/etudiants.component';
+import { AdminDashboardComponent } from './dashboard/admin-dashboard/admin-dashboard.component';
 
 
 @NgModule({
@@ -26,7 +29,10 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     PanierComponent,
     SemestreComponent,
     ParcourComponent,
-    MatiereComponent
+    MatiereComponent,
+    EnseignantsComponent,
+    EtudiantsComponent,
+    AdminDashboardComponent
   ],
   imports: [
     CommonModule,

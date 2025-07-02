@@ -1,6 +1,8 @@
 <div class="matieres-list">
   <h2>Subjects List </h2>
-  <button mat-raised-button  routerLink="/admin/matieres/new">Add New Subject</button>
+<button mat-raised-button color="primary" routerLink="/admin/matieres/new" aria-label="Add new subject">
+  <i class="fas fa-plus"></i>
+</button>
   <mat-table [dataSource]="matieres" class="mat-elevation-z8">
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
