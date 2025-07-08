@@ -16,8 +16,8 @@ export class EnseignantService {
     return this.http.get<number>(`${this.apiUrl}/count/by-role/Enseignant`);
   }
 
-  getAllEnseignants(): Observable<EnseignantDto[]> {
-    return this.http.get<EnseignantDto[]>(`${this.apiUrl}/all`); // Filter by role on frontend if needed
+ getAllEnseignants(): Observable<EnseignantDto[] | null> {
+    return this.http.get<EnseignantDto[] | null>(this.apiUrl + '/all');
   }
 
   getEnseignantById(id: number): Observable<EnseignantDto> {
@@ -25,7 +25,7 @@ export class EnseignantService {
   }
 
   createEnseignant(enseignant: EnseignantDto): Observable<EnseignantDto> {
-    return this.http.post<EnseignantDto>(`${this.apiUrl}/register`, enseignant); // Assuming register endpoint
+    return this.http.post<EnseignantDto>(`${this.apiUrl}/register`, enseignant); 
   }
 
   updateEnseignant(id: number, enseignant: EnseignantDto): Observable<EnseignantDto> {

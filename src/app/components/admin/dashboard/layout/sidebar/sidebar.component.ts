@@ -32,7 +32,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     {
       label: 'Dashboard',
       icon: 'fas fa-chart-line',
-      route: '/admin/dashboard',
+      route: 'dashboard',
       exact: true
     },
       {
@@ -45,6 +45,12 @@ export class SidebarComponent implements OnInit, AfterViewInit {
       label: 'Semestre',
       icon: 'fas fa-calendar-alt',
       route: 'Semestre',
+      exact: true
+    },
+     {
+      label: 'Paniers',
+      icon: 'fas fa-shopping-basket',
+      route: 'Panier',
       exact: true
     },
     {
@@ -60,26 +66,27 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     },
     {
       label: 'Enseignants',
+      icon: 'fas fa-chalkboard-teacher',
+      route: 'Enseignants',
+      exact: true
+    },
+    /*{
+      label: 'Enseignants',
      icon: 'fas fa-chalkboard-teacher',
 
-      route: 'Enseignant',
+      route: 'Enseignants',
       exact: true,
       submenu: [
-        { label: 'Liste des enseignants', route: 'Enseignant' },
+        { label: 'Liste des enseignants', route: 'Enseignants' },
         { label: 'Ajouter enseignant', route: '/admin/Enseignants/add' }
       ],
       expanded: false
-    },
+    },*/
     {
       label: 'Étudiants',
       icon: 'fas fa-graduation-cap',
       route: 'Etudiant',
       exact: true,
-      submenu: [
-        { label: 'Liste des étudiants', route: 'Etudiant' },
-        { label: 'Ajouter étudiant', route: '/admin/Etudiants/add' }
-      ],
-      expanded: false
     }
   ];
 

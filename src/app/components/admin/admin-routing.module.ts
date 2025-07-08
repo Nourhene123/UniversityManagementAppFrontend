@@ -7,6 +7,8 @@ import { ParcourComponent } from './parcours/parcour/parcour.component';
 import { MatiereComponent } from './matiere/matiere/matiere.component';
 import { SemestreComponent } from './semestres/semestre/semestre.component';
 import { EtudiantsComponent } from './UserManagement/etudiants/etudiants.component';
+import { EnseignantsComponent } from './UserManagement/enseignants/enseignants.component';
+import { PanierComponent } from './paniers/panier/panier.component';
 
 const routes: Routes = [
    {
@@ -18,7 +20,10 @@ const routes: Routes = [
       { path: 'Matier', component:MatiereComponent },
       { path: 'Parcour', component:ParcourComponent },
       { path: 'Semestre', component:SemestreComponent},
+       { path: 'Panier', component:PanierComponent},
       { path: 'Etudiant', component:EtudiantsComponent},
+     
+       { path: 'Enseignants', component:EnseignantsComponent},
 
         
 

@@ -1,22 +1,40 @@
 <div class="semestres-list">
   <h2>Semestres List</h2>
 
-  <!-- Add New Semestre Form -->
-  <form #semestreForm="ngForm" *ngIf="showForm" (ngSubmit)="onSubmit(semestreForm.value)" class="semestre-form">
-    <mat-form-field appearance="fill">
-      <mat-label>Name</mat-label>
-      <input matInput name="nom" ngModel required>
-    </mat-form-field>
-    <mat-form-field appearance="fill">
-      <mat-label>Panier IDs (comma-separated)</mat-label>
-      <input matInput name="panierIds" ngModel [ngModel]="panierIdsString" (ngModelChange)="updatePanierIds($event)">
-    </mat-form-field>
-    <button mat-raised-button color="primary" type="submit" [disabled]="!semestreForm.valid">Add Semestre</button>
-    <button mat-raised-button type="button" (click)="cancelForm()">Cancel</button>
-  </form>
+  <!-- Modal Overlay for Add/Edit Form -->
+  <div class="modal-overlay" *ngIf="showForm">
+    <div class="modal-content">
+      <form #semestreForm="ngForm" (ngSubmit)="onSubmit(semestreForm.value)" class="semestre-form">
+        <div class="form-header">
+          <h3>{{ editMode ? 'Modifier Semestre' : 'Ajouter un Nouveau Semestre' }}</h3>
+          <button mat-icon-button (click)="cancelForm()" class="close-button">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <mat-form-field >
+          <mat-label>Name</mat-label>
+          <input matInput name="nom" [(ngModel)]="newSemestre.nom" required>
+        </mat-form-field>
+        <mat-form-field >
+          <mat-label>Panier IDs (comma-separated)</mat-label>
+          <input matInput name="panierIds" [ngModel]="panierIdsString" (ngModelChange)="updatePanierIds($event)">
+        </mat-form-field>
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="!semestreForm.valid">
+            {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+          </button>
+          <button mat-raised-button (click)="cancelForm()">Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-  <!-- Table Button -->
-  <button mat-raised-button (click)="openForm()" style="margin-top: 10px;">Add New Semestre</button>
+  <!-- Add New Semestre Button -->
+  <button mat-raised-button (click)="openForm()" style="margin-top: 10px;">
+    <mat-icon>add</mat-icon> 
+  </button>
+
+  <!-- Semestre Table -->
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
@@ -29,7 +47,7 @@
     <ng-container matColumnDef="actions">
       <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
       <mat-cell *matCellDef="let element">
-        <button mat-icon-button color="accent" (click)="getSemestre(element.id)">
+        <button mat-icon-button color="accent" (click)="editSemestre(element)">
           <mat-icon>edit</mat-icon>
         </button>
         <button mat-icon-button color="warn" (click)="deleteSemestre(element.id)">

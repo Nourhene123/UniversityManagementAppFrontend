@@ -1,8 +1,52 @@
 <div class="parcours-list">
   <h2>Parcours List</h2>
-  <button mat-raised-button (click)="createParcour({ id: 0, nom: 'New', annee: '2025', libelle: 'New Libelle', etudiantId: 1, panierIds: [] })">
-    Add New Parcour
+
+  <!-- Modal Overlay for Add/Edit Form -->
+  <div class="modal-overlay" *ngIf="showForm">
+    <div class="modal-content">
+      <form #parcourForm="ngForm" (ngSubmit)="onSubmit(parcourForm.value)" class="parcour-form">
+        <div class="form-header">
+          <h3>{{ editMode ? 'Modifier Parcour' : 'Ajouter un Nouveau Parcour' }}</h3>
+          <button mat-icon-button (click)="cancelForm()" class="close-button">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <mat-form-field >
+          <mat-label>Nom</mat-label>
+          <input matInput name="nom" [(ngModel)]="newParcour.nom" required>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Année</mat-label>
+          <input matInput name="annee" [(ngModel)]="newParcour.annee" required>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Libellé</mat-label>
+          <input matInput name="libelle" [(ngModel)]="newParcour.libelle" required>
+        </mat-form-field>
+        <mat-form-field >
+          <mat-label>Étudiant ID</mat-label>
+          <input matInput type="number" name="etudiantId" [(ngModel)]="newParcour.etudiantId" required>
+        </mat-form-field>
+        <mat-form-field >
+          <mat-label>Panier IDs (comma-separated)</mat-label>
+          <input matInput name="panierIds" [(ngModel)]="panierIdsString" (ngModelChange)="updatePanierIds($event)">
+        </mat-form-field>
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="!parcourForm.valid">
+            {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+          </button>
+          <button mat-stroked-button (click)="cancelForm()">Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add New Parcour Button -->
+  <button mat-flat-button (click)="openForm()">
+    <mat-icon>add</mat-icon> 
   </button>
+
+  <!-- Parcour Table -->
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
@@ -23,7 +67,7 @@
     <ng-container matColumnDef="actions">
       <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
       <mat-cell *matCellDef="let element">
-        <button mat-icon-button color="accent" (click)="getParcour(element.id)">
+        <button mat-icon-button color="accent" (click)="editParcour(element)">
           <mat-icon>edit</mat-icon>
         </button>
         <button mat-icon-button color="warn" (click)="deleteParcour(element.id)">

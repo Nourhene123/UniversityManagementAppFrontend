@@ -7,7 +7,6 @@ import { ParcourDto } from 'src/app/models/ParcourDto';
   providedIn: 'root'
 })
 export class ParcourService {
-
   private apiUrl = 'http://localhost:8080/api/parcours';
 
   constructor(private http: HttpClient) { }
@@ -22,6 +21,10 @@ export class ParcourService {
 
   createParcour(parcour: ParcourDto): Observable<ParcourDto> {
     return this.http.post<ParcourDto>(this.apiUrl, parcour);
+  }
+
+  updateParcour(parcour: ParcourDto): Observable<ParcourDto> {
+    return this.http.put<ParcourDto>(`${this.apiUrl}/${parcour.id}`, parcour);
   }
 
   deleteParcour(id: number): Observable<void> {

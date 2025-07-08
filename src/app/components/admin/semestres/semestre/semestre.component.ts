@@ -18,6 +18,8 @@ export class SemestreComponent implements OnInit {
   selectedSemestre$: Observable<SemestreDto> | null = null;
   panierIdsString: string = '';
   showForm: boolean = false;
+  editMode: boolean = false; // Add editMode property
+  newSemestre: SemestreDto = { nom: '', panierIds: [] }; // Add newSemestre property
 
   @ViewChild(MatTable) table!: MatTable<SemestreDto>;
   @ViewChild('semestreForm') semestreForm!: NgForm;
@@ -46,7 +48,24 @@ export class SemestreComponent implements OnInit {
       });
       this.showForm = false;
       this.semestreForm.reset();
+      this.newSemestre = { nom: '', panierIds: [] }; // Reset newSemestre
+      this.editMode = false; // Reset edit mode
     });
+  }
+
+  updateSemestre(semestre: SemestreDto) {
+    if (semestre.id) {
+      this.semestreService.updateSemestre(semestre).subscribe(() => {
+        this.semestres$ = this.semestreService.getAllSemestres();
+        this.semestres$.subscribe(data => {
+          if (data) this.dataSource.data = data;
+        });
+        this.showForm = false;
+        this.semestreForm.reset();
+        this.newSemestre = { nom: '', panierIds: [] }; // Reset newSemestre
+        this.editMode = false; // Reset edit mode
+      });
+    }
   }
 
   deleteSemestre(id: number) {
@@ -60,11 +79,15 @@ export class SemestreComponent implements OnInit {
 
   onSubmit(formValue: any) {
     const semestre: SemestreDto = {
-      id: 0,
+      id: this.editMode ? this.newSemestre.id : undefined, // Preserve id if editing
       nom: formValue.nom,
       panierIds: this.panierIdsString.split(',').map(id => +id.trim()).filter(id => !isNaN(id))
     };
-    this.createSemestre(semestre);
+    if (this.editMode) {
+      this.updateSemestre(semestre);
+    } else {
+      this.createSemestre(semestre);
+    }
   }
 
   updatePanierIds(value: string) {
@@ -74,10 +97,21 @@ export class SemestreComponent implements OnInit {
   openForm() {
     this.showForm = true;
     this.panierIdsString = '';
+    this.editMode = false; // Default to add mode
+    this.newSemestre = { nom: '', panierIds: [] }; // Reset form
   }
 
   cancelForm() {
     this.showForm = false;
     this.semestreForm.reset();
+    this.newSemestre = { nom: '', panierIds: [] }; // Reset newSemestre
+    this.editMode = false; // Reset edit mode
+  }
+
+  editSemestre(element: SemestreDto) { // Add editSemestre method
+    this.editMode = true;
+    this.showForm = true;
+    this.newSemestre = { ...element }; // Copy the selected semester
+    this.panierIdsString = element.panierIds ? element.panierIds.join(',') : '';
   }
 }

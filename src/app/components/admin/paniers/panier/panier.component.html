@@ -1,1 +1,87 @@
-<p>panier works!</p>
+<div class="paniers-list">
+  <h2>Gestion des Paniers</h2>
+  <div class="modal-overlay" *ngIf="showForm">
+    <div class="modal-content">
+      <form #panierForm="ngForm" (ngSubmit)="onSubmit(panierForm.value)" class="panier-form">
+        <div class="form-header">
+          <h3>{{ editMode ? 'Modifier Panier' : 'Ajouter un Nouveau Panier' }}</h3>
+          <button mat-icon-button (click)="cancelForm()" class="close-button">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <mat-form-field >
+          <mat-label>Nom</mat-label>
+          <input matInput name="nom" [(ngModel)]="newPanier.nom" required>
+        </mat-form-field>
+        <mat-form-field >
+          <mat-label>Coefficient Total</mat-label>
+          <input matInput type="number" name="coefficientTotal" [(ngModel)]="newPanier.coefficientTotal" required>
+        </mat-form-field>
+        <mat-form-field >
+          <mat-label>Semestre</mat-label>
+          <input matInput name="semestre" [(ngModel)]="newPanier.semestre" required>
+        </mat-form-field>
+        <mat-form-field >
+          <mat-label>Parcour ID</mat-label>
+          <input matInput type="number" name="parcourId" [(ngModel)]="newPanier.parcourId" required>
+        </mat-form-field>
+        <mat-form-field >
+          <mat-label>Matiere IDs (comma-separated)</mat-label>
+          <input matInput name="matiereIds" [ngModel]="matiereIdsString" (ngModelChange)="updateMatiereIds($event)">
+        </mat-form-field>
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="!panierForm.valid">
+            {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+          </button>
+          <button mat-stroked-button (click)="cancelForm()">Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add New Panier Button -->
+  <button mat-flat-button color="primary" (click)="openForm()" style="margin-top: 10px;">
+    <mat-icon>add</mat-icon> 
+  </button>
+
+  <!-- Panier Table -->
+  <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <ng-container matColumnDef="id">
+      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="nom">
+      <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="coefficientTotal">
+      <mat-header-cell *matHeaderCellDef>Coefficient Total</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.coefficientTotal }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="semestre">
+      <mat-header-cell *matHeaderCellDef>Semestre</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.semestre }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="parcourId">
+      <mat-header-cell *matHeaderCellDef>Parcour ID</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.parcourId }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="matiereIds">
+      <mat-header-cell *matHeaderCellDef>Matiere IDs</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.matiereIds.join(', ') }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+      <mat-cell *matCellDef="let element">
+        <button mat-icon-button color="accent" (click)="editPanier(element)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deletePanier(element.id)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-cell>
+    </ng-container>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+  </mat-table>
+</div>

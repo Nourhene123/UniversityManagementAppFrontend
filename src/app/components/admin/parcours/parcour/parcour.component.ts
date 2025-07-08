@@ -1,8 +1,7 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
-import { Observable, of } from 'rxjs'; 
+import { Component, OnInit } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatTable } from '@angular/material/table';
+import { NgForm } from '@angular/forms';
+import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
 import { ParcourDto } from 'src/app/models/ParcourDto';
 
 @Component({
@@ -11,44 +10,72 @@ import { ParcourDto } from 'src/app/models/ParcourDto';
   styleUrls: ['./parcour.component.css']
 })
 export class ParcourComponent implements OnInit {
-  parcours$: Observable<ParcourDto[] | null> = this.parcourService.getAllParcours();
-  dataSource = new MatTableDataSource<ParcourDto>();
   displayedColumns: string[] = ['id', 'nom', 'annee', 'libelle', 'actions'];
-  selectedParcour$: Observable<ParcourDto> | null = null;
-
-  @ViewChild(MatTable) table!: MatTable<ParcourDto>;
+  dataSource = new MatTableDataSource<ParcourDto>();
+  showForm = false;
+  editMode = false;
+  newParcour: ParcourDto = { id: 0, nom: '', annee: '', libelle: '', etudiantId: 0, panierIds: [] };
+  panierIdsString = '';
 
   constructor(private parcourService: ParcourService) {}
 
   ngOnInit() {
-    this.parcours$.subscribe(data => {
-      if (data) {
-        this.dataSource.data = data;
-      } else {
-        this.dataSource.data = []; // Default to empty array if null
-      }
+    this.loadParcours();
+  }
+
+  loadParcours() {
+    this.parcourService.getAllParcours().subscribe(data => {
+      this.dataSource.data = data;
     });
   }
 
-  getParcour(id: number) {
-    this.selectedParcour$ = this.parcourService.getParcourById(id);
+  openForm() {
+    this.showForm = true;
+    this.editMode = false;
+    this.newParcour = { id: 0, nom: '', annee: '', libelle: '', etudiantId: 0, panierIds: [] };
+    this.panierIdsString = '';
   }
 
-  createParcour(parcour: ParcourDto) {
-    this.parcourService.createParcour(parcour).subscribe(() => {
-      this.parcours$ = this.parcourService.getAllParcours();
-      this.parcours$.subscribe(data => {
-        if (data) this.dataSource.data = data;
+  cancelForm() {
+    this.showForm = false;
+  }
+
+  onSubmit(formValue: any) {
+    const parcour: ParcourDto = {
+      id: this.editMode ? this.newParcour.id : 0,
+      nom: formValue.nom,
+      annee: formValue.annee,
+      libelle: formValue.libelle,
+      etudiantId: formValue.etudiantId,
+      panierIds: this.panierIdsString.split(',').map(id => +id.trim()).filter(id => !isNaN(id))
+    };
+    if (this.editMode) {
+      this.parcourService.updateParcour(parcour).subscribe(() => {
+        this.loadParcours();
+        this.showForm = false;
       });
-    });
+    } else {
+      this.parcourService.createParcour(parcour).subscribe(() => {
+        this.loadParcours();
+        this.showForm = false;
+      });
+    }
+  }
+
+  editParcour(parcour: ParcourDto) {
+    this.newParcour = { ...parcour };
+    this.panierIdsString = parcour.panierIds ? parcour.panierIds.join(', ') : '';
+    this.showForm = true;
+    this.editMode = true;
   }
 
   deleteParcour(id: number) {
     this.parcourService.deleteParcour(id).subscribe(() => {
-      this.parcours$ = this.parcourService.getAllParcours();
-      this.parcours$.subscribe(data => {
-        if (data) this.dataSource.data = data;
-      });
+      this.loadParcours();
     });
+  }
+
+  updatePanierIds(value: string) {
+    this.panierIdsString = value;
   }
 }

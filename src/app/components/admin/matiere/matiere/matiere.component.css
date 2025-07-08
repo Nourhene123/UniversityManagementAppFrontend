@@ -1,113 +1,472 @@
+:root {
+  --primary-bg: linear-gradient(135deg, #1a252f 0%, #1e2a38 100%);
+  --secondary-bg: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --text-color: #ecf0f1;
+  --accent-color: #3498db;
+  --success-color: #27ae60;
+  --error-color: #e74c3c;
+  --shadow-light: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --transition-speed: 0.2s ease;
+}
+
+/* Base styles for the matieres list container */
 .matieres-list {
-  padding: 20px;
-  background-color: #1a252f; /* Dark background to match dashboard */
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Slightly stronger shadow */
-  margin-bottom: 20px;
-  color: #ecf0f1; /* Light text for contrast */
+  padding: 24px;
+  background: linear-gradient(135deg, #1a252f 0%, #1e2a38 100%);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  margin-bottom: 24px;
+  color: #ecf0f1;
+  position: relative;
+  overflow: hidden;
 }
 
-.mat-elevation-z8 {
-  overflow: auto;
-  max-height: 600px;
-  border-radius: 8px;
-  background-color: #2c3e50; /* Darker table background */
-  border: 1px solid #34495e; /* Darker border */
+.matieres-list::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3498db, #2980b9, #8e44ad);
+  border-radius: 12px 12px 0 0;
 }
 
-mat-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-mat-header-cell,
-mat-cell {
-  padding: 12px 15px;
-  border-bottom: 1px solid #34495e; /* Darker border color */
-  font-size: 1em;
-  color: #ecf0f1; /* Light text */
-  text-align: left;
-  transition: all 0.3s ease;
-}
-
-mat-header-cell {
-  background-color: #2c3e50; /* Matches header background */
+.matieres-list h2 {
+  margin: 0 0 24px 0;
+  font-size: 1.8rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-mat-cell {
-  background-color: #2c3e50; /* Consistent with table background */
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-mat-row:hover mat-cell {
-  background-color: #34495e; /* Darker hover effect */
+.modal-content {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 540px;
+  animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3498db, #2980b9, #8e44ad);
+  border-radius: 16px 16px 0 0;
+}
+
+/* Form Header */
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-header h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.6rem;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.close-button {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: none;
   cursor: pointer;
 }
 
+.close-button:hover {
+  background: rgba(231, 76, 60, 0.2);
+  transform: scale(1.1);
+}
+
+.close-button mat-icon {
+  color: #ecf0f1;
+  font-size: 20px;
+}
+
+/* Form Styling */
+.semestre-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.semestre-form mat-form-field {
+  width: 100%;
+}
+
+/* Material Form Field Customization */
+.semestre-form ::ng-deep .mat-form-field-appearance-fill .mat-form-field-underline {
+  color: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.semestre-form ::ng-deep .mat-form-field-appearance-fill.mat-focused .mat-form-field-underline {
+  color: #3498db;
+  border-width: 2px;
+}
+
+.semestre-form ::ng-deep .mat-form-field-appearance-fill .mat-form-field-underline {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.semestre-form ::ng-deep .mat-form-field-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.semestre-form ::ng-deep .mat-focused .mat-form-field-label {
+  color: #3498db;
+}
+
+.semestre-form ::ng-deep .mat-input-element {
+  color: #ecf0f1;
+  font-weight: 400;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+}
+
+.semestre-form ::ng-deep .mat-input-element:focus {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.semestre-form ::ng-deep .mat-form-field-invalid .mat-form-field-underline {
+  color: #e74c3c;
+}
+
+.semestre-form ::ng-deep .mat-form-field-invalid .mat-form-field-label {
+  color: #e74c3c;
+}
+
+.semestre-form ::ng-deep mat-error {
+  color: #e74c3c;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-actions button {
+  flex: 1;
+  height: 48px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.form-actions button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.form-actions button:hover::before {
+  left: 100%;
+}
+
+.form-actions button[color="primary"] {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.form-actions button[color="primary"]:hover {
+  background: linear-gradient(135deg, #2980b9, #21618c);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+.form-actions button[color="primary"]:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.form-actions button[mat-raised-button]:not([color="primary"]) {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: #ecf0f1;
+}
+
+.form-actions button[mat-raised-button]:not([color="primary"]):hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Add Button Styling */
+button[mat-raised-button]:not(.form-actions button) {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: white;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+button[mat-raised-button]:not(.form-actions button)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+button[mat-raised-button]:not(.form-actions button):hover::before {
+  left: 100%;
+}
+
+button[mat-raised-button]:not(.form-actions button):hover {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+}
+
+button[mat-raised-button]:not(.form-actions button) mat-icon {
+  margin-right: 8px;
+}
+
+/* Table Styling */
+.mat-elevation-z8 {
+  border-radius: 8px;
+  background-color: #2c3e50;
+  border: 1px solid #34495e;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+/* Table Headers */
+mat-header-cell {
+  background-color: #34495e;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #3a526b;
+}
+
+/* Table Cells */
+mat-cell {
+  color: #ecf0f1;
+  font-size: 0.9rem;
+  padding: 16px 20px;
+  border-bottom: 1px solid #3a526b;
+  background-color: transparent;
+}
+
+/* Table Rows */
+mat-row {
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+mat-row:hover {
+  background-color: #354a5f;
+}
+
+mat-row:last-child mat-cell {
+  border-bottom: none;
+}
+
+/* Action Buttons */
+mat-cell button[mat-icon-button] {
+  width: 32px;
+  height: 32px;
+  margin-right: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+mat-cell button[color="accent"] {
+  color: #3498db;
+  background-color: transparent;
+}
+
+mat-cell button[color="accent"]:hover {
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+mat-cell button[color="warn"] {
+  color: #e74c3c;
+  background-color: transparent;
+}
+
+mat-cell button[color="warn"]:hover {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Remove any extra shadows or effects */
+mat-header-row,
+mat-row {
+  box-shadow: none;
+}
+
+/* Simple scrollbar */
 .mat-elevation-z8::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .mat-elevation-z8::-webkit-scrollbar-track {
-  background: #2c3e50;
-  border-radius: 4px;
+  background: #34495e;
 }
 
 .mat-elevation-z8::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+  background: #5a6c7d;
+  border-radius: 3px;
 }
 
 .mat-elevation-z8::-webkit-scrollbar-thumb:hover {
-  background: #bbb;
+  background: #6c7b8a;
 }
 
-/* Button styling to match dashboard */
-button[mat-raised-button] {
-  background-color: #3498db; /* Blue button like dashboard */
-  color: #fff;
-  border-radius: 4px;
-  padding: 8px 16px;
-  margin-bottom: 15px;
+/* Animations */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+  }
+  to { 
+    opacity: 1; 
+  }
 }
 
-button[mat-raised-button]:hover {
-  background-color: #2980b9; /* Darker blue on hover */
+@keyframes slideIn {
+  from { 
+    transform: translateY(-30px) scale(0.95); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0) scale(1); 
+    opacity: 1; 
+  }
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    padding: 24px;
+    margin: 20px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-actions button {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
   .matieres-list {
-    padding: 15px;
-    margin-bottom: 15px;
+    padding: 16px;
   }
-
-  mat-header-cell,
-  mat-cell {
-    padding: 10px 12px;
-    font-size: 0.9em;
+  
+  .matieres-list h2 {
+    font-size: 1.5rem;
   }
-
-  .mat-elevation-z8 {
-    max-height: 400px;
+  
+  .form-header h3 {
+    font-size: 1.3rem;
   }
 }
 
-@media (max-width: 480px) {
-  .matieres-list {
-    padding: 10px;
-  }
+/* Loading States */
+.form-actions button:disabled {
+  position: relative;
+  color: transparent;
+}
 
-  mat-header-cell,
-  mat-cell {
-    padding: 8px 10px;
-    font-size: 0.85em;
-  }
+.form-actions button:disabled::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: spin 1s linear infinite;
+}
 
-  .mat-elevation-z8 {
-    max-height: 300px;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
+}
+
+/* Focus States for Accessibility */
+.close-button:focus,
+.form-actions button:focus,
+button[mat-raised-button]:focus {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
 }

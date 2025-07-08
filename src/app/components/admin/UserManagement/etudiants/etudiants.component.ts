@@ -13,11 +13,12 @@ import { EtudiantService } from 'src/app/Services/EtudiantService/etudiant.servi
   styleUrls: ['./etudiants.component.css']
 })
 export class EtudiantsComponent implements OnInit {
-  etudiants$: Observable<EtudiantDto[] | null> = this.etudiantService.getAllEtudiants();
+ etudiants$: Observable<EtudiantDto[] | null> = this.etudiantService.getAllEtudiants();
   dataSource = new MatTableDataSource<EtudiantDto>();
   displayedColumns: string[] = ['id', 'nom', 'prenom', 'email', 'numeroInscription', 'actions'];
-  selectedEtudiant: EtudiantDto | null = null;
   showForm: boolean = false;
+  editMode: boolean = false;
+  selectedEtudiant: EtudiantDto = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Etudiant', numeroInscription: '' };
 
   @ViewChild(MatTable) table!: MatTable<EtudiantDto>;
   @ViewChild('etudiantForm') etudiantForm!: NgForm;
@@ -27,18 +28,17 @@ export class EtudiantsComponent implements OnInit {
   ngOnInit() {
     this.etudiants$.subscribe(data => {
       if (data) {
-        this.dataSource.data = data.filter(e => e.role === 'Etudiant'); // Filter for Etudiant role
+        this.dataSource.data = data.filter(e => e.role === 'Etudiant');
       } else {
         this.dataSource.data = [];
       }
     });
   }
 
-  getEtudiant(id: number) {
-    this.etudiantService.getEtudiantById(id).subscribe(etudiant => {
-      this.selectedEtudiant = etudiant;
-      this.showForm = true;
-    });
+  editEtudiant(etudiant: EtudiantDto) {
+    this.selectedEtudiant = { ...etudiant };
+    this.editMode = true;
+    this.showForm = true;
   }
 
   createEtudiant(etudiant: EtudiantDto) {
@@ -49,18 +49,22 @@ export class EtudiantsComponent implements OnInit {
       });
       this.showForm = false;
       this.etudiantForm.reset();
+      this.selectedEtudiant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Etudiant', numeroInscription: '' };
+      this.editMode = false;
     });
   }
 
   updateEtudiant(etudiant: EtudiantDto) {
-    if (this.selectedEtudiant?.id) {
-      this.etudiantService.updateEtudiant(this.selectedEtudiant.id, etudiant).subscribe(() => {
+    if (etudiant.id) {
+      this.etudiantService.updateEtudiant(etudiant.id, etudiant).subscribe(() => {
         this.etudiants$ = this.etudiantService.getAllEtudiants();
         this.etudiants$.subscribe(data => {
           if (data) this.dataSource.data = data.filter(e => e.role === 'Etudiant');
         });
         this.showForm = false;
         this.etudiantForm.reset();
+        this.selectedEtudiant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Etudiant', numeroInscription: '' };
+        this.editMode = false;
       });
     }
   }
@@ -76,15 +80,15 @@ export class EtudiantsComponent implements OnInit {
 
   onSubmit(formValue: any) {
     const etudiant: EtudiantDto = {
-      id: this.selectedEtudiant?.id,
-      nom: formValue.nom,
-      prenom: formValue.prenom,
-      email: formValue.email,
-      password: formValue.password,
+      id: this.editMode ? this.selectedEtudiant.id : 0,
+      nom: formValue.nom || this.selectedEtudiant.nom,
+      prenom: formValue.prenom || this.selectedEtudiant.prenom,
+      email: formValue.email || this.selectedEtudiant.email,
+      password: formValue.password || this.selectedEtudiant.password,
       role: 'Etudiant',
-      numeroInscription: formValue.numeroInscription
+      numeroInscription: formValue.numeroInscription || this.selectedEtudiant.numeroInscription
     };
-    if (this.selectedEtudiant?.id) {
+    if (this.editMode && etudiant.id) {
       this.updateEtudiant(etudiant);
     } else {
       this.createEtudiant(etudiant);
@@ -92,12 +96,15 @@ export class EtudiantsComponent implements OnInit {
   }
 
   openForm() {
-    this.selectedEtudiant = null;
+    this.selectedEtudiant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Etudiant', numeroInscription: '' };
+    this.editMode = false;
     this.showForm = true;
   }
 
   cancelForm() {
     this.showForm = false;
     this.etudiantForm.reset();
+    this.selectedEtudiant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Etudiant', numeroInscription: '' };
+    this.editMode = false;
   }
 }

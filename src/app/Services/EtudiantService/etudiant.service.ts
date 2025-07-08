@@ -12,9 +12,8 @@ export class EtudiantService {
   constructor(private http: HttpClient) {}
 
 getEtudiantCount(): Observable<number> {
-  return this.http.get<number>(`${this.apiUrl}/count/by-role/Etudiant`);
-}
-
+    return this.http.get<number>(`${this.apiUrl}/countByRole/Etudiant`);
+  }
 
   getAllEtudiants(): Observable<EtudiantDto[]> {
     return this.http.get<EtudiantDto[]>(`${this.apiUrl}/all`); }

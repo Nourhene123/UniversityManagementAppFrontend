@@ -1,0 +1,85 @@
+<div class="enseignants-management">
+  <h2>Enseignant Management</h2>
+
+  <!-- Modal Overlay for Add/Edit Form -->
+  <div class="modal-overlay" *ngIf="showForm">
+    <div class="modal-content">
+      <form #enseignantForm="ngForm" (ngSubmit)="onSubmit(enseignantForm.value)" class="semestre-form"> <!-- Changed to semestre-form for consistency -->
+        <div class="form-header">
+          <h3>{{ editMode ? 'Modifier Enseignant' : 'Ajouter un Nouvel Enseignant' }}</h3>
+          <button mat-icon-button (click)="cancelForm()" class="close-button">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <mat-form-field appearance="fill">
+          <mat-label>Nom</mat-label>
+          <input matInput name="nom" [(ngModel)]="selectedEnseignant.nom" required>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Prénom</mat-label>
+          <input matInput name="prenom" [(ngModel)]="selectedEnseignant.prenom" required>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Email</mat-label>
+          <input matInput name="email" [(ngModel)]="selectedEnseignant.email" required type="email">
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Password</mat-label>
+          <input matInput name="password" [(ngModel)]="selectedEnseignant.password" required type="password">
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Département</mat-label>
+          <input matInput name="departement" [(ngModel)]="selectedEnseignant.departement">
+        </mat-form-field>
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="!enseignantForm.valid">
+            {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+          </button>
+          <button mat-raised-button (click)="cancelForm()">Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add New Enseignant Button -->
+  <button mat-raised-button (click)="openForm()">
+    <mat-icon>add</mat-icon> 
+  </button>
+
+  <!-- Table -->
+  <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <ng-container matColumnDef="id">
+      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="nom">
+      <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="prenom">
+      <mat-header-cell *matHeaderCellDef>Prénom</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.prenom }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="email">
+      <mat-header-cell *matHeaderCellDef>Email</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.email }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="departement">
+      <mat-header-cell *matHeaderCellDef>Département</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.departement || 'N/A' }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+      <mat-cell *matCellDef="let element">
+        <button mat-icon-button color="accent" (click)="editEnseignant(element)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deleteEnseignant(element.id)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-cell>
+    </ng-container>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+  </mat-table>
+</div>

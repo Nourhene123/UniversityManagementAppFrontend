@@ -1,27 +1,32 @@
 
 .admin-layout {
   display: flex;
+  min-height: 100vh; 
 }
 
 .main-content {
+  flex: 1; 
   margin-left: 280px;
-  min-height: 150vh;
   background: var(--bg-primary);
   transition: var(--transition);
+  min-height: 100vh; 
 }
 
 .content-area {
   padding: 2rem;
-  min-height: calc(100vh - 80px);
+  min-height: calc(100vh - 120px); 
 }
-
 
 @media (max-width: 768px) {
   .main-content {
-    margin-left: 0;
+    margin-left: 0; 
   }
 
   .content-area {
     padding: 1rem;
+  }
+
+  .admin-layout {
+    flex-direction: column; 
   }
 }
