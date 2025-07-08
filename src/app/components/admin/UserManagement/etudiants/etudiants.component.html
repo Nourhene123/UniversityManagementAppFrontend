@@ -1,7 +1,6 @@
 <div class="etudiants-management">
   <h2>Étudiant Management</h2>
 
-  <!-- Modal Overlay for Add/Edit Form -->
   <div class="modal-overlay" *ngIf="showForm">
     <div class="modal-content">
       <form #etudiantForm="ngForm" (ngSubmit)="onSubmit(etudiantForm.value)" class="semestre-form">
@@ -41,12 +40,11 @@
     </div>
   </div>
 
-  <!-- Add New Étudiant Button -->
+  
   <button mat-raised-button (click)="openForm()">
     <mat-icon>add</mat-icon>
   </button>
 
-  <!-- Table -->
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>

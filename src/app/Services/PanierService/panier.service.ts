@@ -1,6 +1,6 @@
 
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PanierDto } from 'src/app/models/PanierDto';
 
@@ -8,13 +8,23 @@ import { PanierDto } from 'src/app/models/PanierDto';
   providedIn: 'root'
 })
 export class PanierService {
-  updatePanier(panier: PanierDto) {
-    throw new Error('Method not implemented.');
-  }
+ 
   private apiUrl = 'http://localhost:8080/api/paniers'; 
+  private getHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    });
+  }
 
   constructor(private http: HttpClient) {}
-
+  
+ updatePanier(parcour: PanierDto): Observable<PanierDto> {
+  if (!parcour.id) {
+    throw new Error('Parcour ID is required for update');
+  }
+  return this.http.put<PanierDto>(`${this.apiUrl}/${parcour.id}`, parcour, { headers: this.getHeaders() });
+}
   getAllPaniers(): Observable<PanierDto[]> {
     return this.http.get<PanierDto[]>(this.apiUrl);
   }

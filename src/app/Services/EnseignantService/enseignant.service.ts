@@ -19,7 +19,9 @@ export class EnseignantService {
  getAllEnseignants(): Observable<EnseignantDto[] | null> {
     return this.http.get<EnseignantDto[] | null>(this.apiUrl + '/all');
   }
-
+  getUtilisateurByEmail(email: string): Observable<EnseignantDto> {
+    return this.http.get<EnseignantDto>(`${this.apiUrl}/email/${email}`, { withCredentials: true });
+  }
   getEnseignantById(id: number): Observable<EnseignantDto> {
     return this.http.get<EnseignantDto>(`${this.apiUrl}/${id}`);
   }

@@ -1,10 +1,10 @@
 <div class="matieres-list">
-  <h2>Subjects List</h2>
+  <h2>Liste des matières</h2>
 
   <!-- Modal Overlay for Add/Edit Form -->
   <div class="modal-overlay" *ngIf="showForm">
     <div class="modal-content">
-      <form [formGroup]="matiereForm" (ngSubmit)="onSubmit()" class="semestre-form">
+      <form [formGroup]="matiereForm" (ngSubmit)="onSubmit()" class="semestre-form" #matiereFormElement="ngForm">
         <div class="form-header">
           <h3>{{ editMode ? 'Modifier Matière' : 'Ajouter une Nouvelle Matière' }}</h3>
           <button mat-icon-button (click)="cancelForm()" class="close-button">
@@ -38,11 +38,25 @@
             Coefficient must be at least 1
           </mat-error>
         </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Panier</mat-label>
+          <mat-select formControlName="panierId">
+            <mat-option [value]="null">None</mat-option>
+            <mat-option *ngFor="let panier of paniers" [value]="panier.id">{{ panier.nom }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Enseignant</mat-label>
+          <mat-select formControlName="enseignantId">
+            <mat-option [value]="null">None</mat-option>
+            <mat-option *ngFor="let enseignant of enseignants" [value]="enseignant.id">{{ enseignant.nom }}</mat-option>
+          </mat-select>
+        </mat-form-field>
         <div class="form-actions">
-          <button mat-raised-button color="primary" type="submit" [disabled]="matiereForm.invalid">
+          <button mat-raised-button color="primary" type="submit" [disabled]="matiereForm.invalid || isSubmitting">
             {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
           </button>
-          <button mat-raised-button (click)="cancelForm()">Annuler</button>
+          <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
         </div>
       </form>
     </div>
@@ -50,7 +64,7 @@
 
   <!-- Add New Subject Button -->
   <button mat-raised-button (click)="openForm()">
-    <mat-icon>add</mat-icon> 
+    <mat-icon>add</mat-icon>
   </button>
 
   <!-- Subjects Table -->
@@ -70,6 +84,14 @@
     <ng-container matColumnDef="coefficient">
       <mat-header-cell *matHeaderCellDef>Coefficient</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.coefficient }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="panierNom">
+      <mat-header-cell *matHeaderCellDef>Panier</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ getPanierNom(element.panierId) }}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="enseignantNom">
+      <mat-header-cell *matHeaderCellDef>Enseignant</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ getEnseignantNom(element.enseignantId) }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="actions">
       <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>

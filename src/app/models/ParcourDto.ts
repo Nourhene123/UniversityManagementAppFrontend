@@ -1,7 +1,7 @@
 import { MatiereDto } from './MatiereDto';
 import { SemestreDto } from './SemestreDto';
 export interface ParcourDto {
-  id: number;
+  id?: number;
   nom: string;
   annee: string;
   libelle: string;

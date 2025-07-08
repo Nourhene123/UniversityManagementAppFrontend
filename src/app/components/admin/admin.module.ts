@@ -19,6 +19,9 @@ import { EnseignantsComponent } from './UserManagement/enseignants/enseignants.c
 import { EtudiantsComponent } from './UserManagement/etudiants/etudiants.component';
 import { AdminDashboardComponent } from './dashboard/admin-dashboard/admin-dashboard.component';
 import { ParcourComponent } from './parcours/parcour/parcour.component';
+import { MatSelectModule } from '@angular/material/select';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptor } from 'src/app/interceptors/auth.interceptor';
 
 
 @NgModule({
@@ -43,8 +46,13 @@ import { ParcourComponent } from './parcours/parcour/parcour.component';
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatSelectModule
   ],
-  providers: [MatiereService]
+  providers: [MatiereService,  {
+        provide: HTTP_INTERCEPTORS,
+        useClass: AuthInterceptor,
+        multi: true
+      }]
 })
 export class AdminModule { }

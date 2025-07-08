@@ -8,6 +8,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AuthModule } from './components/auth/auth.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { MatSelectModule } from '@angular/material/select';
 
 
 @NgModule({
@@ -17,6 +18,7 @@ import { AuthInterceptor } from './interceptors/auth.interceptor';
   imports: [
     BrowserModule,
     HttpClientModule,
+    MatSelectModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     FormsModule,

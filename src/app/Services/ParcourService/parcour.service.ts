@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ParcourDto } from 'src/app/models/ParcourDto';
 
@@ -19,13 +19,25 @@ export class ParcourService {
     return this.http.get<ParcourDto>(`${this.apiUrl}/${id}`);
   }
 
-  createParcour(parcour: ParcourDto): Observable<ParcourDto> {
-    return this.http.post<ParcourDto>(this.apiUrl, parcour);
-  }
-
+ createParcour(parcour: ParcourDto): Observable<ParcourDto> {
+  const headers = { 
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('token')}` // Adjust based on your auth mechanism
+  };
+  return this.http.post<ParcourDto>(this.apiUrl, parcour, { headers });
+}
+private getHeaders(): HttpHeaders {
+  return new HttpHeaders({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  });
+}
   updateParcour(parcour: ParcourDto): Observable<ParcourDto> {
-    return this.http.put<ParcourDto>(`${this.apiUrl}/${parcour.id}`, parcour);
+  if (!parcour.id) {
+    throw new Error('Parcour ID is required for update');
   }
+  return this.http.put<ParcourDto>(`${this.apiUrl}/${parcour.id}`, parcour, { headers: this.getHeaders() });
+}
 
   deleteParcour(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);

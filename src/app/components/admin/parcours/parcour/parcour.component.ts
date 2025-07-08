@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
-import { NgForm } from '@angular/forms';
+import { PanierService } from 'src/app/Services/PanierService/panier.service';
 import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
+import { PanierDto } from 'src/app/models/PanierDto';
 import { ParcourDto } from 'src/app/models/ParcourDto';
 
 @Component({
@@ -10,30 +11,58 @@ import { ParcourDto } from 'src/app/models/ParcourDto';
   styleUrls: ['./parcour.component.css']
 })
 export class ParcourComponent implements OnInit {
-  displayedColumns: string[] = ['id', 'nom', 'annee', 'libelle', 'actions'];
+ displayedColumns: string[] = ['id', 'nom', 'annee', 'libelle', 'paniers', 'actions'];
   dataSource = new MatTableDataSource<ParcourDto>();
   showForm = false;
   editMode = false;
-  newParcour: ParcourDto = { id: 0, nom: '', annee: '', libelle: '', etudiantId: 0, panierIds: [] };
-  panierIdsString = '';
+  newParcour: ParcourDto = { nom: '', annee: '', libelle: '', etudiantId: undefined, panierIds: [] };
+  paniers: PanierDto[] = [];
 
-  constructor(private parcourService: ParcourService) {}
+  constructor(private parcourService: ParcourService, private panierService: PanierService) {}
 
   ngOnInit() {
     this.loadParcours();
+    this.loadPaniers();
   }
 
   loadParcours() {
-    this.parcourService.getAllParcours().subscribe(data => {
-      this.dataSource.data = data;
+    this.parcourService.getAllParcours().subscribe({
+      next: (data) => {
+        this.dataSource.data = data;
+      },
+      error: (err) => {
+        console.error('Error loading parcours:', err);
+        alert('Failed to load Parcours: ' + (err.error?.message || err.statusText || 'Unknown error'));
+      }
     });
+  }
+
+  loadPaniers() {
+    this.panierService.getAllPaniers().subscribe({
+      next: (data) => {
+        this.paniers = data;
+      },
+      error: (err) => {
+        console.error('Error loading paniers:', err);
+        alert('Failed to load Paniers: ' + (err.error?.message || err.statusText || 'Unknown error'));
+      }
+    });
+  }
+
+  getPanierNames(panierIds: number[]): string {
+    if (!panierIds || panierIds.length === 0) {
+      return 'None';
+    }
+    return this.paniers
+      .filter(panier => panier.id !== undefined && panierIds.includes(panier.id))
+      .map(panier => panier.nom)
+      .join(', ');
   }
 
   openForm() {
     this.showForm = true;
     this.editMode = false;
-    this.newParcour = { id: 0, nom: '', annee: '', libelle: '', etudiantId: 0, panierIds: [] };
-    this.panierIdsString = '';
+    this.newParcour = { nom: '', annee: '', libelle: '', etudiantId: undefined, panierIds: [] };
   }
 
   cancelForm() {
@@ -42,40 +71,60 @@ export class ParcourComponent implements OnInit {
 
   onSubmit(formValue: any) {
     const parcour: ParcourDto = {
-      id: this.editMode ? this.newParcour.id : 0,
       nom: formValue.nom,
       annee: formValue.annee,
       libelle: formValue.libelle,
-      etudiantId: formValue.etudiantId,
-      panierIds: this.panierIdsString.split(',').map(id => +id.trim()).filter(id => !isNaN(id))
+      etudiantId: formValue.etudiantId || null,
+      panierIds: formValue.panierIds || []
     };
     if (this.editMode) {
-      this.parcourService.updateParcour(parcour).subscribe(() => {
-        this.loadParcours();
-        this.showForm = false;
+      if (!this.newParcour.id) {
+        alert('Error: Parcour ID is missing for update');
+        return;
+      }
+      parcour.id = this.newParcour.id;
+      this.parcourService.updateParcour(parcour).subscribe({
+        next: () => {
+          this.loadParcours();
+          this.showForm = false;
+        },
+        error: (err) => {
+          console.error('Update error:', err);
+          const message = err.error?.message || err.statusText || 'Unknown error';
+          alert(`Failed to update Parcour: ${message} (Status: ${err.status})`);
+        }
       });
     } else {
-      this.parcourService.createParcour(parcour).subscribe(() => {
-        this.loadParcours();
-        this.showForm = false;
+      this.parcourService.createParcour(parcour).subscribe({
+        next: () => {
+          this.loadParcours();
+          this.showForm = false;
+        },
+        error: (err) => {
+          console.error('Create error:', err);
+          const message = err.error?.message || err.statusText || 'Unknown error';
+          alert(`Failed to create Parcour: ${message} (Status: ${err.status})`);
+        }
       });
     }
   }
 
   editParcour(parcour: ParcourDto) {
     this.newParcour = { ...parcour };
-    this.panierIdsString = parcour.panierIds ? parcour.panierIds.join(', ') : '';
     this.showForm = true;
     this.editMode = true;
   }
 
   deleteParcour(id: number) {
-    this.parcourService.deleteParcour(id).subscribe(() => {
-      this.loadParcours();
+    this.parcourService.deleteParcour(id).subscribe({
+      next: () => {
+        this.loadParcours();
+      },
+      error: (err) => {
+        console.error('Delete error:', err);
+        const message = err.error?.message || err.statusText || 'Unknown error';
+        alert(`Failed to delete Parcour: ${message} (Status: ${err.status})`);
+      }
     });
-  }
-
-  updatePanierIds(value: string) {
-    this.panierIdsString = value;
   }
 }

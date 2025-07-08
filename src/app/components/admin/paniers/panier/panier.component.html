@@ -9,25 +9,33 @@
             <mat-icon>close</mat-icon>
           </button>
         </div>
-        <mat-form-field >
+        <mat-form-field>
           <mat-label>Nom</mat-label>
           <input matInput name="nom" [(ngModel)]="newPanier.nom" required>
         </mat-form-field>
-        <mat-form-field >
+        <mat-form-field>
           <mat-label>Coefficient Total</mat-label>
           <input matInput type="number" name="coefficientTotal" [(ngModel)]="newPanier.coefficientTotal" required>
         </mat-form-field>
-        <mat-form-field >
+        <mat-form-field>
           <mat-label>Semestre</mat-label>
           <input matInput name="semestre" [(ngModel)]="newPanier.semestre" required>
         </mat-form-field>
-        <mat-form-field >
-          <mat-label>Parcour ID</mat-label>
-          <input matInput type="number" name="parcourId" [(ngModel)]="newPanier.parcourId" required>
+        <mat-form-field>
+          <mat-label>Parcour</mat-label>
+          <mat-select name="parcourId" [(ngModel)]="newPanier.parcourId" required>
+            <mat-option *ngFor="let parcour of allParcours" [value]="parcour.id">
+              {{ parcour.nom }}
+            </mat-option>
+          </mat-select>
         </mat-form-field>
-        <mat-form-field >
-          <mat-label>Matiere IDs (comma-separated)</mat-label>
-          <input matInput name="matiereIds" [ngModel]="matiereIdsString" (ngModelChange)="updateMatiereIds($event)">
+        <mat-form-field>
+          <mat-label>Matieres</mat-label>
+          <mat-select name="matiereIds" [(ngModel)]="newPanier.matiereIds" multiple required>
+            <mat-option *ngFor="let matiere of allMatieres" [value]="matiere.id">
+              {{ matiere.nom }}
+            </mat-option>
+          </mat-select>
         </mat-form-field>
         <div class="form-actions">
           <button mat-raised-button color="primary" type="submit" [disabled]="!panierForm.valid">
@@ -39,12 +47,10 @@
     </div>
   </div>
 
-  <!-- Add New Panier Button -->
   <button mat-flat-button color="primary" (click)="openForm()" style="margin-top: 10px;">
-    <mat-icon>add</mat-icon> 
+    <mat-icon>add</mat-icon>
   </button>
 
-  <!-- Panier Table -->
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
@@ -62,13 +68,13 @@
       <mat-header-cell *matHeaderCellDef>Semestre</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.semestre }}</mat-cell>
     </ng-container>
-    <ng-container matColumnDef="parcourId">
-      <mat-header-cell *matHeaderCellDef>Parcour ID</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.parcourId }}</mat-cell>
+    <ng-container matColumnDef="parcourNom">
+      <mat-header-cell *matHeaderCellDef>Parcour Nom</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ getParcourNom(element.parcourId) }}</mat-cell>
     </ng-container>
-    <ng-container matColumnDef="matiereIds">
-      <mat-header-cell *matHeaderCellDef>Matiere IDs</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.matiereIds.join(', ') }}</mat-cell>
+    <ng-container matColumnDef="listeMatieres">
+      <mat-header-cell *matHeaderCellDef>Liste des Matières</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ getListeMatieres(element.id) }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="actions">
       <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
