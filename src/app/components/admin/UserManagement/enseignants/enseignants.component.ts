@@ -1,10 +1,10 @@
-
+// src/app/components/enseignants/enseignants.component.ts
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatTable } from '@angular/material/table';
 import { NgForm } from '@angular/forms';
+import { MatTableDataSource, MatTable } from '@angular/material/table';
+import { Observable } from 'rxjs';
 import { EnseignantDto } from 'src/app/models/EnseignantDto';
+import { AuthService } from 'src/app/Services/Auth/auth.service';
 import { EnseignantService } from 'src/app/Services/EnseignantService/enseignant.service';
 
 @Component({
@@ -19,88 +19,39 @@ export class EnseignantsComponent implements OnInit {
   showForm: boolean = false;
   editMode: boolean = false;
   selectedEnseignant: EnseignantDto = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
+  errorMessage: string = '';
+  successMessage: string = '';
 
   @ViewChild(MatTable) table!: MatTable<EnseignantDto>;
   @ViewChild('enseignantForm') enseignantForm!: NgForm;
 
-  constructor(private enseignantService: EnseignantService) {}
+  constructor(
+    private enseignantService: EnseignantService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit() {
-    this.enseignants$.subscribe(data => {
-      if (data) {
-        this.dataSource.data = data.filter(e => e.role === 'Enseignant');
-      } else {
-        this.dataSource.data = [];
+    this.loadEnseignants();
+  }
+
+  loadEnseignants() {
+    this.enseignants$.subscribe({
+      next: (data) => {
+        this.dataSource.data = data ? data.filter(e => e.role === 'Enseignant') : [];
+      },
+      error: (error) => {
+        this.errorMessage = error.message;
+        this.successMessage = '';
       }
     });
-  }
-
-  editEnseignant(id: number) {
-    this.enseignantService.getEnseignantById(id).subscribe(enseignant => {
-      this.selectedEnseignant = { ...enseignant };
-      this.editMode = true;
-      this.showForm = true;
-    });
-  }
-
-  createEnseignant(enseignant: EnseignantDto) {
-    this.enseignantService.createEnseignant(enseignant).subscribe(() => {
-      this.enseignants$ = this.enseignantService.getAllEnseignants();
-      this.enseignants$.subscribe(data => {
-        if (data) this.dataSource.data = data.filter(e => e.role === 'Enseignant');
-      });
-      this.showForm = false;
-      this.enseignantForm.reset();
-      this.selectedEnseignant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
-      this.editMode = false;
-    });
-  }
-
-  updateEnseignant(enseignant: EnseignantDto) {
-    if (enseignant.id) {
-      this.enseignantService.updateEnseignant(enseignant.id, enseignant).subscribe(() => {
-        this.enseignants$ = this.enseignantService.getAllEnseignants();
-        this.enseignants$.subscribe(data => {
-          if (data) this.dataSource.data = data.filter(e => e.role === 'Enseignant');
-        });
-        this.showForm = false;
-        this.enseignantForm.reset();
-        this.selectedEnseignant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
-        this.editMode = false;
-      });
-    }
-  }
-
-  deleteEnseignant(id: number) {
-    this.enseignantService.deleteEnseignant(id).subscribe(() => {
-      this.enseignants$ = this.enseignantService.getAllEnseignants();
-      this.enseignants$.subscribe(data => {
-        if (data) this.dataSource.data = data.filter(e => e.role === 'Enseignant');
-      });
-    });
-  }
-
-  onSubmit(formValue: any) {
-    const enseignant: EnseignantDto = {
-      id: this.editMode ? this.selectedEnseignant.id : 0,
-      nom: formValue.nom || this.selectedEnseignant.nom,
-      prenom: formValue.prenom || this.selectedEnseignant.prenom,
-      email: formValue.email || this.selectedEnseignant.email,
-      password: formValue.password || this.selectedEnseignant.password,
-      role: 'Enseignant',
-      departement: formValue.departement || this.selectedEnseignant.departement
-    };
-    if (this.editMode && enseignant.id) {
-      this.updateEnseignant(enseignant);
-    } else {
-      this.createEnseignant(enseignant);
-    }
   }
 
   openForm() {
     this.selectedEnseignant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
     this.editMode = false;
     this.showForm = true;
+    this.errorMessage = '';
+    this.successMessage = '';
   }
 
   cancelForm() {
@@ -108,5 +59,86 @@ export class EnseignantsComponent implements OnInit {
     this.enseignantForm.reset();
     this.selectedEnseignant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
     this.editMode = false;
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  editEnseignant(enseignant: EnseignantDto) {
+    this.selectedEnseignant = { ...enseignant, password: '' }; // Clear password for security
+    this.editMode = true;
+    this.showForm = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  onSubmit(formValue: any) {
+    if (!this.enseignantForm.valid) {
+      this.errorMessage = 'Please fill out all required fields correctly';
+      return;
+    }
+
+    if (!this.authService.getToken()) {
+      this.errorMessage = 'Please log in as an admin first';
+      return;
+    }
+
+    const enseignant: EnseignantDto = {
+      id: this.editMode ? this.selectedEnseignant.id : 0,
+      nom: formValue.nom,
+      prenom: formValue.prenom,
+      email: formValue.email,
+      password: formValue.password || undefined, // Exclude password if empty in edit mode
+      role: 'Enseignant',
+      departement: formValue.departement
+    };
+
+    if (this.editMode && enseignant.id) {
+      this.enseignantService.updateEnseignant(enseignant.id, enseignant).subscribe({
+        next: () => {
+          this.successMessage = 'Enseignant updated successfully!';
+          this.errorMessage = '';
+          this.showForm = false;
+          this.enseignantForm.reset();
+          this.selectedEnseignant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
+          this.editMode = false;
+          this.loadEnseignants();
+        },
+        error: (error) => {
+          this.errorMessage = error.message;
+          this.successMessage = '';
+        }
+      });
+    } else {
+      this.enseignantService.createEnseignant(enseignant).subscribe({
+        next: () => {
+          this.successMessage = 'Enseignant created successfully!';
+          this.errorMessage = '';
+          this.showForm = false;
+          this.enseignantForm.reset();
+          this.selectedEnseignant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
+          this.loadEnseignants();
+        },
+        error: (error) => {
+          this.errorMessage = error.message;
+          this.successMessage = '';
+        }
+      });
+    }
+  }
+
+  deleteEnseignant(id: number) {
+    if (confirm('Are you sure you want to delete this enseignant?')) {
+      this.enseignantService.deleteEnseignant(id).subscribe({
+        next: () => {
+          this.successMessage = 'Enseignant deleted successfully!';
+          this.errorMessage = '';
+          this.loadEnseignants();
+        },
+        error: (error) => {
+          this.errorMessage = error.message;
+          this.successMessage = '';
+        }
+      });
+    }
   }
 }

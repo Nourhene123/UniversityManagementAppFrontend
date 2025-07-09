@@ -1,8 +1,10 @@
+// src/app/admin-dashboard/admin-dashboard.component.ts
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/Services/Auth/auth.service';
 import { EnseignantService } from 'src/app/Services/EnseignantService/enseignant.service';
 import { EtudiantService } from 'src/app/Services/EtudiantService/etudiant.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -15,12 +17,13 @@ export class AdminDashboardComponent implements OnInit {
   etudiantCount: number = 0;
   parcourCount: number = 0;
   isLoading: boolean = true;
+  parcourStats: { parcourNom: string, studentCount: number }[] = [];
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private enseignantService: EnseignantService,
-    private etudiantService: EtudiantService,
+    private etudiantService: EtudiantService
   ) {}
 
   ngOnInit() {
@@ -36,22 +39,26 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   private loadCounts(): void {
-  this.isLoading = true;
-  this.enseignantService.getEnseignantCount().subscribe({
-    next: count => this.enseignantCount = count,
-    error: err => {
-      console.error('Error fetching enseignant count:', err);
-      this.enseignantCount = 0; 
-    }
-  });
-  this.etudiantService.getEtudiantCount().subscribe({
-    next: count => this.etudiantCount = count,
-    error: err => {
-      console.error('Error fetching etudiant count:', err);
-      this.etudiantCount = 0;
-    }
-  });
-  
-}
-
+    this.isLoading = true;
+    forkJoin({
+      enseignant: this.enseignantService.getEnseignantCount(),
+      etudiant: this.etudiantService.getEtudiantCount(),
+      parcourStats: this.etudiantService.getStudentCountByParcour()
+    }).subscribe({
+      next: ({ enseignant, etudiant, parcourStats }) => {
+        this.enseignantCount = enseignant || 0;
+        this.etudiantCount = etudiant || 0;
+        this.parcourStats = parcourStats || [];
+        console.log('Parcour Stats:', this.parcourStats);
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error fetching counts:', err);
+        this.enseignantCount = 0;
+        this.etudiantCount = 0;
+        this.parcourStats = [];
+        this.isLoading = false;
+      }
+    });
+  }
 }

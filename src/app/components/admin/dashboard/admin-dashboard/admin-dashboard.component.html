@@ -1,5 +1,5 @@
 <div class="dashboard-container">
-  <h1>Welcome,Back!</h1>
+  <h1>Welcome, Back!</h1>
 
   <div class="cards-container" *ngIf="!isLoading; else loading">
     <div class="card">
@@ -12,12 +12,23 @@
       <h3>Étudiants</h3>
       <p>{{ etudiantCount }}</p>
     </div>
-    
+  </div>
+
+  <!-- Parcour Statistics as List -->
+  <div class="parcour-stats" *ngIf="!isLoading">
+    <h2>Étudiants par Parcour</h2>
+    <div class="stats-list" *ngIf="parcourStats.length > 0; else noData">
+      <div class="stat-item" *ngFor="let stat of parcourStats">
+        <h4>{{ stat.parcourNom }}</h4>
+        <p>{{ stat.studentCount }} étudiant(s)</p>
+      </div>
+    </div>
+    <ng-template #noData>
+      <p>Aucun parcours trouvé.</p>
+    </ng-template>
   </div>
 
   <ng-template #loading>
     <div class="loading">Loading data...</div>
   </ng-template>
-
-  
 </div>

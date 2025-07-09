@@ -3,7 +3,7 @@ export interface EnseignantDto {
   nom: string;
   prenom: string;
   email: string;
-  password: string;
+  password?: string;
   role: string;
   departement?: string; 
 }

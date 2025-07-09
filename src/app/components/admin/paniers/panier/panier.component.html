@@ -1,3 +1,4 @@
+
 <div class="paniers-list">
   <h2>Gestion des Paniers</h2>
   <div class="modal-overlay" *ngIf="showForm">
@@ -19,7 +20,11 @@
         </mat-form-field>
         <mat-form-field>
           <mat-label>Semestre</mat-label>
-          <input matInput name="semestre" [(ngModel)]="newPanier.semestre" required>
+          <mat-select name="semestreId" [(ngModel)]="newPanier.semestreId" required>
+            <mat-option *ngFor="let semestre of allSemestres" [value]="semestre.id">
+              {{ semestre.nom }}
+            </mat-option>
+          </mat-select>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Parcour</mat-label>
@@ -66,7 +71,7 @@
     </ng-container>
     <ng-container matColumnDef="semestre">
       <mat-header-cell *matHeaderCellDef>Semestre</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.semestre }}</mat-cell>
+      <mat-cell *matCellDef="let element">{{ getSemestreNom(element.semestreId) }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="parcourNom">
       <mat-header-cell *matHeaderCellDef>Parcour Nom</mat-header-cell>

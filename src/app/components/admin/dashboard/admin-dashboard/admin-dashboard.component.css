@@ -42,5 +42,41 @@
 .loading {
   text-align: center;
   padding: 20px;
+  color: #17829c;
+}
+
+.parcour-stats {
+  margin-top: 10px;
+}
+
+.stats-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stat-item {
+  background: #2c3e50;
+  padding: 15px;
+  border-radius: 8px;
+  flex: 1 1 200px;
+  text-align: center;
   color: #ecf0f1;
+}
+
+.stat-item h4 {
+  margin: 0 0 10px;
+  font-size: 1.1em;
+}
+
+.stat-item p {
+  font-size: 1.3em;
+  font-weight: bold;
+}
+.chart-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  height: 400px; 
+  position: relative; 
 }

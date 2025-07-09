@@ -1,7 +1,5 @@
 <div class="matieres-list">
   <h2>Liste des matières</h2>
-
-  <!-- Modal Overlay for Add/Edit Form -->
   <div class="modal-overlay" *ngIf="showForm">
     <div class="modal-content">
       <form [formGroup]="matiereForm" (ngSubmit)="onSubmit()" class="semestre-form" #matiereFormElement="ngForm">
@@ -62,12 +60,9 @@
     </div>
   </div>
 
-  <!-- Add New Subject Button -->
   <button mat-raised-button (click)="openForm()">
     <mat-icon>add</mat-icon>
   </button>
-
-  <!-- Subjects Table -->
   <mat-table [dataSource]="matieres" class="mat-elevation-z8">
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>

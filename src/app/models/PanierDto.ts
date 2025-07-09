@@ -2,7 +2,7 @@ export interface PanierDto {
   id?: number;
   nom: string;
   coefficientTotal: number;
-  semestre: string;
+ semestreId?: number;
   parcourId?: number;
   matiereIds?: number[];
 }

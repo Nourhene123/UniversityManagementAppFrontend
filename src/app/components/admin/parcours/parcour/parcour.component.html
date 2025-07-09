@@ -1,7 +1,5 @@
 <div class="parcours-list">
   <h2>Parcours List</h2>
-
-  <!-- Modal Overlay for Add/Edit Form -->
   <div class="modal-overlay" *ngIf="showForm">
     <div class="modal-content">
       <form #parcourForm="ngForm" (ngSubmit)="onSubmit(parcourForm.value)" class="parcour-form">
@@ -40,12 +38,10 @@
     </div>
   </div>
 
-  <!-- Add New Parcour Button -->
   <button mat-flat-button (click)="openForm()">
     <mat-icon>add</mat-icon>
   </button>
 
-  <!-- Parcour Table -->
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
