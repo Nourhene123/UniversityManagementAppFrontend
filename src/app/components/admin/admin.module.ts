@@ -2,9 +2,6 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { AdminRoutingModule } from './admin-routing.module';
-import { LayoutComponent } from './dashboard/layout/layout.component';
-import { SidebarComponent } from './dashboard/layout/sidebar/sidebar.component';
-import { HeaderComponent } from './dashboard/layout/header/header.component';
 import { PanierComponent } from './paniers/panier/panier.component';
 import { SemestreComponent } from './semestres/semestre/semestre.component';
 import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
@@ -22,13 +19,11 @@ import { ParcourComponent } from './parcours/parcour/parcour.component';
 import { MatSelectModule } from '@angular/material/select';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AuthInterceptor } from 'src/app/interceptors/auth.interceptor';
+import { SharedModule } from 'src/app/shared/shared.module';
 
 
 @NgModule({
   declarations: [
-    LayoutComponent,
-    SidebarComponent,
-    HeaderComponent,
     PanierComponent,
     SemestreComponent,
     ParcourComponent,
@@ -47,7 +42,8 @@ import { AuthInterceptor } from 'src/app/interceptors/auth.interceptor';
     MatFormFieldModule,
     MatInputModule,
     ReactiveFormsModule,
-    MatSelectModule
+    MatSelectModule,
+    SharedModule
   ],
   providers: [MatiereService,  {
         provide: HTTP_INTERCEPTORS,

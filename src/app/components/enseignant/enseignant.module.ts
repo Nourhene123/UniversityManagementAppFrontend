@@ -2,20 +2,18 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { EnseignantRoutingModule } from './enseignant-routing.module';
-import { LayoutComponent } from './layout/layout.component';
-import { SidebarComponent } from './layout/sidebar/sidebar.component';
-import { HeaderComponent } from './layout/header/header.component';
+import { SharedModule } from 'src/app/shared/shared.module';
+import { DashboardEnsignantComponent} from './dashboardEnseignant/dashboard.component';
 
 
 @NgModule({
   declarations: [
-    LayoutComponent,
-    SidebarComponent,
-    HeaderComponent
+   DashboardEnsignantComponent
   ],
   imports: [
     CommonModule,
     EnseignantRoutingModule
+    ,SharedModule
   ]
 })
 export class EnseignantModule { }

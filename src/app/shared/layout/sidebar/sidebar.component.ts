@@ -22,32 +22,33 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
   ]
 })
 export class SidebarComponent implements OnInit, AfterViewInit {
+  
   currentUser: any = { nom: '', prenom: '', role: '' };
   isLoading = true;
   isAnimated = false;
   isSidebarOpen = false;
   isDarkTheme = false;
 
-  menuItems = [
+  private adminMenuItems = [
     {
       label: 'Dashboard',
       icon: 'fas fa-chart-line',
       route: 'dashboard',
       exact: true
     },
-      {
-      label: 'parcour',
+    {
+      label: 'Parcours',
       icon: 'fas fa-graduation-cap',
       route: 'Parcour',
       exact: true
     },
-      {
+    {
       label: 'Semestre',
       icon: 'fas fa-calendar-alt',
       route: 'Semestre',
       exact: true
     },
-     {
+    {
       label: 'Paniers',
       icon: 'fas fa-shopping-basket',
       route: 'Panier',
@@ -68,27 +69,49 @@ export class SidebarComponent implements OnInit, AfterViewInit {
       label: 'Enseignants',
       icon: 'fas fa-chalkboard-teacher',
       route: 'Enseignants',
-      exact: true
-    },
-    /*{
-      label: 'Enseignants',
-     icon: 'fas fa-chalkboard-teacher',
-
-      route: 'Enseignants',
       exact: true,
       submenu: [
         { label: 'Liste des enseignants', route: 'Enseignants' },
         { label: 'Ajouter enseignant', route: '/admin/Enseignants/add' }
       ],
       expanded: false
-    },*/
+    },
     {
       label: 'Étudiants',
       icon: 'fas fa-graduation-cap',
       route: 'Etudiant',
-      exact: true,
+      exact: true
     }
   ];
+
+  private enseignantMenuItems = [
+    {
+      label: 'Dashboard',
+      icon: 'fas fa-chart-line',
+      route: 'dashboard',
+      exact: true
+    },
+    {
+      label: 'Matières',
+      icon: 'fas fa-book-open',
+      route: 'Matier',
+      exact: true
+    },
+    {
+      label: 'Notes',
+      icon: 'fas fa-clipboard-list',
+      route: 'Notes',
+      exact: true
+    },
+    {
+      label: 'Étudiants',
+      icon: 'fas fa-graduation-cap',
+      route: 'Etudiant',
+      exact: true
+    }
+  ];
+
+  menuItems: any[] = [];
 
   @ViewChild('sidebar') sidebar!: ElementRef;
 
@@ -110,17 +133,41 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   }
 
   private loadUserData(): void {
-    this.authService.getCurrentUser().subscribe({
-      next: (user) => {
-        this.currentUser = user;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error fetching user data:', error);
-        this.isLoading = false;
+  this.authService.getCurrentUser().subscribe({
+    next: (user) => {
+      this.currentUser = user;
+      console.log('User loaded:', user);
+      if (this.currentUser.role === 'Administrateur') {
+        this.menuItems = this.adminMenuItems;
+      } else if (this.currentUser.role === 'Enseignant') {
+        this.menuItems = this.enseignantMenuItems;
+      } else {
+        this.menuItems = [];
+        console.warn('Unknown role:', this.currentUser.role);
       }
-    });
-  }
+      this.isLoading = false;
+    },
+    error: (error) => {
+      console.error('Error fetching user data:', {
+        status: error.status,
+        statusText: error.statusText,
+        message: error.message,
+        url: error.url
+      });
+      if (error.status === 401) {
+        console.warn('Unauthorized: Redirecting to login');
+        this.router.navigate(['/login']);
+      } else if (error.status === 403) {
+        console.warn('Forbidden: User lacks permission');
+      } else if (error.status === 404) {
+        console.error('User not found');
+      } else {
+        console.error('Unexpected error:', error.message);
+      }
+      this.isLoading = false;
+    }
+  });
+}
 
   private loadThemePreference(): void {
     const savedTheme = localStorage.getItem('theme');
@@ -140,9 +187,12 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     localStorage.setItem('theme', this.isDarkTheme ? 'dark' : 'light');
   }
 
-  getUserInitials(): string {
-    return (this.currentUser.prenom?.charAt(0) + this.currentUser.nom?.charAt(0))?.toUpperCase() || 'FN';
-  }
+ getUserInitials(): string {
+  const prenomInitial = this.currentUser.prenom ? this.currentUser.prenom.charAt(0) : '';
+  const nomInitial = this.currentUser.nom ? this.currentUser.nom.charAt(0) : '';
+  const initials = (prenomInitial + nomInitial).toUpperCase();
+  return initials || 'FN';
+}
 
   logout(): void {
     this.isLoading = true;

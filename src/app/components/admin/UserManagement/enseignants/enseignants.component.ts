@@ -1,11 +1,12 @@
-// src/app/components/enseignants/enseignants.component.ts
+// src/app/components/admin/UserManagement/enseignants/enseignants.component.ts
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { MatTableDataSource, MatTable } from '@angular/material/table';
 import { Observable } from 'rxjs';
 import { EnseignantDto } from 'src/app/models/EnseignantDto';
-import { AuthService } from 'src/app/Services/Auth/auth.service';
 import { EnseignantService } from 'src/app/Services/EnseignantService/enseignant.service';
+import { Router } from '@angular/router';
+import { TokenService } from 'src/app/Services/token.service';
 
 @Component({
   selector: 'app-enseignants',
@@ -27,13 +28,21 @@ export class EnseignantsComponent implements OnInit {
 
   constructor(
     private enseignantService: EnseignantService,
-    private authService: AuthService
+    private tokenService: TokenService,
+    private router: Router
   ) {}
 
   ngOnInit() {
+    const user = this.tokenService.user;
+    if (!this.tokenService.token || !user || user.role.toLowerCase() !== 'administrateur') {
+      this.errorMessage = 'Access denied. Admin privileges required.';
+      this.router.navigate(['/login']);
+      return;
+    }
     this.loadEnseignants();
   }
 
+  // Rest of the component remains unchanged
   loadEnseignants() {
     this.enseignants$.subscribe({
       next: (data) => {
@@ -64,7 +73,7 @@ export class EnseignantsComponent implements OnInit {
   }
 
   editEnseignant(enseignant: EnseignantDto) {
-    this.selectedEnseignant = { ...enseignant, password: '' }; // Clear password for security
+    this.selectedEnseignant = { ...enseignant, password: '' };
     this.editMode = true;
     this.showForm = true;
     this.errorMessage = '';
@@ -77,8 +86,9 @@ export class EnseignantsComponent implements OnInit {
       return;
     }
 
-    if (!this.authService.getToken()) {
+    if (!this.tokenService.token) {
       this.errorMessage = 'Please log in as an admin first';
+      this.router.navigate(['/login']);
       return;
     }
 
@@ -87,7 +97,7 @@ export class EnseignantsComponent implements OnInit {
       nom: formValue.nom,
       prenom: formValue.prenom,
       email: formValue.email,
-      password: formValue.password || undefined, // Exclude password if empty in edit mode
+      password: formValue.password || undefined,
       role: 'Enseignant',
       departement: formValue.departement
     };

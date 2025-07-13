@@ -9,13 +9,11 @@ import { AuthModule } from './components/auth/auth.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { MatSelectModule } from '@angular/material/select';
-import { DashboardComponent } from './components/enseignant/dashboard/dashboard.component';
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    DashboardComponent,
   ],
   imports: [
     BrowserModule,
@@ -25,7 +23,8 @@ import { DashboardComponent } from './components/enseignant/dashboard/dashboard.
     BrowserAnimationsModule,
     FormsModule,
     AuthModule,
-    FontAwesomeModule
+    FontAwesomeModule,
+    AppRoutingModule
 
   ],
   providers: [
