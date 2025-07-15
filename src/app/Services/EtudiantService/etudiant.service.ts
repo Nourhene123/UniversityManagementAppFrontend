@@ -1,7 +1,12 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { catchError, Observable } from 'rxjs';
 import { EtudiantDto } from 'src/app/models/EtudiantDto';
+// Define or import EtudiantWithNote interface
+export interface EtudiantWithNote {
+  etudiant: EtudiantDto;
+  notes: any[]; 
+}
 
 @Injectable({
   providedIn: 'root'
@@ -35,5 +40,14 @@ getEtudiantCount(): Observable<number> {
   deleteEtudiant(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+assignParcourToEtudiants(etudiantIds: number[], parcourId: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/assign-parcour`, { etudiantIds, parcourId });
+  }
+  getEtudiantsByParcour(parcourId: number): Observable<EtudiantDto[]> {
+  return this.http.get<EtudiantDto[]>(`${this.apiUrl}/parcours/${parcourId}/etudiants`);
+}
+
+ 
 }
   

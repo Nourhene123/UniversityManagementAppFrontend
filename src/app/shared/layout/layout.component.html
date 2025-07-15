@@ -1,9 +1,10 @@
 <div class="admin-layout">
-  <app-sidebar ></app-sidebar>
+  <app-sidebar [isSidebarOpen]="isSidebarOpen"></app-sidebar>
   <div class="main-content">
-    <app-header></app-header>
+    <app-header (toggleSidebar)="toggleSidebar()"></app-header>
     <div class="content-area">
       <router-outlet></router-outlet>
     </div>
   </div>
+  <div class="overlay" *ngIf="isSidebarOpen" (click)="toggleSidebar()"></div>
 </div>

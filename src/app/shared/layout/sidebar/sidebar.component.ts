@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, OnInit, AfterViewInit } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, AfterViewInit, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/Services/Auth/auth.service';
 import { trigger, state, style, transition, animate } from '@angular/animations';
@@ -22,12 +22,12 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
   ]
 })
 export class SidebarComponent implements OnInit, AfterViewInit {
-  
+  @Input() isSidebarOpen: boolean = false; // Controlled by LayoutComponent
   currentUser: any = { nom: '', prenom: '', role: '' };
   isLoading = true;
   isAnimated = false;
-  isSidebarOpen = false;
   isDarkTheme = false;
+  isMinimized: boolean = false; // New state for minimization
 
   private adminMenuItems = [
     {
@@ -100,7 +100,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     {
       label: 'Notes',
       icon: 'fas fa-clipboard-list',
-      route: 'Notes',
+      route: 'notes',
       exact: true
     },
     {
@@ -132,50 +132,50 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     }, 50);
   }
 
-  private loadUserData(): void {
-  this.authService.getCurrentUser().subscribe({
-    next: (user) => {
-      this.currentUser = user;
-      console.log('User loaded:', user);
-      if (this.currentUser.role === 'Administrateur') {
-        this.menuItems = this.adminMenuItems;
-      } else if (this.currentUser.role === 'Enseignant') {
-        this.menuItems = this.enseignantMenuItems;
-      } else {
-        this.menuItems = [];
-        console.warn('Unknown role:', this.currentUser.role);
+   private loadUserData(): void {
+    this.authService.getCurrentUser().subscribe({
+      next: (user) => {
+        this.currentUser = user;
+        console.log('User loaded:', JSON.stringify(user, null, 2));
+        if (this.currentUser?.role === 'Administrateur') {
+          this.menuItems = this.adminMenuItems;
+        } else if (this.currentUser?.role === 'Enseignant') {
+          this.menuItems = this.enseignantMenuItems;
+        } else {
+          this.menuItems = [];
+          console.warn('Unknown role:', this.currentUser?.role);
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error fetching user data:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          url: error.url
+        });
+        if (error.status === 401 || error.status === 403) {
+          console.warn('Unauthorized/Forbidden: Redirecting to login');
+          this.router.navigate(['/login']);
+        } else {
+          console.error('Unexpected error:', error.message);
+        }
+        this.isLoading = false;
       }
-      this.isLoading = false;
-    },
-    error: (error) => {
-      console.error('Error fetching user data:', {
-        status: error.status,
-        statusText: error.statusText,
-        message: error.message,
-        url: error.url
-      });
-      if (error.status === 401) {
-        console.warn('Unauthorized: Redirecting to login');
-        this.router.navigate(['/login']);
-      } else if (error.status === 403) {
-        console.warn('Forbidden: User lacks permission');
-      } else if (error.status === 404) {
-        console.error('User not found');
-      } else {
-        console.error('Unexpected error:', error.message);
-      }
-      this.isLoading = false;
-    }
-  });
-}
-
+    });
+  }
   private loadThemePreference(): void {
     const savedTheme = localStorage.getItem('theme');
     this.isDarkTheme = savedTheme === 'dark';
   }
 
   toggleSidebar(): void {
-    this.isSidebarOpen = !this.isSidebarOpen;
+    if (this.isMinimized) {
+      this.isMinimized = false; // Expand to full state
+    } else {
+      this.isMinimized = true; // Minimize to icon only
+    }
+    this.isSidebarOpen = !this.isMinimized; // Sync with LayoutComponent
   }
 
   toggleSubMenu(index: number): void {
@@ -187,12 +187,12 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     localStorage.setItem('theme', this.isDarkTheme ? 'dark' : 'light');
   }
 
- getUserInitials(): string {
-  const prenomInitial = this.currentUser.prenom ? this.currentUser.prenom.charAt(0) : '';
-  const nomInitial = this.currentUser.nom ? this.currentUser.nom.charAt(0) : '';
-  const initials = (prenomInitial + nomInitial).toUpperCase();
-  return initials || 'FN';
-}
+  getUserInitials(): string {
+    const prenomInitial = this.currentUser.prenom ? this.currentUser.prenom.charAt(0) : '';
+    const nomInitial = this.currentUser.nom ? this.currentUser.nom.charAt(0) : '';
+    const initials = (prenomInitial + nomInitial).toUpperCase();
+    return initials || 'FN';
+  }
 
   logout(): void {
     this.isLoading = true;

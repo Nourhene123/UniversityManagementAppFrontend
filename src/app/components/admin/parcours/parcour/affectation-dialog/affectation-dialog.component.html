@@ -1,0 +1,47 @@
+<h2 mat-dialog-title>
+  {{ mode === 'assignParcour' ? 'Affecter un Parcours aux Étudiants' : 'Affecter des Étudiants au Parcours' }}
+</h2>
+
+<mat-dialog-content>
+  <div *ngIf="isLoading" class="loading">Chargement...</div>
+
+  <ng-container *ngIf="!isLoading">
+    <!-- Choix du parcours (UN SEUL) -->
+    <ng-container *ngIf="mode === 'assignParcour'; else assignToParcour">
+      <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Choisir un parcours</mat-label>
+        <mat-select [(ngModel)]="selectedParcourId">
+          <mat-option *ngFor="let parcour of parcours" [value]="parcour.id">
+            {{ parcour.nom }} ({{ parcour.annee }} - {{ parcour.libelle }})
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ng-container>
+
+    <!-- Liste des étudiants à sélectionner -->
+    <ng-template #assignToParcour>
+      <mat-selection-list [(ngModel)]="selectedEtudiantIds">
+        <mat-list-option *ngFor="let etudiant of etudiants" [value]="etudiant.id">
+          {{ etudiant.prenom }} {{ etudiant.nom }} ({{ etudiant.email }})
+        </mat-list-option>
+      </mat-selection-list>
+    </ng-template>
+  </ng-container>
+
+  <!-- Boutons -->
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="cancel()" [disabled]="isLoading">Annuler</button>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="save()"
+      [disabled]="
+        isLoading ||
+        (mode === 'assignParcour' && !selectedParcourId) ||
+        (mode === 'assignToParcour' && selectedEtudiantIds.length === 0)
+      "
+    >
+      Affecter
+    </button>
+  </mat-dialog-actions>
+</mat-dialog-content>

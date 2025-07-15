@@ -1,3 +1,4 @@
+<!-- src/app/components/admin/UserManagement/etudiants/etudiants.component.html -->
 <div class="etudiants-management">
   <h2>Étudiant Management</h2>
 
@@ -40,12 +41,22 @@
     </div>
   </div>
 
-  
   <button mat-raised-button (click)="openForm()">
-    <mat-icon>add</mat-icon>
+    <mat-icon>add</mat-icon> 
+  </button>
+  <button mat-raised-button color="primary" (click)="openAffectationDialog()" [disabled]="selectedEtudiantIds.length === 0">
+    <mat-icon>assignment</mat-icon> Affecter Parcours
   </button>
 
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <ng-container matColumnDef="select">
+      <mat-header-cell *matHeaderCellDef>
+        <mat-checkbox (change)="toggleAll($event.checked)" [checked]="isAllSelected()"></mat-checkbox>
+      </mat-header-cell>
+      <mat-cell *matCellDef="let element">
+        <mat-checkbox (change)="toggleSelection(element.id, $event.checked)" [checked]="selectedEtudiantIds.includes(element.id)"></mat-checkbox>
+      </mat-cell>
+    </ng-container>
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>

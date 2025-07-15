@@ -4,6 +4,8 @@ import { PanierService } from 'src/app/Services/PanierService/panier.service';
 import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
 import { PanierDto } from 'src/app/models/PanierDto';
 import { ParcourDto } from 'src/app/models/ParcourDto';
+import { AffectationDialogComponent } from './affectation-dialog/affectation-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-parcour',
@@ -17,6 +19,7 @@ export class ParcourComponent implements OnInit {
   editMode = false;
   newParcour: ParcourDto = { nom: '', annee: '', libelle: '', etudiantId: undefined, panierIds: [] };
   paniers: PanierDto[] = [];
+
 
   constructor(private parcourService: ParcourService, private panierService: PanierService) {}
 
@@ -58,6 +61,7 @@ export class ParcourComponent implements OnInit {
       .map(panier => panier.nom)
       .join(', ');
   }
+  
 
   openForm() {
     this.showForm = true;
@@ -127,4 +131,5 @@ export class ParcourComponent implements OnInit {
       }
     });
   }
+ 
 }

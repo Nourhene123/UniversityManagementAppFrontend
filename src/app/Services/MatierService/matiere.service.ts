@@ -35,6 +35,10 @@ export class MatiereService {
   deleteMatiere(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+    getMatieresByEnseignant(): Observable<MatiereDto[]> {
+    return this.http.get<MatiereDto[]>(`${this.apiUrl}/enseignant/matieres`, { headers: this.getHeaders() });
+  }
+
 
 
 }

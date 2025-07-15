@@ -248,7 +248,7 @@
 
 /* Add Button Styling */
 button[mat-raised-button]:not(.form-actions button) {
-  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  background:  linear-gradient(135deg, #3498db, #2980b9);
   color: white;
   border-radius: 8px;
   padding: 12px 24px;
@@ -278,7 +278,7 @@ button[mat-raised-button]:not(.form-actions button):hover::before {
 }
 
 button[mat-raised-button]:not(.form-actions button):hover {
-  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  background:  #3498db;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
 }

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ParcourDto } from 'src/app/models/ParcourDto';
+import { EtudiantDto } from 'src/app/models/EtudiantDto';
 
 @Injectable({
   providedIn: 'root'
@@ -42,4 +43,20 @@ private getHeaders(): HttpHeaders {
   deleteParcour(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+  getEtudiantsByParcourId(id: number): Observable<EtudiantDto[]> {
+    return this.http.get<EtudiantDto[]>(`${this.apiUrl}/${id}/etudiants`, { headers: this.getHeaders() });
+  }
+assignManyEtudiantsToParcour(etudiantIds: number[], parcourId: number): Observable<EtudiantDto[]> {
+    console.log('Sending POST to:', `${this.apiUrl}/${parcourId}/assign-etudiants`, 'with body:', etudiantIds);
+    return this.http.post<EtudiantDto[]>(`${this.apiUrl}/${parcourId}/assign-etudiants`, etudiantIds, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+   getParcoursByMatiereId(matiereId: number): Observable<ParcourDto[]> {
+    return this.http.get<ParcourDto[]>(`${this.apiUrl}/matiere/${matiereId}`, { headers: this.getHeaders() });
+  }
+
+
+
+
 }

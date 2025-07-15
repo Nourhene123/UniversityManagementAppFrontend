@@ -7,4 +7,10 @@ import { Component } from '@angular/core';
 })
 export class LayoutComponent {
  
+
+  isSidebarOpen = false;
+
+  toggleSidebar() {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
 }

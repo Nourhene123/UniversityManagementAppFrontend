@@ -21,7 +21,6 @@
           <mat-label>Libellé</mat-label>
           <input matInput name="libelle" [(ngModel)]="newParcour.libelle" required>
         </mat-form-field>
-       
         <mat-form-field>
           <mat-label>Paniers</mat-label>
           <mat-select name="panierIds" [(ngModel)]="newParcour.panierIds" multiple>
@@ -39,7 +38,7 @@
   </div>
 
   <button mat-flat-button (click)="openForm()">
-    <mat-icon>add</mat-icon>
+    <mat-icon>add</mat-icon> Ajouter Parcour
   </button>
 
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
@@ -61,9 +60,7 @@
     </ng-container>
     <ng-container matColumnDef="paniers">
       <mat-header-cell *matHeaderCellDef>Paniers</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        {{ getPanierNames(element.panierIds) }}
-      </mat-cell>
+      <mat-cell *matCellDef="let element">{{ getPanierNames(element.panierIds) }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="actions">
       <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
@@ -74,6 +71,7 @@
         <button mat-icon-button color="warn" (click)="deleteParcour(element.id)">
           <mat-icon>delete</mat-icon>
         </button>
+       
       </mat-cell>
     </ng-container>
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>

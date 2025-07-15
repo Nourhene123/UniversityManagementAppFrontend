@@ -1,10 +1,9 @@
-<aside class="sidebar" [ngClass]="{'open': isSidebarOpen, 'dark-theme': isDarkTheme}" #sidebar>
+<aside class="sidebar" [ngClass]="{'open': isSidebarOpen, 'minimized': isMinimized, 'dark-theme': isDarkTheme}" #sidebar>
   <div class="sidebar-header">
     <div class="logo-container">
       <div class="logo">EDX</div>
       <div class="brand-text">EduPlatform</div>
     </div>
-    
     <button class="toggle-btn" (click)="toggleSidebar()" aria-label="Toggle sidebar">
       <i class="fas fa-bars"></i>
     </button>
