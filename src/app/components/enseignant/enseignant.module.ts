@@ -31,5 +31,9 @@ import { FormsModule } from '@angular/forms';
     MatProgressSpinnerModule,
      FormsModule
   ]
+  ,
+  exports: [
+    NotesComponent
+  ]
 })
 export class EnseignantModule { }

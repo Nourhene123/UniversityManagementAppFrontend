@@ -5,7 +5,7 @@ export interface ParcourDto {
   nom: string;
   annee: string;
   libelle: string;
-  etudiantId?: number;
+etudiantIds?: number[];
   panierIds?: number[];
   
   matieres?: MatiereDto[];

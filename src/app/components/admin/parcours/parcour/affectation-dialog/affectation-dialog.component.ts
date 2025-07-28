@@ -75,40 +75,39 @@ export class AffectationDialogComponent implements OnInit {
   }
 
  save(): void {
-    if (this.isLoading) return;
-    this.isLoading = true;
+  if (this.isLoading) return;
+  this.isLoading = true;
 
-    console.log('Mode:', this.mode);
-    console.log('Selected Parcour ID:', this.selectedParcourId);
-    console.log('Selected Etudiant IDs:', this.selectedEtudiantIds);
-
-    if (this.mode === 'assignParcour' || this.mode === 'assignToParcour') {
-      if (!this.selectedParcourId || this.selectedEtudiantIds.length === 0) {
-        this.isLoading = false;
-        this.snackBar.open('Veuillez sélectionner un parcours et au moins un étudiant', 'Fermer', { duration: 3000 });
-        return;
-      }
-      this.parcourService.assignManyEtudiantsToParcour(this.selectedEtudiantIds, this.selectedParcourId).subscribe({
-        next: (response: EtudiantDto[]) => {
-          this.isLoading = false;
-          console.log('Assignment response:', response);
-          const allAssigned = response.every(student => student.parcourId === this.selectedParcourId);
-          if (allAssigned) {
-            this.snackBar.open('Étudiants assignés avec succès', 'Fermer', { duration: 3000 });
-            this.dialogRef.close(true);
-          } else {
-            this.snackBar.open('Erreur: Certains étudiants n\'ont pas été assignés correctement', 'Fermer', { duration: 3000 });
-            console.error('Failed assignments:', response.filter(student => student.parcourId !== this.selectedParcourId));
-          }
-        },
-        error: (err) => {
-          this.isLoading = false;
-          console.error('Assignment error:', err);
-          this.snackBar.open('Erreur lors de l\'affectation des étudiants: ' + (err.error?.message || err.message), 'Fermer', { duration: 3000 });
-        }
-      });
-    }
+  if (!this.selectedParcourId || this.selectedEtudiantIds.length === 0) {
+    this.isLoading = false;
+    this.snackBar.open('Veuillez sélectionner un parcours et au moins un étudiant', 'Fermer', { duration: 3000 });
+    return;
   }
+
+  this.parcourService.assignManyEtudiantsToParcour(this.selectedEtudiantIds, this.selectedParcourId).subscribe({
+  next: (result: { success: EtudiantDto[], failed: EtudiantDto[] }) => {
+    this.isLoading = false;
+
+    const successCount = result.success.length;
+    const failedCount = result.failed.length;
+
+    if (failedCount > 0) {
+      console.warn('Certains étudiants n’ont pas été assignés.', result.failed);
+      this.snackBar.open(`${failedCount} étudiant(s) non assigné(s)`, 'Fermer', { duration: 3000 });
+    } else {
+      this.snackBar.open('Tous les étudiants ont été assignés avec succès.', 'Fermer', { duration: 3000 });
+    }
+
+    this.dialogRef.close({ success: true, assigned: result.success, failed: result.failed });
+  },
+  error: (err) => {
+    this.isLoading = false;
+    console.error('Erreur d’assignation:', err);
+    this.snackBar.open('Erreur lors de l\'assignation', 'Fermer', { duration: 3000 });
+  }
+});
+  }
+
 
   cancel(): void {
     this.dialogRef.close();

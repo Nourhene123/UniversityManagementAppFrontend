@@ -23,8 +23,7 @@ export class MatiereComponent implements OnInit {
   showForm: boolean = false;
   editMode: boolean = false;
   isSubmitting: boolean = false;
-  selectedMatiere: MatiereDto = {  nom: '', volumeHoraire: 0, coefficient: 0 };
-  paniers: PanierDto[] = [];
+selectedMatiere: MatiereDto = { nom: '', volumeHoraire: 0, coefficient: 0, parcours: [] };  paniers: PanierDto[] = [];
   enseignants: EnseignantDto[] = [];
   panierNomMap: { [key: number]: string } = {};
   enseignantNomMap: { [key: number]: string } = {};
@@ -148,15 +147,14 @@ export class MatiereComponent implements OnInit {
     this.showForm = true;
     this.editMode = false;
     this.isSubmitting = false;
-    this.selectedMatiere = {  nom: '', volumeHoraire: 0, coefficient: 0 };
-    this.matiereForm.reset({ nom: '', volumeHoraire: 0, coefficient: 0, panierId: null, enseignantId: null });
+this.selectedMatiere = { nom: '', volumeHoraire: 0, coefficient: 0, parcours: [] };    this.matiereForm.reset({ nom: '', volumeHoraire: 0, coefficient: 0, panierId: null, enseignantId: null });
   }
 
   editMatiere(matiere: MatiereDto): void {
     this.showForm = true;
     this.editMode = true;
     this.isSubmitting = false;
-    this.selectedMatiere = { ...matiere };
+this.selectedMatiere = { ...matiere, parcours: matiere.parcours || [] };
     this.matiereForm.patchValue(matiere);
   }
 
@@ -229,7 +227,6 @@ export class MatiereComponent implements OnInit {
     this.showForm = false;
     this.editMode = false;
     this.isSubmitting = false;
-    this.selectedMatiere = { id: 0, nom: '', volumeHoraire: 0, coefficient: 0 };
-    this.matiereForm.reset({ nom: '', volumeHoraire: 0, coefficient: 0, panierId: null, enseignantId: null });
+this.selectedMatiere = { nom: '', volumeHoraire: 0, coefficient: 0, parcours: [] };    this.matiereForm.reset({ nom: '', volumeHoraire: 0, coefficient: 0, panierId: null, enseignantId: null });
   }
 }

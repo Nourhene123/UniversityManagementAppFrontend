@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 import { ParcourDto } from 'src/app/models/ParcourDto';
 import { EtudiantDto } from 'src/app/models/EtudiantDto';
+import { ParcourWithStudents } from 'src/app/models/ParcourWithStudents';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +15,15 @@ export class ParcourService {
 
   getAllParcours(): Observable<ParcourDto[]> {
     return this.http.get<ParcourDto[]>(this.apiUrl);
+  }  getStudentsGroupedByParcour(): Observable<ParcourWithStudents[]> {
+    return this.http.get<ParcourWithStudents[]>(`${this.apiUrl}/count/by-parcour`, { headers: this.getHeaders() }).pipe(
+      catchError(err => {
+        console.error('Error fetching students grouped by parcour:', err);
+        return throwError(() => new Error('Failed to fetch students grouped by parcour'));
+      })
+    );
   }
+
 
   getParcourById(id: number): Observable<ParcourDto> {
     return this.http.get<ParcourDto>(`${this.apiUrl}/${id}`);
@@ -46,12 +55,20 @@ private getHeaders(): HttpHeaders {
   getEtudiantsByParcourId(id: number): Observable<EtudiantDto[]> {
     return this.http.get<EtudiantDto[]>(`${this.apiUrl}/${id}/etudiants`, { headers: this.getHeaders() });
   }
-assignManyEtudiantsToParcour(etudiantIds: number[], parcourId: number): Observable<EtudiantDto[]> {
-    console.log('Sending POST to:', `${this.apiUrl}/${parcourId}/assign-etudiants`, 'with body:', etudiantIds);
-    return this.http.post<EtudiantDto[]>(`${this.apiUrl}/${parcourId}/assign-etudiants`, etudiantIds, {
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+assignManyEtudiantsToParcour(etudiantIds: number[], parcourId: number) {
+  const url = `${this.apiUrl}/${parcourId}/assign-etudiants`;
+  const headers = new HttpHeaders({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+  });
+
+  return this.http.post<{ success: EtudiantDto[]; failed: EtudiantDto[] }>(
+    url, etudiantIds, { headers }
+  );
+}
+
+
+
    getParcoursByMatiereId(matiereId: number): Observable<ParcourDto[]> {
     return this.http.get<ParcourDto[]>(`${this.apiUrl}/matiere/${matiereId}`, { headers: this.getHeaders() });
   }

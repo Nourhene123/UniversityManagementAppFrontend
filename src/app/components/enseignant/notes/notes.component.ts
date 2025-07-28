@@ -1,17 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin, of, switchMap, catchError, map, Observable } from 'rxjs';
+import { forkJoin, of, switchMap, catchError, map, Observable, tap } from 'rxjs';
 
 import { NoteDto, TypeNote } from 'src/app/models/NoteDto';
 import { ParcourDto } from 'src/app/models/ParcourDto';
 import { MatiereDto } from 'src/app/models/MatiereDto';
 import { EtudiantDto } from 'src/app/models/EtudiantDto';
-import { SemestreDto } from 'src/app/models/SemestreDto';
+import { ParcourWithStudents } from 'src/app/models/ParcourWithStudents';
 
 import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
 import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
 import { NoteService } from 'src/app/Services/NoteService/note.service';
-import { SemestreService } from 'src/app/Services/SemestreService/semestre.service';
 
 @Component({
   selector: 'app-notes',
@@ -19,15 +18,11 @@ import { SemestreService } from 'src/app/Services/SemestreService/semestre.servi
   styleUrls: ['./notes.component.css']
 })
 export class NotesComponent implements OnInit {
-  matieres: (MatiereDto & {
-    parcours: (ParcourDto & {
-      etudiants: EtudiantDto[];
-    })[];
-  })[] = [];
-  semestres: SemestreDto[] = [];
-  selectedSemestreId: number | null = null;
+  matieres: (MatiereDto & { parcours: (ParcourDto & { etudiants: EtudiantDto[] })[] })[] = [];
   typeNote: TypeNote | '' = '';
+  noteTypes: TypeNote[] = [];
   errorMessage: string = '';
+  successMessage: string = '';
   notesMap: { [key: string]: (number | undefined)[] } = {};
   isLoading: boolean = true;
   currentDate: Date = new Date();
@@ -37,26 +32,78 @@ export class NotesComponent implements OnInit {
     private matiereService: MatiereService,
     private parcourService: ParcourService,
     private noteService: NoteService,
-    private semestreService: SemestreService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.loadSemestres();
+    this.loadNoteTypes();
+    this.loadMatieres();
+  }
 
+  loadNoteTypes(): void {
+    this.isLoading = true;
+    this.noteService.getNoteTypes().pipe(
+      tap(types => console.log('Loaded note types:', types)),
+      catchError(err => {
+        this.handleError(err, 'Erreur lors du chargement des types de notes');
+        this.isLoading = false;
+        return of([] as TypeNote[]);
+      })
+    ).subscribe(types => {
+      this.noteTypes = types;
+      this.isLoading = false;
+    });
+  }
+
+  loadMatieres(): void {
+    this.isLoading = true;
     this.matiereService.getMatieresByEnseignant().pipe(
       switchMap(matieres => {
         if (!matieres || matieres.length === 0) {
-          this.errorMessage = 'Aucune matière trouvée pour l\'enseignant.';
+          this.errorMessage = 'Aucune matière assignée à cet enseignant.';
           this.isLoading = false;
           return of([]);
         }
+        console.log('Matieres fetched:', matieres);
         this.matiereExpanded = matieres.reduce((acc, _, index) => ({ ...acc, [index]: true }), {});
-        const matiereObservables = matieres.map(matiere => 
-          this.loadParcoursAndEtudiantsForMatiere(matiere)
+        return this.parcourService.getStudentsGroupedByParcour().pipe(
+          switchMap(parcoursWithStudents => {
+            console.log('Parcours with students fetched:', parcoursWithStudents);
+            const parcourObservables = matieres.map(matiere =>
+              this.parcourService.getParcoursByMatiereId(matiere.id!).pipe(
+                map(parcours => {
+                  console.log(`Parcours for matiere ${matiere.nom} (ID: ${matiere.id}):`, parcours);
+                  const parcoursWithEtudiants = parcours.map(parcour => {
+                    const pws = parcoursWithStudents.find(p => p.parcourNom.toLowerCase() === parcour.nom.toLowerCase());
+                    return {
+                      ...parcour,
+                      etudiants: pws ? pws.etudiants || [] : []
+                    } as ParcourDto & { etudiants: EtudiantDto[] };
+                  });
+                  console.log(`Parcours with etudiants for matiere ${matiere.nom}:`, parcoursWithEtudiants);
+                  return {
+                    ...matiere,
+                    parcours: parcoursWithEtudiants
+                  } as MatiereDto & { parcours: (ParcourDto & { etudiants: EtudiantDto[] })[] };
+                }),
+                catchError(err => {
+                  console.error(`Erreur lors du chargement des parcours pour la matière ${matiere.nom}`, err);
+                  this.errorMessage = `Erreur lors du chargement des parcours pour ${matiere.nom}`;
+                  return of({ ...matiere, parcours: [] } as MatiereDto & { parcours: (ParcourDto & { etudiants: EtudiantDto[] })[] });
+                })
+              )
+            );
+            return forkJoin(parcourObservables);
+          }),
+          catchError(err => {
+            console.error('Erreur lors du chargement des parcours avec étudiants', err);
+            this.errorMessage = 'Erreur lors du chargement des parcours avec étudiants';
+            this.isLoading = false;
+            return of([]);
+          })
         );
-        return forkJoin(matiereObservables);
       }),
+      tap(matieresAvecParcours => console.log('Final matieres with parcours and etudiants:', matieresAvecParcours)),
       catchError(err => {
         this.handleError(err, 'Erreur lors du chargement des matières');
         this.isLoading = false;
@@ -65,67 +112,11 @@ export class NotesComponent implements OnInit {
     ).subscribe(matieresAvecParcours => {
       this.matieres = matieresAvecParcours;
       this.isLoading = false;
-      if (this.matieres.every(matiere => matiere.parcours.every(parcour => parcour.etudiants.length === 0))) {
+      if (this.matieres.every(matiere => (matiere.parcours as unknown as (ParcourDto & { etudiants: EtudiantDto[] })[]).every(parcour => parcour.etudiants.length === 0))) {
         this.errorMessage = 'Aucun étudiant trouvé pour les matières et parcours associés.';
+        console.log('No students found for any parcours');
       }
     });
-  }
-
-  loadSemestres(): void {
-    this.semestreService.getAllSemestres().pipe(
-      catchError(err => {
-        this.handleError(err, 'Erreur lors du chargement des semestres');
-        return of([]);
-      })
-    ).subscribe(semestres => {
-      this.semestres = semestres || [];
-      this.isLoading = false;
-    });
-  }
-
-  loadParcoursAndEtudiantsForMatiere(matiere: MatiereDto) {
-    if (!matiere.id) {
-      console.error('Matiere ID is undefined:', matiere);
-      return of({ ...matiere, parcours: [] });
-    }
-    return this.parcourService.getParcoursByMatiereId(matiere.id).pipe(
-      catchError(err => {
-        console.error(`Error fetching parcours for matiere ${matiere.id}:`, err);
-        return of([]);
-      }),
-      switchMap((parcours: ParcourDto[]) => {
-        console.log(`Fetched ${parcours.length} parcours for matiere ${matiere.id}:`, parcours);
-        if (parcours.length === 0) {
-          return of([]);
-        }
-        const parcoursObservables = parcours.map(parcour => {
-          if (!parcour.id) {
-            console.error('Parcour ID is undefined:', parcour);
-            return of({ ...parcour, etudiants: [] });
-          }
-          return this.parcourService.getEtudiantsByParcourId(parcour.id).pipe(
-            catchError(err => {
-              console.error(`Error fetching etudiants for parcour ${parcour.id}:`, err);
-              this.handleError(err, `Erreur lors du chargement des étudiants pour le parcours ${parcour.nom}`);
-              return of([]);
-            }),
-            map((etudiants: EtudiantDto[]) => {
-              console.log(`Fetched ${etudiants.length} etudiants for parcour ${parcour.id}:`, etudiants);
-              return { ...parcour, etudiants: etudiants || [] };
-            })
-          );
-        });
-        return forkJoin(parcoursObservables);
-      }),
-      map(parcoursAvecEtudiants => {
-        console.log(`Final parcours with etudiants for matiere ${matiere.id}:`, parcoursAvecEtudiants);
-        return { ...matiere, parcours: parcoursAvecEtudiants };
-      }),
-      catchError(err => {
-        console.error(`Error processing matiere ${matiere.id}:`, err);
-        return of({ ...matiere, parcours: [] });
-      })
-    );
   }
 
   toggleMatiere(index: number): void {
@@ -140,14 +131,22 @@ export class NotesComponent implements OnInit {
     return Array(this.notesMap[key].length).fill(0).map((_, i) => i);
   }
 
-  addNote(matiereId: number, etudiantId: number): void {
+  addNote(matiereId: number, etudiantId: number, index: number = -1, value: number | null = null): void {
     const key = `${matiereId}_${etudiantId}`;
     if (!this.notesMap[key]) {
       this.notesMap[key] = [undefined];
     }
-    if (this.notesMap[key].length < 3) {
+    if (index === -1 && this.notesMap[key].length < 3) {
       this.notesMap[key].push(undefined);
+    } else if (index >= 0 && value !== null) {
+      if (!isNaN(value) && value >= 0 && value <= 20) {
+        this.notesMap[key][index] = value;
+      } else {
+        this.notesMap[key][index] = undefined;
+        this.errorMessage = `La note pour ${key} doit être entre 0 et 20.`;
+      }
     }
+    console.log(`Updated notesMap[${key}]:`, this.notesMap[key]);
   }
 
   removeNote(matiereId: number, etudiantId: number, index: number): void {
@@ -155,118 +154,172 @@ export class NotesComponent implements OnInit {
     if (this.notesMap[key] && this.notesMap[key].length > 1) {
       this.notesMap[key].splice(index, 1);
     }
+    console.log(`Removed note from notesMap[${key}]:`, this.notesMap[key]);
+  }
+
+  hasValidNotes(): boolean {
+    for (const key in this.notesMap) {
+      const notes = this.notesMap[key];
+      if (notes.some(note => note !== undefined && note >= 0 && note <= 20)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   onTypeNoteChange(): void {
     this.errorMessage = '';
-    this.loadNotesForSelection();
-  }
-
-  onSemestreChange(): void {
-    this.errorMessage = '';
+    this.successMessage = '';
     this.loadNotesForSelection();
   }
 
   loadNotesForSelection(): void {
-    if (this.selectedSemestreId && this.typeNote) {
+    if (this.typeNote) {
       this.isLoading = true;
-      this.noteService.getNotesBySemestreAndType(this.selectedSemestreId, this.typeNote).pipe(
+      this.noteService.getNotesByType(this.typeNote).pipe(
+        tap(notes => console.log('Loaded existing notes:', notes)),
         catchError(err => {
           this.handleError(err, 'Erreur lors du chargement des notes existantes');
           return of([]);
         })
-      ).subscribe((notes: NoteDto[]) => {
-        console.log('Fetched notes:', notes);
-        this.notesMap = {};
-        notes.forEach(note => {
+      ).subscribe((existingNotes: NoteDto[]) => {
+        const existingNotesMap = new Map<string, number[]>();
+        existingNotes.forEach(note => {
           const key = `${note.matiereId}_${note.etudiantId}`;
-          if (!this.notesMap[key]) {
-            this.notesMap[key] = [];
+          if (!existingNotesMap.has(key)) {
+            existingNotesMap.set(key, []);
           }
           if (note.valeur !== undefined) {
-            this.notesMap[key].push(note.valeur);
+            existingNotesMap.get(key)!.push(note.valeur);
           }
         });
+
+        // Preserve user-entered notes
+        const currentNotesMap = { ...this.notesMap };
+        this.notesMap = {};
         this.matieres.forEach(matiere => {
-          matiere.parcours.forEach(parcour => {
-            parcour.etudiants.forEach(etudiant => {
+          (matiere.parcours as unknown as (ParcourDto & { etudiants: EtudiantDto[] })[]).forEach(parcour => {
+            parcour.etudiants.forEach((etudiant: EtudiantDto) => {
               const key = `${matiere.id}_${etudiant.id}`;
-              if (!this.notesMap[key]) {
-                this.notesMap[key] = [undefined];
-              }
+              this.notesMap[key] = currentNotesMap[key] || existingNotesMap.get(key) || [undefined];
             });
           });
         });
         this.isLoading = false;
+        console.log('Updated notesMap after loading:', this.notesMap);
       });
+    } else {
+      this.notesMap = {};
+      this.isLoading = false;
     }
   }
 
   submitAllNotes(): void {
-    if (!this.selectedSemestreId || !this.typeNote) {
-      this.errorMessage = 'Veuillez sélectionner un semestre et un type de note.';
+    console.log('submitAllNotes called with:', {
+      typeNote: this.typeNote,
+      notesMap: this.notesMap
+    });
+
+    if (!this.typeNote) {
+      this.errorMessage = 'Veuillez sélectionner un type de note.';
+      console.log('Validation failed: Missing typeNote');
       return;
     }
 
-    const noteObservables: Observable<NoteDto | null>[] = [];
-    for (let matiere of this.matieres) {
-      for (let parcour of matiere.parcours) {
-        for (let etudiant of parcour.etudiants) {
-          const key = `${matiere.id}_${etudiant.id}`;
-          const notes = this.notesMap[key] || [];
-          notes.forEach((valeur, index) => {
-            if (valeur !== undefined && valeur >= 0 && valeur <= 20) {
-              noteObservables.push(
-                this.noteService.createNote({
-                  etudiantId: etudiant.id!,
-                  matiereId: matiere.id!,
-                  semestreId: this.selectedSemestreId!,
-                  typeNote: this.typeNote as TypeNote,
-                  valeur
-                }).pipe(
-                  catchError(err => {
-                    this.handleError(err, `Erreur pour ${etudiant.nom} ${etudiant.prenom}, note ${index + 1}`);
-                    return of(null);
-                  })
-                )
-              );
+    this.noteService.getNotesByType(this.typeNote).pipe(
+      switchMap((existingNotes: NoteDto[]) => {
+        const noteObservables: Observable<NoteDto | null>[] = [];
+        const existingNotesMap = new Map<string, NoteDto[]>();
+        existingNotes.forEach(note => {
+          const key = `${note.matiereId}_${note.etudiantId}_${note.typeNote}`;
+          if (!existingNotesMap.has(key)) {
+            existingNotesMap.set(key, []);
+          }
+          existingNotesMap.get(key)!.push(note);
+        });
+
+        for (let matiere of this.matieres) {
+          for (let parcour of (matiere.parcours as unknown as (ParcourDto & { etudiants: EtudiantDto[] })[])) {
+            for (let etudiant of parcour.etudiants) {
+              const key = `${matiere.id}_${etudiant.id}`;
+              const notes = this.notesMap[key] || [];
+              console.log(`Processing notes for ${key}:`, notes);
+              notes.forEach((valeur, index) => {
+                if (valeur !== undefined && valeur >= 0 && valeur <= 20) {
+                  console.log(`Valid note found for ${key}:`, valeur);
+                  const noteKey = `${matiere.id}_${etudiant.id}_${this.typeNote}`;
+                  const existingNotes = existingNotesMap.get(noteKey) || [];
+                  const existingNote = existingNotes[index];
+                  const noteDto = {
+                    etudiantId: etudiant.id!,
+                    matiereId: matiere.id!,
+                    typeNote: this.typeNote as TypeNote,
+                    valeur
+                  };
+
+                  if (existingNote) {
+                    noteObservables.push(
+                      this.noteService.updateNote(existingNote.id!, noteDto).pipe(
+                        tap(updatedNote => console.log(`Note updated for ${key}:`, updatedNote)),
+                        catchError(err => {
+                          console.error(`Error updating note for ${key}:`, err);
+                          this.handleError(err, `Erreur pour ${etudiant.nom} ${etudiant.prenom}, note ${index + 1}`);
+                          return of(null);
+                        })
+                      )
+                    );
+                  } else {
+                    noteObservables.push(
+                      this.noteService.createNote(noteDto).pipe(
+                        tap(savedNote => console.log(`Note saved for ${key}:`, savedNote)),
+                        catchError(err => {
+                          console.error(`Error saving note for ${key}:`, err);
+                          this.handleError(err, `Erreur pour ${etudiant.nom} ${etudiant.prenom}, note ${index + 1}`);
+                          return of(null);
+                        })
+                      )
+                    );
+                  }
+                } else {
+                  console.log(`Invalid or missing note for ${key}:`, valeur);
+                }
+              });
             }
-          });
+          }
         }
-      }
-    }
 
-    if (noteObservables.length === 0) {
-      this.errorMessage = 'Aucune note valide à enregistrer.';
-      return;
-    }
+        if (noteObservables.length === 0) {
+          this.errorMessage = 'Aucune note valide à enregistrer.';
+          console.log('No valid notes to save');
+          return of([]);
+        }
 
-    this.isLoading = true;
-    forkJoin(noteObservables).subscribe({
-      next: () => {
-        this.errorMessage = '';
-        this.isLoading = false;
-        this.showSuccessMessage('Notes enregistrées avec succès !');
-      },
-      error: () => {
+        this.isLoading = true;
+        return forkJoin(noteObservables);
+      }),
+      tap(results => console.log('All notes save results:', results)),
+      catchError(err => {
+        console.error('Error in forkJoin:', err);
         this.isLoading = false;
         this.errorMessage = 'Une erreur est survenue lors de l\'enregistrement des notes.';
-      }
+        return of([]);
+      })
+    ).subscribe(() => {
+      this.errorMessage = '';
+      this.isLoading = false;
+      this.successMessage = 'Notes enregistrées avec succès !';
+      this.loadNotesForSelection();
     });
-  }
-
-  showSuccessMessage(message: string): void {
-    this.errorMessage = '';
-    alert(message); // Replace with ngx-toastr or similar in production
   }
 
   handleError(err: any, message: string): void {
     if (err.status === 403) {
-      this.errorMessage = 'Accès refusé. Redirection en cours...';
+      this.errorMessage = 'Accès refusé. Veuillez vérifier vos permissions ou vous reconnecter.';
+      console.error('403 Forbidden:', err);
       setTimeout(() => this.router.navigate(['/login']), 2000);
     } else {
       this.errorMessage = message;
+      console.error(message, err);
     }
-    console.error(message, err);
   }
 }

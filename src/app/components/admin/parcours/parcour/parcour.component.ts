@@ -6,6 +6,7 @@ import { PanierDto } from 'src/app/models/PanierDto';
 import { ParcourDto } from 'src/app/models/ParcourDto';
 import { AffectationDialogComponent } from './affectation-dialog/affectation-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-parcour',
@@ -13,15 +14,19 @@ import { MatDialog } from '@angular/material/dialog';
   styleUrls: ['./parcour.component.css']
 })
 export class ParcourComponent implements OnInit {
- displayedColumns: string[] = ['id', 'nom', 'annee', 'libelle', 'paniers', 'actions'];
+  displayedColumns: string[] = ['id', 'nom', 'annee', 'libelle', 'paniers', 'actions'];
   dataSource = new MatTableDataSource<ParcourDto>();
   showForm = false;
   editMode = false;
-  newParcour: ParcourDto = { nom: '', annee: '', libelle: '', etudiantId: undefined, panierIds: [] };
+  newParcour: ParcourDto = { nom: '', annee: '', libelle: '', etudiantIds: [], panierIds: [] }; // Consistent with interface
   paniers: PanierDto[] = [];
 
-
-  constructor(private parcourService: ParcourService, private panierService: PanierService) {}
+  constructor(
+    private parcourService: ParcourService,
+    private panierService: PanierService,
+    public dialog: MatDialog,
+    private snackBar: MatSnackBar
+  ) {}
 
   ngOnInit() {
     this.loadParcours();
@@ -35,7 +40,9 @@ export class ParcourComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading parcours:', err);
-        alert('Failed to load Parcours: ' + (err.error?.message || err.statusText || 'Unknown error'));
+        this.snackBar.open('Failed to load Parcours: ' + (err.error?.message || err.statusText || 'Unknown error'), 'Close', {
+          duration: 5000,
+        });
       }
     });
   }
@@ -47,7 +54,9 @@ export class ParcourComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading paniers:', err);
-        alert('Failed to load Paniers: ' + (err.error?.message || err.statusText || 'Unknown error'));
+        this.snackBar.open('Failed to load Paniers: ' + (err.error?.message || err.statusText || 'Unknown error'), 'Close', {
+          duration: 5000,
+        });
       }
     });
   }
@@ -61,12 +70,11 @@ export class ParcourComponent implements OnInit {
       .map(panier => panier.nom)
       .join(', ');
   }
-  
 
   openForm() {
     this.showForm = true;
     this.editMode = false;
-    this.newParcour = { nom: '', annee: '', libelle: '', etudiantId: undefined, panierIds: [] };
+    this.newParcour = { nom: '', annee: '', libelle: '', etudiantIds: [], panierIds: [] };
   }
 
   cancelForm() {
@@ -75,42 +83,32 @@ export class ParcourComponent implements OnInit {
 
   onSubmit(formValue: any) {
     const parcour: ParcourDto = {
+      id: this.editMode ? this.newParcour.id : undefined,
       nom: formValue.nom,
       annee: formValue.annee,
       libelle: formValue.libelle,
-      etudiantId: formValue.etudiantId || null,
+      etudiantIds: formValue.etudiantIds || [], // Use array for consistency
       panierIds: formValue.panierIds || []
     };
-    if (this.editMode) {
-      if (!this.newParcour.id) {
-        alert('Error: Parcour ID is missing for update');
-        return;
+    const serviceCall = this.editMode
+      ? this.parcourService.updateParcour(parcour)
+      : this.parcourService.createParcour(parcour);
+
+    serviceCall.subscribe({
+      next: () => {
+        this.loadParcours();
+        this.showForm = false;
+        this.snackBar.open(`Parcour ${this.editMode ? 'updated' : 'created'} successfully!`, 'Close', {
+          duration: 3000,
+        });
+      },
+      error: (err) => {
+        console.error(`${this.editMode ? 'Update' : 'Create'} error:`, err);
+        this.snackBar.open(`Failed to ${this.editMode ? 'update' : 'create'} Parcour: ${err.error?.message || err.statusText || 'Unknown error'} (Status: ${err.status})`, 'Close', {
+          duration: 5000,
+        });
       }
-      parcour.id = this.newParcour.id;
-      this.parcourService.updateParcour(parcour).subscribe({
-        next: () => {
-          this.loadParcours();
-          this.showForm = false;
-        },
-        error: (err) => {
-          console.error('Update error:', err);
-          const message = err.error?.message || err.statusText || 'Unknown error';
-          alert(`Failed to update Parcour: ${message} (Status: ${err.status})`);
-        }
-      });
-    } else {
-      this.parcourService.createParcour(parcour).subscribe({
-        next: () => {
-          this.loadParcours();
-          this.showForm = false;
-        },
-        error: (err) => {
-          console.error('Create error:', err);
-          const message = err.error?.message || err.statusText || 'Unknown error';
-          alert(`Failed to create Parcour: ${message} (Status: ${err.status})`);
-        }
-      });
-    }
+    });
   }
 
   editParcour(parcour: ParcourDto) {
@@ -123,13 +121,36 @@ export class ParcourComponent implements OnInit {
     this.parcourService.deleteParcour(id).subscribe({
       next: () => {
         this.loadParcours();
+        this.snackBar.open('Parcour deleted successfully!', 'Close', {
+          duration: 3000,
+        });
       },
       error: (err) => {
         console.error('Delete error:', err);
-        const message = err.error?.message || err.statusText || 'Unknown error';
-        alert(`Failed to delete Parcour: ${message} (Status: ${err.status})`);
+        this.snackBar.open(`Failed to delete Parcour: ${err.error?.message || err.statusText || 'Unknown error'} (Status: ${err.status})`, 'Close', {
+          duration: 5000,
+        });
       }
     });
   }
- 
+
+  openAffectationDialog(parcourId: number) {
+    const dialogRef = this.dialog.open(AffectationDialogComponent, {
+      width: '400px',
+      data: { parcourId }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.success) {
+        this.loadParcours(); // Refresh data on successful assignment
+        this.snackBar.open('Students assigned successfully!', 'Close', {
+          duration: 3000,
+        });
+      } else if (result?.error) {
+        this.snackBar.open(`Failed to assign students: ${result.error.message || 'Unknown error'}`, 'Close', {
+          duration: 5000,
+        });
+      }
+    });
+  }
 }

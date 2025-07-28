@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { NoteDto, TypeNote } from 'src/app/models/NoteDto';
 
@@ -11,24 +11,31 @@ export class NoteService {
 
   constructor(private http: HttpClient) {}
 
-  
-
-  // Update an existing note
-  updateNote(note: NoteDto): Observable<NoteDto> {
-    const url = `${this.apiUrl}/${note.id}`;
-    return this.http.put<NoteDto>(url, note);
+ private getHeaders(): HttpHeaders {
+    const email = 'doggi@gmail.com';
+    const password = 'your_password'; // Replace with actual password
+    const auth = btoa(`${email}:${password}`);
+    return new HttpHeaders({
+      'Authorization': `Basic ${auth}`,
+      'Content-Type': 'application/json'
+    });
   }
 
-  // Create a new note (if the ID is null or undefined)
+  getNoteTypes(): Observable<TypeNote[]> {
+    return this.http.get<TypeNote[]>(`${this.apiUrl}/types`, { headers: this.getHeaders() });
+  }
+
+  getNotesByType(typeNote: TypeNote | ''): Observable<NoteDto[]> {
+    let params = new HttpParams().set('typeNote', typeNote);
+    return this.http.get<NoteDto[]>(`${this.apiUrl}/by-type`, { headers: this.getHeaders(), params });
+  }
+
   createNote(note: NoteDto): Observable<NoteDto> {
-    return this.http.post<NoteDto>(this.apiUrl, note);
+    return this.http.post<NoteDto>(this.apiUrl, note, { headers: this.getHeaders() });
   }
-   getNotesBySemestreAndType(semestreId: number, typeNote: TypeNote | ''): Observable<NoteDto[]> {
-    let params = new HttpParams()
-      .set('semestreId', semestreId.toString())
-      .set('typeNote', typeNote);
-    return this.http.get<NoteDto[]>(`${this.apiUrl}/by-semestre-and-type`, { params });
-  }
-  
 
+  updateNote(id: number, note: NoteDto): Observable<NoteDto> {
+    const url = `${this.apiUrl}/${id}`;
+    return this.http.put<NoteDto>(url, note, { headers: this.getHeaders() });
+  }
 }
