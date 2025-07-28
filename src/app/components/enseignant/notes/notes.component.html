@@ -1,46 +1,47 @@
-<section class="min-h-screen container" aria-label="Gestion des notes pour enseignants">
+<section class="min-h-screen container mx-auto p-4" aria-label="Gestion des notes pour enseignants">
   <div class="gradient-border"></div>
 
   <!-- Header -->
-  <header class="header">
-    <h2>Gestion des Notes pour Enseignants</h2>
+  <header class="header mb-6">
+    <h2 class="text-2xl font-bold">Gestion des Notes pour Enseignants</h2>
     <div class="date">Dernière mise à jour: {{ currentDate | date:'medium' }}</div>
   </header>
 
   <!-- Main Content -->
   <main>
     <!-- Loading Indicator -->
-    <div *ngIf="isLoading" class="loading">
-      <div class="spinner"></div>
+    <div *ngIf="isLoading" class="loading flex items-center justify-center gap-2 p-4">
+      <div class="spinner w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       <span>Chargement des données...</span>
     </div>
 
     <!-- Error Message -->
-    <div *ngIf="errorMessage && !isLoading" class="message error" role="alert">
-      <svg aria-hidden="true" focusable="false">
+    <div *ngIf="errorMessage && !isLoading" class="message error flex items-center gap-2 p-4" role="alert">
+      <svg class="w-5 h-5" aria-hidden="true" focusable="false" fill="none" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
       </svg>
       <span>{{ errorMessage }}</span>
     </div>
 
     <!-- Success Message -->
-    <div *ngIf="successMessage && !isLoading" class="message success" role="alert">
-      <svg aria-hidden="true" focusable="false">
+    <div *ngIf="successMessage && !isLoading" class="message success flex items-center gap-2 p-4" role="alert">
+      <svg class="w-5 h-5" aria-hidden="true" focusable="false" fill="none" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
       </svg>
       <span>{{ successMessage }}</span>
     </div>
 
     <!-- Form Section -->
-    <section class="form-section" *ngIf="!isLoading">
-      <div class="grid">
+    <section class="form-section mb-8" *ngIf="!isLoading">
+      <div class="grid grid-cols-1 gap-4">
         <!-- Select TypeNote -->
         <div class="form-group">
-          <label for="typeNote">Type de Note</label>
+          <label for="typeNote" class="block text-sm font-medium">Type de Note</label>
           <select
             id="typeNote"
             [(ngModel)]="typeNote"
             (ngModelChange)="onTypeNoteChange()"
+            class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             aria-describedby="typeNoteHelp"
             required
           >
@@ -49,48 +50,115 @@
               {{ noteType }}
             </option>
           </select>
-          <small id="typeNoteHelp">Choisissez le type de note à enregistrer.</small>
+          <small id="typeNoteHelp" class="text-xs">Choisissez le type de note à enregistrer.</small>
+        </div>
+      </div>
+
+      <!-- Coefficient Table -->
+      <div *ngIf="typeNote" class="coefficient-section mt-6">
+        <button
+          (click)="toggleCoefficientSection()"
+          class="flex items-center gap-2 text-lg font-semibold text-blue-600 hover:text-blue-800"
+          [attr.aria-expanded]="coefficientSectionExpanded"
+          aria-controls="coefficient-table"
+        >
+          <span>Gérer les Coefficients</span>
+          <svg class="w-5 h-5 transition-transform" [ngClass]="{'rotate-180': coefficientSectionExpanded}" aria-hidden="true" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+        <div *ngIf="coefficientSectionExpanded" id="coefficient-table" class="mt-4">
+          <table class="table w-full border-collapse">
+            <thead>
+              <tr>
+                <th class="p-3 text-left text-sm font-medium">Matière</th>
+                <th class="p-3 text-left text-sm font-medium">Coefficient</th>
+                <th class="p-3 text-left text-sm font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let matiere of matieres" class="border-t">
+                <td class="p-3">{{ matiere.nom }}</td>
+                <td class="p-3">
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.1"
+                    [(ngModel)]="coefficientMap[matiere.id + '_' + typeNote]"
+                    (ngModelChange)="updateCoefficient(matiere.id!, $event)"
+                    placeholder="Coefficient"
+                    class="w-24 p-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    [ngClass]="{'border-red-500': isInvalidCoefficient(matiere.id!)}"
+                    [attr.aria-label]="'Coefficient pour ' + matiere.nom + ' et ' + typeNote"
+                  />
+                </td>
+                <td class="p-3">
+                  <button
+                    *ngIf="coefficientMap[matiere.id + '_' + typeNote] !== undefined"
+                    (click)="clearCoefficient(matiere.id!)"
+                    class="text-red-600 hover:text-red-800"
+                    [attr.aria-label]="'Supprimer le coefficient pour ' + matiere.nom"
+                  >
+                    <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
 
-    <!-- Matiere Section -->
+    <!-- Matiere and Etudiant Section -->
     <section class="matiere-section" *ngIf="!isLoading && matieres.length > 0" aria-label="Liste des matières">
       <div *ngFor="let matiere of matieres; let matiereIndex = index" class="matiere-item">
         <!-- Matiere Header -->
-        <div class="matiere-header" (click)="toggleMatiere(matiereIndex)" role="button" [attr.aria-expanded]="matiereExpanded[matiereIndex]" [attr.aria-controls]="'matiere-content-' + matiereIndex">
-          <h3>{{ matiere.nom }} (Coefficient: {{ matiere.coefficient }})</h3>
-          <svg [ngClass]="{'rotate-180': matiereExpanded[matiereIndex]}" aria-hidden="true" focusable="false">
+        <div
+          class="matiere-header p-4 flex justify-between items-center cursor-pointer"
+          (click)="toggleMatiere(matiereIndex)"
+          role="button"
+          [attr.aria-expanded]="matiereExpanded[matiereIndex]"
+          [attr.aria-controls]="'matiere-content-' + matiereIndex"
+        >
+          <h3 class="text-lg font-semibold">
+            {{ matiere.nom }}
+            <span *ngIf="typeNote && coefficientMap[matiere.id + '_' + typeNote] !== undefined" class="text-sm text-blue-600">
+              (Coefficient: {{ coefficientMap[matiere.id + '_' + typeNote] | number:'1.1-2' }})
+            </span>
+          </h3>
+          <svg class="w-5 h-5 transition-transform" [ngClass]="{'rotate-180': matiereExpanded[matiereIndex]}" aria-hidden="true" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
           </svg>
         </div>
 
         <!-- Matiere Content -->
-        <div *ngIf="matiereExpanded[matiereIndex]" class="matiere-content" [id]="'matiere-content-' + matiereIndex">
+        <div *ngIf="matiereExpanded[matiereIndex]" class="matiere-content p-4" [id]="'matiere-content-' + matiereIndex">
           <!-- Parcour List -->
           <div *ngFor="let parcour of matiere.parcours" class="parcour-item">
             <h4>{{ parcour.nom }} - {{ parcour.annee }}</h4>
-            <div *ngIf="!parcour.etudiants || parcour.etudiants.length === 0" class="no-data">
+            <div *ngIf="!parcour.etudiants || parcour.etudiants.length === 0" class="no-data p-2">
               Aucun étudiant trouvé pour ce parcours.
             </div>
 
             <!-- Student Table -->
-            <table *ngIf="parcour.etudiants && parcour.etudiants.length > 0" class="table">
+            <table *ngIf="parcour.etudiants && parcour.etudiants.length > 0" class="table w-full border-collapse mt-2">
               <thead>
                 <tr>
-                  <th scope="col">Étudiant</th>
-                  <th scope="col">Numéro d'inscription</th>
-                  <th scope="col">Notes (0-20)</th>
-                  <th scope="col">Actions</th>
+                  <th class="p-3 text-left text-sm font-medium">Étudiant</th>
+                  <th class="p-3 text-left text-sm font-medium">Numéro d'inscription</th>
+                  <th class="p-3 text-left text-sm font-medium">Notes (0-20)</th>
+                  <th class="p-3 text-left text-sm font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let etudiant of parcour.etudiants; let etudiantIndex = index">
-                  <td>{{ etudiant.nom }} {{ etudiant.prenom }}</td>
-                  <td>{{ etudiant.numeroInscription }}</td>
-                  <td>
-                    <div class="note-inputs">
-                      <div *ngFor="let noteIndex of getNoteIndices(matiere.id!, etudiant.id!); let j = index" class="note-input">
+                <tr *ngFor="let etudiant of parcour.etudiants; let etudiantIndex = index" class="border-t">
+                  <td class="p-3">{{ etudiant.nom }} {{ etudiant.prenom }}</td>
+                  <td class="p-3">{{ etudiant.numeroInscription }}</td>
+                  <td class="p-3">
+                    <div class="note-inputs flex gap-2">
+                      <div *ngFor="let noteIndex of getNoteIndices(matiere.id!, etudiant.id!); let j = index" class="note-input flex items-center gap-1">
                         <input
                           type="number"
                           min="0"
@@ -99,32 +167,33 @@
                           [(ngModel)]="notesMap[matiere.id + '_' + etudiant.id][j]"
                           (ngModelChange)="addNote(matiere.id!, etudiant.id!, j, $event)"
                           placeholder="Note {{ j + 1 }}"
+                          class="w-20 p-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                          [ngClass]="{'border-red-500': notesMap[matiere.id + '_' + etudiant.id][j] !== undefined && (notesMap[matiere.id + '_' + etudiant.id][j]! < 0 || notesMap[matiere.id + '_' + etudiant.id][j]! > 20)}"
                           [attr.aria-label]="'Note ' + (j + 1) + ' pour ' + etudiant.nom + ' ' + etudiant.prenom"
-                          [ngClass]="{'invalid': notesMap[matiere.id + '_' + etudiant.id][j] !== undefined && (notesMap[matiere.id + '_' + etudiant.id][j]! < 0 || notesMap[matiere.id + '_' + etudiant.id][j]! > 20)}"
                         />
                         <button
                           *ngIf="notesMap[matiere.id + '_' + etudiant.id].length > 1"
-                          class="remove-btn"
+                          class="remove-btn text-red-600 hover:text-red-800"
                           (click)="removeNote(matiere.id!, etudiant.id!, j)"
                           [attr.aria-label]="'Supprimer la note ' + (j + 1) + ' pour ' + etudiant.nom + ' ' + etudiant.prenom"
                           type="button"
                         >
-                          <svg aria-hidden="true" focusable="false">
+                          <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                           </svg>
                         </button>
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td class="p-3">
                     <button
-                      class="add-btn"
+                      class="add-btn text-blue-600 hover:text-blue-800"
                       (click)="addNote(matiere.id!, etudiant.id!)"
                       [disabled]="notesMap[matiere.id + '_' + etudiant.id].length >= 3"
                       [attr.aria-label]="'Ajouter une note pour ' + etudiant.nom + ' ' + etudiant.prenom"
                       type="button"
                     >
-                      <svg aria-hidden="true" focusable="false">
+                      <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                       </svg>
                     </button>
@@ -137,21 +206,22 @@
       </div>
 
       <!-- Submit Button -->
-      <div class="submit-btn">
+      <div class="submit-btn mt-6">
         <button
           (click)="submitAllNotes()"
           [disabled]="!typeNote || isLoading || !hasValidNotes()"
+          class="relative px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed overflow-hidden"
           [attr.aria-label]="'Enregistrer toutes les notes'"
           type="button"
         >
           <span>Enregistrer toutes les Notes</span>
-          <span class="gradient-overlay"></span>
+          <span class="gradient-overlay absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 hover:opacity-20 transition-opacity"></span>
         </button>
       </div>
     </section>
 
     <!-- No Matiere Message -->
-    <div *ngIf="!isLoading && matieres.length === 0 && !errorMessage" class="no-matiere" role="alert">
+    <div *ngIf="!isLoading && matieres.length === 0 && !errorMessage" class="no-matiere p-4" role="alert">
       Aucune matière assignée à cet enseignant.
     </div>
   </main>

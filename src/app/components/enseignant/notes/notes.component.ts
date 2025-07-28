@@ -7,6 +7,7 @@ import { ParcourDto } from 'src/app/models/ParcourDto';
 import { MatiereDto } from 'src/app/models/MatiereDto';
 import { EtudiantDto } from 'src/app/models/EtudiantDto';
 import { ParcourWithStudents } from 'src/app/models/ParcourWithStudents';
+import { TypeNoteCoefficientDto } from 'src/app/models/TypeNoteCoefficientDto';
 
 import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
 import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
@@ -24,6 +25,8 @@ export class NotesComponent implements OnInit {
   errorMessage: string = '';
   successMessage: string = '';
   notesMap: { [key: string]: (number | undefined)[] } = {};
+  coefficientMap: { [key: string]: number | undefined } = {};
+  coefficientSectionExpanded: boolean = true;
   isLoading: boolean = true;
   currentDate: Date = new Date();
   matiereExpanded: { [key: number]: boolean } = {};
@@ -123,6 +126,10 @@ export class NotesComponent implements OnInit {
     this.matiereExpanded[index] = !this.matiereExpanded[index];
   }
 
+  toggleCoefficientSection(): void {
+    this.coefficientSectionExpanded = !this.coefficientSectionExpanded;
+  }
+
   getNoteIndices(matiereId: number, etudiantId: number): number[] {
     const key = `${matiereId}_${etudiantId}`;
     if (!this.notesMap[key]) {
@@ -167,24 +174,52 @@ export class NotesComponent implements OnInit {
     return false;
   }
 
+  isInvalidCoefficient(matiereId: number): boolean {
+    if (this.typeNote) {
+      const key = `${matiereId}_${this.typeNote}`;
+      const coefficient = this.coefficientMap[key];
+      return coefficient !== undefined && coefficient <= 0;
+    }
+    return false;
+  }
+
   onTypeNoteChange(): void {
     this.errorMessage = '';
     this.successMessage = '';
-    this.loadNotesForSelection();
+    this.coefficientMap = {};
+    this.coefficientSectionExpanded = true;
+    this.loadNotesAndCoefficients();
   }
 
-  loadNotesForSelection(): void {
+  loadNotesAndCoefficients(): void {
     if (this.typeNote) {
       this.isLoading = true;
-      this.noteService.getNotesByType(this.typeNote).pipe(
-        tap(notes => console.log('Loaded existing notes:', notes)),
-        catchError(err => {
-          this.handleError(err, 'Erreur lors du chargement des notes existantes');
-          return of([]);
-        })
-      ).subscribe((existingNotes: NoteDto[]) => {
+      forkJoin([
+        this.noteService.getNotesByType(this.typeNote).pipe(
+          catchError(err => {
+            this.handleError(err, 'Erreur lors du chargement des notes existantes');
+            return of([]);
+          })
+        ),
+        forkJoin(
+          this.matieres.map(matiere =>
+            this.noteService.getCoefficientsByMatiere(matiere.id!).pipe(
+              catchError(err => {
+                console.error(`Erreur lors du chargement des coefficients pour la matière ${matiere.nom}`, err);
+                return of([]);
+              })
+            )
+          )
+        ).pipe(
+          catchError(err => {
+            this.handleError(err, 'Erreur lors du chargement des coefficients');
+            return of([]);
+          })
+        )
+      ]).subscribe(([notes, coefficientsByMatiere]) => {
+        // Process notes
         const existingNotesMap = new Map<string, number[]>();
-        existingNotes.forEach(note => {
+        notes.forEach(note => {
           const key = `${note.matiereId}_${note.etudiantId}`;
           if (!existingNotesMap.has(key)) {
             existingNotesMap.set(key, []);
@@ -194,7 +229,6 @@ export class NotesComponent implements OnInit {
           }
         });
 
-        // Preserve user-entered notes
         const currentNotesMap = { ...this.notesMap };
         this.notesMap = {};
         this.matieres.forEach(matiere => {
@@ -205,13 +239,95 @@ export class NotesComponent implements OnInit {
             });
           });
         });
+
+        // Process coefficients
+        this.coefficientMap = {};
+        coefficientsByMatiere.forEach((coefficients, index) => {
+          const matiere = this.matieres[index];
+          const coefficient = coefficients.find(c => c.typeNote === this.typeNote);
+          const key = `${matiere.id}_${this.typeNote}`;
+          this.coefficientMap[key] = coefficient ? coefficient.coefficient : undefined;
+        });
+
         this.isLoading = false;
-        console.log('Updated notesMap after loading:', this.notesMap);
+        console.log('Updated notesMap:', this.notesMap);
+        console.log('Updated coefficientMap:', this.coefficientMap);
       });
     } else {
       this.notesMap = {};
+      this.coefficientMap = {};
       this.isLoading = false;
     }
+  }
+
+  updateCoefficient(matiereId: number, value: number | undefined): void {
+    if (!this.typeNote || !matiereId) {
+      this.errorMessage = 'Veuillez sélectionner un type de note.';
+      return;
+    }
+    const key = `${matiereId}_${this.typeNote}`;
+    if (value !== undefined && value > 0) {
+      this.isLoading = true;
+      const coefficientDto: TypeNoteCoefficientDto = {
+        typeNote: this.typeNote as TypeNote,
+        coefficient: value,
+        matiereId: matiereId
+      };
+      this.noteService.getCoefficientsByMatiere(matiereId).pipe(
+        switchMap(coefficients => {
+          const existing = coefficients.find(c => c.typeNote === this.typeNote);
+          if (existing) {
+            return this.noteService.updateCoefficient(existing.id!, coefficientDto);
+          } else {
+            return this.noteService.createCoefficient(coefficientDto);
+          }
+        }),
+        tap(savedCoefficient => {
+          this.coefficientMap[key] = savedCoefficient.coefficient;
+          this.successMessage = `Coefficient pour ${this.matieres.find(m => m.id === matiereId)?.nom} enregistré avec succès !`;
+          console.log(`Saved coefficient for ${key}:`, savedCoefficient);
+        }),
+        catchError(err => {
+          this.handleError(err, 'Erreur lors de l\'enregistrement du coefficient');
+          return of(null);
+        })
+      ).subscribe(() => {
+        this.isLoading = false;
+      });
+    } else {
+      this.coefficientMap[key] = undefined;
+      this.errorMessage = 'Le coefficient doit être positif.';
+    }
+  }
+
+  clearCoefficient(matiereId: number): void {
+    if (!this.typeNote) {
+      this.errorMessage = 'Veuillez sélectionner un type de note.';
+      return;
+    }
+    const key = `${matiereId}_${this.typeNote}`;
+    this.isLoading = true;
+    this.noteService.getCoefficientsByMatiere(matiereId).pipe(
+      switchMap(coefficients => {
+        const existing = coefficients.find(c => c.typeNote === this.typeNote);
+        if (existing) {
+          return this.noteService.deleteCoefficient(existing.id!).pipe(
+            tap(() => {
+              this.coefficientMap[key] = undefined;
+              this.successMessage = `Coefficient pour ${this.matieres.find(m => m.id === matiereId)?.nom} supprimé avec succès !`;
+              console.log(`Deleted coefficient for ${key}`);
+            })
+          );
+        }
+        return of(null);
+      }),
+      catchError(err => {
+        this.handleError(err, 'Erreur lors de la suppression du coefficient');
+        return of(null);
+      })
+    ).subscribe(() => {
+      this.isLoading = false;
+    });
   }
 
   submitAllNotes(): void {
@@ -308,7 +424,7 @@ export class NotesComponent implements OnInit {
       this.errorMessage = '';
       this.isLoading = false;
       this.successMessage = 'Notes enregistrées avec succès !';
-      this.loadNotesForSelection();
+      this.loadNotesAndCoefficients();
     });
   }
 
