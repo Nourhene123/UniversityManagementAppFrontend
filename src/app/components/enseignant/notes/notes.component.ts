@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin, of, switchMap, catchError, map, Observable, tap } from 'rxjs';
+import { forkJoin, of, switchMap, catchError, map, Observable, tap, finalize } from 'rxjs';
 
 import { NoteDto, TypeNote } from 'src/app/models/NoteDto';
 import { ParcourDto } from 'src/app/models/ParcourDto';
@@ -55,6 +55,7 @@ export class NotesComponent implements OnInit {
     ).subscribe(types => {
       this.noteTypes = types;
       this.isLoading = false;
+      this.loadNotesAndCoefficients();
     });
   }
 
@@ -130,16 +131,20 @@ export class NotesComponent implements OnInit {
     this.coefficientSectionExpanded = !this.coefficientSectionExpanded;
   }
 
-  getNoteIndices(matiereId: number, etudiantId: number): number[] {
-    const key = `${matiereId}_${etudiantId}`;
+  getNoteIndices(matiereId: number, etudiantId: number, noteType: TypeNote): number[] {
+    const key = `${matiereId}_${etudiantId}_${noteType}`;
     if (!this.notesMap[key]) {
       this.notesMap[key] = [undefined];
     }
     return Array(this.notesMap[key].length).fill(0).map((_, i) => i);
   }
 
-  addNote(matiereId: number, etudiantId: number, index: number = -1, value: number | null = null): void {
-    const key = `${matiereId}_${etudiantId}`;
+  addNote(matiereId: number, etudiantId: number, index: number = -1, value: number | null = null, noteType?: TypeNote): void {
+    if (!noteType) {
+      this.errorMessage = 'Type de note requis pour ajouter une note.';
+      return;
+    }
+    const key = `${matiereId}_${etudiantId}_${noteType}`;
     if (!this.notesMap[key]) {
       this.notesMap[key] = [undefined];
     }
@@ -156,8 +161,8 @@ export class NotesComponent implements OnInit {
     console.log(`Updated notesMap[${key}]:`, this.notesMap[key]);
   }
 
-  removeNote(matiereId: number, etudiantId: number, index: number): void {
-    const key = `${matiereId}_${etudiantId}`;
+  removeNote(matiereId: number, etudiantId: number, index: number, noteType: TypeNote): void {
+    const key = `${matiereId}_${etudiantId}_${noteType}`;
     if (this.notesMap[key] && this.notesMap[key].length > 1) {
       this.notesMap[key].splice(index, 1);
     }
@@ -183,6 +188,12 @@ export class NotesComponent implements OnInit {
     return false;
   }
 
+  isInvalidNote(matiereId: number, etudiantId: number, noteType: TypeNote, index: number): boolean {
+    const key = `${matiereId}_${etudiantId}_${noteType}`;
+    const note = this.notesMap[key]?.[index];
+    return note != null && (note < 0 || note > 20);
+  }
+
   onTypeNoteChange(): void {
     this.errorMessage = '';
     this.successMessage = '';
@@ -192,41 +203,30 @@ export class NotesComponent implements OnInit {
   }
 
   loadNotesAndCoefficients(): void {
-    if (this.typeNote) {
-      this.isLoading = true;
-      forkJoin([
-        this.noteService.getNotesByType(this.typeNote).pipe(
+    this.isLoading = true;
+    forkJoin(
+      this.noteTypes.map(noteType =>
+        this.noteService.getNotesByType(noteType).pipe(
           catchError(err => {
-            this.handleError(err, 'Erreur lors du chargement des notes existantes');
-            return of([]);
-          })
-        ),
-        forkJoin(
-          this.matieres.map(matiere =>
-            this.noteService.getCoefficientsByMatiere(matiere.id!).pipe(
-              catchError(err => {
-                console.error(`Erreur lors du chargement des coefficients pour la matière ${matiere.nom}`, err);
-                return of([]);
-              })
-            )
-          )
-        ).pipe(
-          catchError(err => {
-            this.handleError(err, 'Erreur lors du chargement des coefficients');
+            this.handleError(err, `Erreur lors du chargement des notes pour ${noteType}`);
             return of([]);
           })
         )
-      ]).subscribe(([notes, coefficientsByMatiere]) => {
-        // Process notes
+      )
+    ).pipe(
+      switchMap(notesByType => {
         const existingNotesMap = new Map<string, number[]>();
-        notes.forEach(note => {
-          const key = `${note.matiereId}_${note.etudiantId}`;
-          if (!existingNotesMap.has(key)) {
-            existingNotesMap.set(key, []);
-          }
-          if (note.valeur !== undefined) {
-            existingNotesMap.get(key)!.push(note.valeur);
-          }
+        notesByType.forEach((notes, index) => {
+          const noteType = this.noteTypes[index];
+          notes.forEach(note => {
+            const key = `${note.matiereId}_${note.etudiantId}_${noteType}`;
+            if (!existingNotesMap.has(key)) {
+              existingNotesMap.set(key, []);
+            }
+            if (note.valeur !== undefined) {
+              existingNotesMap.get(key)!.push(note.valeur);
+            }
+          });
         });
 
         const currentNotesMap = { ...this.notesMap };
@@ -234,13 +234,31 @@ export class NotesComponent implements OnInit {
         this.matieres.forEach(matiere => {
           (matiere.parcours as unknown as (ParcourDto & { etudiants: EtudiantDto[] })[]).forEach(parcour => {
             parcour.etudiants.forEach((etudiant: EtudiantDto) => {
-              const key = `${matiere.id}_${etudiant.id}`;
-              this.notesMap[key] = currentNotesMap[key] || existingNotesMap.get(key) || [undefined];
+              this.noteTypes.forEach(noteType => {
+                const key = `${matiere.id}_${etudiant.id}_${noteType}`;
+                this.notesMap[key] = currentNotesMap[key] || existingNotesMap.get(key) || [undefined];
+              });
             });
           });
         });
 
-        // Process coefficients
+        if (this.typeNote) {
+          return forkJoin(
+            this.matieres.map(matiere =>
+              this.noteService.getCoefficientsByMatiere(matiere.id!).pipe(
+                catchError(err => {
+                  console.error(`Erreur lors du chargement des coefficients pour la matière ${matiere.nom}`, err);
+                  return of([]);
+                })
+              )
+            )
+          ).pipe(
+            map(coefficientsByMatiere => ({ notesByType, coefficientsByMatiere }))
+          );
+        }
+        return of({ notesByType, coefficientsByMatiere: [] });
+      }),
+      tap(({ notesByType, coefficientsByMatiere }) => {
         this.coefficientMap = {};
         coefficientsByMatiere.forEach((coefficients, index) => {
           const matiere = this.matieres[index];
@@ -249,15 +267,16 @@ export class NotesComponent implements OnInit {
           this.coefficientMap[key] = coefficient ? coefficient.coefficient : undefined;
         });
 
-        this.isLoading = false;
         console.log('Updated notesMap:', this.notesMap);
         console.log('Updated coefficientMap:', this.coefficientMap);
-      });
-    } else {
-      this.notesMap = {};
-      this.coefficientMap = {};
+      }),
+      catchError(err => {
+        this.handleError(err, 'Erreur lors du chargement des notes ou coefficients');
+        return of({ notesByType: [], coefficientsByMatiere: [] });
+      })
+    ).subscribe(() => {
       this.isLoading = false;
-    }
+    });
   }
 
   updateCoefficient(matiereId: number, value: number | undefined): void {
@@ -275,7 +294,7 @@ export class NotesComponent implements OnInit {
       };
       this.noteService.getCoefficientsByMatiere(matiereId).pipe(
         switchMap(coefficients => {
-          const existing = coefficients.find(c => c.typeNote === this.typeNote);
+          const existing = coefficients.find(c => c.typeNote === this.typeNote); // Corrected to c.typeNote
           if (existing) {
             return this.noteService.updateCoefficient(existing.id!, coefficientDto);
           } else {
@@ -309,7 +328,7 @@ export class NotesComponent implements OnInit {
     this.isLoading = true;
     this.noteService.getCoefficientsByMatiere(matiereId).pipe(
       switchMap(coefficients => {
-        const existing = coefficients.find(c => c.typeNote === this.typeNote);
+        const existing = coefficients.find(c => c.typeNote === this.typeNote); // Corrected to c.typeNote
         if (existing) {
           return this.noteService.deleteCoefficient(existing.id!).pipe(
             tap(() => {
@@ -330,101 +349,110 @@ export class NotesComponent implements OnInit {
     });
   }
 
-  submitAllNotes(): void {
+  submitAllNotes(): Observable<void> {
     console.log('submitAllNotes called with:', {
-      typeNote: this.typeNote,
       notesMap: this.notesMap
     });
 
-    if (!this.typeNote) {
-      this.errorMessage = 'Veuillez sélectionner un type de note.';
-      console.log('Validation failed: Missing typeNote');
-      return;
+    const noteObservables: Observable<NoteDto | null>[] = [];
+
+    for (let matiere of this.matieres) {
+      for (let parcour of (matiere.parcours as unknown as (ParcourDto & { etudiants: EtudiantDto[] })[])) {
+        for (let etudiant of parcour.etudiants) {
+          this.noteTypes.forEach(noteType => {
+            const key = `${matiere.id}_${etudiant.id}_${noteType}`;
+            const notes = this.notesMap[key] || [];
+            console.log(`Processing notes for ${key}:`, notes);
+
+            notes.forEach((valeur, index) => {
+              if (valeur !== undefined && valeur >= 0 && valeur <= 20) {
+                console.log(`Valid note found for ${key}:`, valeur);
+                const noteDto = {
+                  etudiantId: etudiant.id!,
+                  matiereId: matiere.id!,
+                  typeNote: noteType,
+                  valeur
+                };
+
+                noteObservables.push(
+                  this.noteService.getNotesByType(noteType).pipe(
+                    map(existingNotes => {
+                      const existingNotesMap = new Map<string, NoteDto[]>();
+                      existingNotes.forEach(note => {
+                        const existingKey = `${note.matiereId}_${note.etudiantId}_${note.typeNote}`;
+                        if (!existingNotesMap.has(existingKey)) {
+                          existingNotesMap.set(existingKey, []);
+                        }
+                        existingNotesMap.get(existingKey)!.push(note);
+                      });
+
+                      const existingKey = `${matiere.id}_${etudiant.id}_${noteType}`;
+                      const existingNotesForKey = existingNotesMap.get(existingKey) || [];
+                      const existingNote = existingNotesForKey[index];
+
+                      if (existingNote) {
+                        return this.noteService.updateNote(existingNote.id!, noteDto).pipe(
+                          tap(updatedNote => console.log(`Note updated for ${key}:`, updatedNote)),
+                          catchError(err => {
+                            console.error(`Error updating note for ${key}:`, err);
+                            this.handleError(err, `Erreur pour ${etudiant.nom} ${etudiant.prenom}, note ${index + 1}`);
+                            return of(null);
+                          })
+                        );
+                      } else {
+                        return this.noteService.createNote(noteDto).pipe(
+                          tap(savedNote => console.log(`Note saved for ${key}:`, savedNote)),
+                          catchError(err => {
+                            console.error(`Error saving note for ${key}:`, err);
+                            this.handleError(err, `Erreur pour ${etudiant.nom} ${etudiant.prenom}, note ${index + 1}`);
+                            return of(null);
+                          })
+                        );
+                      }
+                    }),
+                    switchMap(observable => observable)
+                  )
+                );
+              } else {
+                console.log(`Invalid or missing note for ${key}:`, valeur);
+              }
+            });
+          });
+        }
+      }
     }
 
-    this.noteService.getNotesByType(this.typeNote).pipe(
-      switchMap((existingNotes: NoteDto[]) => {
-        const noteObservables: Observable<NoteDto | null>[] = [];
-        const existingNotesMap = new Map<string, NoteDto[]>();
-        existingNotes.forEach(note => {
-          const key = `${note.matiereId}_${note.etudiantId}_${note.typeNote}`;
-          if (!existingNotesMap.has(key)) {
-            existingNotesMap.set(key, []);
-          }
-          existingNotesMap.get(key)!.push(note);
-        });
+    if (noteObservables.length === 0) {
+      this.errorMessage = 'Aucune note valide à enregistrer.';
+      console.log('No valid notes to save');
+      return of(undefined);
+    }
 
-        for (let matiere of this.matieres) {
-          for (let parcour of (matiere.parcours as unknown as (ParcourDto & { etudiants: EtudiantDto[] })[])) {
-            for (let etudiant of parcour.etudiants) {
-              const key = `${matiere.id}_${etudiant.id}`;
-              const notes = this.notesMap[key] || [];
-              console.log(`Processing notes for ${key}:`, notes);
-              notes.forEach((valeur, index) => {
-                if (valeur !== undefined && valeur >= 0 && valeur <= 20) {
-                  console.log(`Valid note found for ${key}:`, valeur);
-                  const noteKey = `${matiere.id}_${etudiant.id}_${this.typeNote}`;
-                  const existingNotes = existingNotesMap.get(noteKey) || [];
-                  const existingNote = existingNotes[index];
-                  const noteDto = {
-                    etudiantId: etudiant.id!,
-                    matiereId: matiere.id!,
-                    typeNote: this.typeNote as TypeNote,
-                    valeur
-                  };
+    return forkJoin(noteObservables).pipe(map(() => undefined));
+  }
 
-                  if (existingNote) {
-                    noteObservables.push(
-                      this.noteService.updateNote(existingNote.id!, noteDto).pipe(
-                        tap(updatedNote => console.log(`Note updated for ${key}:`, updatedNote)),
-                        catchError(err => {
-                          console.error(`Error updating note for ${key}:`, err);
-                          this.handleError(err, `Erreur pour ${etudiant.nom} ${etudiant.prenom}, note ${index + 1}`);
-                          return of(null);
-                        })
-                      )
-                    );
-                  } else {
-                    noteObservables.push(
-                      this.noteService.createNote(noteDto).pipe(
-                        tap(savedNote => console.log(`Note saved for ${key}:`, savedNote)),
-                        catchError(err => {
-                          console.error(`Error saving note for ${key}:`, err);
-                          this.handleError(err, `Erreur pour ${etudiant.nom} ${etudiant.prenom}, note ${index + 1}`);
-                          return of(null);
-                        })
-                      )
-                    );
-                  }
-                } else {
-                  console.log(`Invalid or missing note for ${key}:`, valeur);
-                }
-              });
-            }
-          }
-        }
+  submitAllNotesForAllTypes(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
 
-        if (noteObservables.length === 0) {
-          this.errorMessage = 'Aucune note valide à enregistrer.';
-          console.log('No valid notes to save');
-          return of([]);
-        }
+    const saveObservables = this.noteTypes.map(noteType => {
+      this.typeNote = noteType;
+      return this.submitAllNotes();
+    });
 
-        this.isLoading = true;
-        return forkJoin(noteObservables);
-      }),
-      tap(results => console.log('All notes save results:', results)),
-      catchError(err => {
-        console.error('Error in forkJoin:', err);
+    forkJoin(saveObservables).pipe(
+      finalize(() => {
         this.isLoading = false;
-        this.errorMessage = 'Une erreur est survenue lors de l\'enregistrement des notes.';
-        return of([]);
+        if (!this.errorMessage) {
+          this.successMessage = 'Toutes les notes pour tous les types ont été enregistrées avec succès !';
+        }
+        this.loadNotesAndCoefficients();
       })
-    ).subscribe(() => {
-      this.errorMessage = '';
-      this.isLoading = false;
-      this.successMessage = 'Notes enregistrées avec succès !';
-      this.loadNotesAndCoefficients();
+    ).subscribe({
+      error: err => {
+        this.handleError(err, 'Erreur lors de l\'enregistrement des notes pour tous les types');
+      }
     });
   }
 

@@ -40,4 +40,9 @@ export class PanierService {
   deletePanier(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+  getPaniersByTeacher(): Observable<PanierDto[]> {
+  const url = `${this.apiUrl}/teacher`; 
+  return this.http.get<PanierDto[]>(url, { headers: this.getHeaders() });
+}
+
 }

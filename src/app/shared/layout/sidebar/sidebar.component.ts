@@ -91,24 +91,14 @@ export class SidebarComponent implements OnInit, AfterViewInit {
       route: 'dashboard',
       exact: true
     },
-    {
-      label: 'Matières',
-      icon: 'fas fa-book-open',
-      route: 'Matier',
-      exact: true
-    },
+   
     {
       label: 'Notes',
       icon: 'fas fa-clipboard-list',
       route: 'notes',
       exact: true
     },
-    {
-      label: 'Étudiants',
-      icon: 'fas fa-graduation-cap',
-      route: 'Etudiant',
-      exact: true
-    }
+   
   ];
 
   menuItems: any[] = [];

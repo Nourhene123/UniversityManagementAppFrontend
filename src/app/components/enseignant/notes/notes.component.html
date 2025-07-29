@@ -36,7 +36,7 @@
       <div class="grid grid-cols-1 gap-4">
         <!-- Select TypeNote -->
         <div class="form-group">
-          <label for="typeNote" class="block text-sm font-medium">Type de Note</label>
+          <label for="typeNote" class="block text-sm font-medium">Type de Note (pour coefficients)</label>
           <select
             id="typeNote"
             [(ngModel)]="typeNote"
@@ -50,7 +50,7 @@
               {{ noteType }}
             </option>
           </select>
-          <small id="typeNoteHelp" class="text-xs">Choisissez le type de note à enregistrer.</small>
+          <small id="typeNoteHelp" class="text-xs">Choisissez le type de note pour gérer les coefficients.</small>
         </div>
       </div>
 
@@ -87,7 +87,7 @@
                     [(ngModel)]="coefficientMap[matiere.id + '_' + typeNote]"
                     (ngModelChange)="updateCoefficient(matiere.id!, $event)"
                     placeholder="Coefficient"
-                    class="w-24 p-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    class="coefficient-input w-24 p-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     [ngClass]="{'border-red-500': isInvalidCoefficient(matiere.id!)}"
                     [attr.aria-label]="'Coefficient pour ' + matiere.nom + ' et ' + typeNote"
                   />
@@ -124,8 +124,10 @@
         >
           <h3 class="text-lg font-semibold">
             {{ matiere.nom }}
-            <span *ngIf="typeNote && coefficientMap[matiere.id + '_' + typeNote] !== undefined" class="text-sm text-blue-600">
-              (Coefficient: {{ coefficientMap[matiere.id + '_' + typeNote] | number:'1.1-2' }})
+            <span *ngFor="let noteType of noteTypes">
+              <span *ngIf="coefficientMap[matiere.id + '_' + noteType] !== undefined" class="text-sm text-blue-600">
+                ({{ noteType }}: {{ coefficientMap[matiere.id + '_' + noteType] | number:'1.1-2' }})
+              </span>
             </span>
           </h3>
           <svg class="w-5 h-5 transition-transform" [ngClass]="{'rotate-180': matiereExpanded[matiereIndex]}" aria-hidden="true" fill="none" stroke="currentColor">
@@ -148,7 +150,9 @@
                 <tr>
                   <th class="p-3 text-left text-sm font-medium">Étudiant</th>
                   <th class="p-3 text-left text-sm font-medium">Numéro d'inscription</th>
-                  <th class="p-3 text-left text-sm font-medium">Notes (0-20)</th>
+                  <th *ngFor="let noteType of noteTypes" class="p-3 text-left text-sm font-medium">
+                    Notes {{ noteType }} (0-20)
+                  </th>
                   <th class="p-3 text-left text-sm font-medium">Actions</th>
                 </tr>
               </thead>
@@ -156,26 +160,25 @@
                 <tr *ngFor="let etudiant of parcour.etudiants; let etudiantIndex = index" class="border-t">
                   <td class="p-3">{{ etudiant.nom }} {{ etudiant.prenom }}</td>
                   <td class="p-3">{{ etudiant.numeroInscription }}</td>
-                  <td class="p-3">
+                  <td *ngFor="let noteType of noteTypes" class="p-3">
                     <div class="note-inputs flex gap-2">
-                      <div *ngFor="let noteIndex of getNoteIndices(matiere.id!, etudiant.id!); let j = index" class="note-input flex items-center gap-1">
+                      <div *ngFor="let noteIndex of getNoteIndices(matiere.id!, etudiant.id!, noteType); let j = index" class="note-input flex items-center gap-1">
                         <input
                           type="number"
                           min="0"
                           max="20"
-                          step="0.1"
-                          [(ngModel)]="notesMap[matiere.id + '_' + etudiant.id][j]"
-                          (ngModelChange)="addNote(matiere.id!, etudiant.id!, j, $event)"
-                          placeholder="Note {{ j + 1 }}"
+                          [(ngModel)]="notesMap[matiere.id + '_' + etudiant.id + '_' + noteType][j]"
+                          (ngModelChange)="addNote(matiere.id!, etudiant.id!, j, $event, noteType)"
+                          placeholder="Note {{ j + 1 }} {{ noteType }}"
                           class="w-20 p-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                          [ngClass]="{'border-red-500': notesMap[matiere.id + '_' + etudiant.id][j] !== undefined && (notesMap[matiere.id + '_' + etudiant.id][j]! < 0 || notesMap[matiere.id + '_' + etudiant.id][j]! > 20)}"
-                          [attr.aria-label]="'Note ' + (j + 1) + ' pour ' + etudiant.nom + ' ' + etudiant.prenom"
+                          [ngClass]="{'border-red-500': isInvalidNote(matiere.id!, etudiant.id!, noteType, j)}"
+                          [attr.aria-label]="'Note ' + (j + 1) + ' ' + noteType + ' pour ' + etudiant.nom + ' ' + etudiant.prenom"
                         />
                         <button
-                          *ngIf="notesMap[matiere.id + '_' + etudiant.id].length > 1"
+                          *ngIf="notesMap[matiere.id + '_' + etudiant.id + '_' + noteType].length > 1"
                           class="remove-btn text-red-600 hover:text-red-800"
-                          (click)="removeNote(matiere.id!, etudiant.id!, j)"
-                          [attr.aria-label]="'Supprimer la note ' + (j + 1) + ' pour ' + etudiant.nom + ' ' + etudiant.prenom"
+                          (click)="removeNote(matiere.id!, etudiant.id!, j, noteType)"
+                          [attr.aria-label]="'Supprimer la note ' + (j + 1) + ' ' + noteType + ' pour ' + etudiant.nom + ' ' + etudiant.prenom"
                           type="button"
                         >
                           <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor">
@@ -187,15 +190,17 @@
                   </td>
                   <td class="p-3">
                     <button
-                      class="add-btn text-blue-600 hover:text-blue-800"
-                      (click)="addNote(matiere.id!, etudiant.id!)"
-                      [disabled]="notesMap[matiere.id + '_' + etudiant.id].length >= 3"
-                      [attr.aria-label]="'Ajouter une note pour ' + etudiant.nom + ' ' + etudiant.prenom"
+                      *ngFor="let noteType of noteTypes"
+                      class="add-btn text-blue-600 hover:text-blue-800 mr-2"
+                      (click)="addNote(matiere.id!, etudiant.id!, -1, null, noteType)"
+                      [disabled]="notesMap[matiere.id + '_' + etudiant.id + '_' + noteType].length >= 3"
+                      [attr.aria-label]="'Ajouter une note ' + noteType + ' pour ' + etudiant.nom + ' ' + etudiant.prenom"
                       type="button"
                     >
                       <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                       </svg>
+                      {{ noteType }}
                     </button>
                   </td>
                 </tr>
@@ -208,10 +213,10 @@
       <!-- Submit Button -->
       <div class="submit-btn mt-6">
         <button
-          (click)="submitAllNotes()"
-          [disabled]="!typeNote || isLoading || !hasValidNotes()"
+          (click)="submitAllNotesForAllTypes()"
+          [disabled]="isLoading || !hasValidNotes()"
           class="relative px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed overflow-hidden"
-          [attr.aria-label]="'Enregistrer toutes les notes'"
+          [attr.aria-label]="'Enregistrer toutes les notes pour tous les types'"
           type="button"
         >
           <span>Enregistrer toutes les Notes</span>
