@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { EnseignantRoutingModule } from './enseignant-routing.module';
-import { DashboardEnsignantComponent} from './dashboardEnseignant/dashboard.component';
+import { DashboardComponent} from './dashboardEnseignant/dashboard.component';
 import { NotesComponent } from './notes/notes.component';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,11 +12,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormsModule } from '@angular/forms';
+import { NgChartsModule } from 'ng2-charts';
 
 
 @NgModule({
   declarations: [
-   DashboardEnsignantComponent,
+   DashboardComponent,
    NotesComponent
   ],
   imports: [
@@ -29,7 +30,8 @@ import { FormsModule } from '@angular/forms';
     MatInputModule,
     MatTableModule,
     MatProgressSpinnerModule,
-     FormsModule
+     FormsModule,
+     NgChartsModule,
   ]
   ,
   exports: [

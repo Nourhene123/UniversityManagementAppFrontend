@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { authGuard } from 'src/app/AuthGuard/auth.guard';
 import { LayoutComponent } from 'src/app/shared/layout/layout.component';
-import {DashboardEnsignantComponent } from './dashboardEnseignant/dashboard.component';
+import {DashboardComponent } from './dashboardEnseignant/dashboard.component';
 import { NotesComponent } from './notes/notes.component';
 
 const routes: Routes = [
@@ -11,7 +11,7 @@ const routes: Routes = [
     component: LayoutComponent,
     canActivate: [authGuard],
     children: [
-      { path: 'dashboard', component: DashboardEnsignantComponent },
+      { path: 'dashboard', component: DashboardComponent },
     { path: 'notes', component: NotesComponent },]
 }];
 

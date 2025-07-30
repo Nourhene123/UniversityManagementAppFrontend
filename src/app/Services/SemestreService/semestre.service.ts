@@ -1,4 +1,3 @@
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { catchError, Observable, throwError } from 'rxjs';
@@ -8,12 +7,12 @@ import { SemestreDto } from 'src/app/models/SemestreDto';
   providedIn: 'root'
 })
 export class SemestreService {
-  
-  private apiUrl = 'http://localhost:8080/api/semestres'; 
+  private apiUrl = 'http://localhost:8080/api/semestres';
 
   constructor(private http: HttpClient) {}
+
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token'); 
+    const token = localStorage.getItem('token');
     return new HttpHeaders({
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : ''
@@ -21,18 +20,23 @@ export class SemestreService {
   }
 
   getAllSemestres(): Observable<SemestreDto[] | null> {
-    return this.http.get<SemestreDto[]>(this.apiUrl);
+    return this.http.get<SemestreDto[]>(this.apiUrl, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   getSemestreById(id: number): Observable<SemestreDto> {
-    return this.http.get<SemestreDto>(`${this.apiUrl}/${id}`);
+    return this.http.get<SemestreDto>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError)
+    );
   }
 
- createSemestre(semestre: SemestreDto): Observable<SemestreDto> {
+  createSemestre(semestre: SemestreDto): Observable<SemestreDto> {
     return this.http.post<SemestreDto>(this.apiUrl, semestre, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError)
     );
   }
+
   updateSemestre(semestre: SemestreDto): Observable<SemestreDto> {
     return this.http.put<SemestreDto>(`${this.apiUrl}/${semestre.id}`, semestre, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError)
@@ -40,11 +44,12 @@ export class SemestreService {
   }
 
   deleteSemestre(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   private handleError(error: any): Observable<never> {
-  
     console.error('An error occurred:', error);
     return throwError(() => error);
   }

@@ -1,15 +1,13 @@
 <section class="min-h-screen container mx-auto p-4" aria-label="Gestion des notes pour enseignants">
   <div class="gradient-border"></div>
 
-  <!-- Header -->
   <header class="header mb-6">
     <h2 class="text-2xl font-bold">Gestion des Notes pour Enseignants</h2>
     <div class="date">Dernière mise à jour: {{ currentDate | date:'medium' }}</div>
   </header>
 
-  <!-- Main Content -->
   <main>
-    <!-- Loading Indicator -->
+   
     <div *ngIf="isLoading" class="loading flex items-center justify-center gap-2 p-4">
       <div class="spinner w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       <span>Chargement des données...</span>
@@ -23,7 +21,6 @@
       <span>{{ errorMessage }}</span>
     </div>
 
-    <!-- Success Message -->
     <div *ngIf="successMessage && !isLoading" class="message success flex items-center gap-2 p-4" role="alert">
       <svg class="w-5 h-5" aria-hidden="true" focusable="false" fill="none" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -31,7 +28,7 @@
       <span>{{ successMessage }}</span>
     </div>
 
-    <!-- Form Section -->
+  
     <section class="form-section mb-8" *ngIf="!isLoading">
       <div class="grid grid-cols-1 gap-4">
         <!-- Select TypeNote -->

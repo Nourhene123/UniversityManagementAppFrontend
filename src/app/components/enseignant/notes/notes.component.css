@@ -424,7 +424,7 @@ body {
   color: #e2e8f0;
   font-size: 0.875rem;
   transition: all 0.3s ease;
-  -webkit-appearance: none; /* Remove spinner for WebKit browsers (Safari, Chrome) */
+  -webkit-appearance: none; 
   -moz-appearance: textfield; /* Remove spinner for Firefox */
 }
 

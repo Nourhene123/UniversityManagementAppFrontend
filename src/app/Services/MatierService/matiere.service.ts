@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { catchError, Observable, tap } from 'rxjs';
 import { MatiereDto } from 'src/app/models/MatiereDto';
+import { MatiereAverageDto } from 'src/app/models/MatiereAverageDto';
 
 @Injectable({
   providedIn: 'root'
@@ -32,6 +33,16 @@ export class MatiereService {
     return this.http.post<MatiereDto>(this.apiUrl, matiere, { headers: this.getHeaders() });
   }
 
+  getMatiereAverages(matiereId: number): Observable<MatiereAverageDto[]> {
+    console.log(`Requesting averages for matiereId: ${matiereId}`);
+    return this.http.get<MatiereAverageDto[]>(`${this.apiUrl}/averages/${matiereId}`).pipe(
+      tap(averages => console.log(`Received averages:`, averages)),
+      catchError(error => {
+        console.error(`Error fetching averages for matiereId ${matiereId}:`, error);
+        throw error;
+      })
+    );
+  }
   deleteMatiere(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
