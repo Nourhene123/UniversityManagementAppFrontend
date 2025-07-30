@@ -9,6 +9,7 @@ import { EtudiantsComponent } from './UserManagement/etudiants/etudiants.compone
 import { EnseignantsComponent } from './UserManagement/enseignants/enseignants.component';
 import { PanierComponent } from './paniers/panier/panier.component';
 import { LayoutComponent } from 'src/app/shared/layout/layout.component';
+import { ClasseComponent } from './classe/classe.component';
 
 const routes: Routes = [
    {
@@ -22,6 +23,8 @@ const routes: Routes = [
       { path: 'Semestre', component:SemestreComponent},
        { path: 'Panier', component:PanierComponent},
       { path: 'Etudiant', component:EtudiantsComponent},
+      
+      { path: 'Classe', component:ClasseComponent},
      
        { path: 'Enseignants', component:EnseignantsComponent},
 

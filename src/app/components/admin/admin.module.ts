@@ -28,6 +28,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { ClasseComponent } from './classe/classe.component';
 
 
 
@@ -40,7 +41,8 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     EnseignantsComponent,
     EtudiantsComponent,
     AdminDashboardComponent,
-    AffectationDialogComponent
+    AffectationDialogComponent,
+    ClasseComponent
   ],
   imports: [
     CommonModule,

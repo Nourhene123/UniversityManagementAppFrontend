@@ -82,6 +82,12 @@ export class SidebarComponent implements OnInit, AfterViewInit {
       route: 'Etudiant',
       exact: true
     }
+    ,  {
+      label: 'Classes',
+      icon: "fas fa-chalkboard",
+      route: 'classe',
+      exact: true
+    }
   ];
 
   private enseignantMenuItems = [
