@@ -32,8 +32,7 @@ export class ParcourService {
  createParcour(parcour: ParcourDto): Observable<ParcourDto> {
   const headers = { 
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('token')}` // Adjust based on your auth mechanism
-  };
+    'Authorization': `Bearer ${localStorage.getItem('token')}` };
   return this.http.post<ParcourDto>(this.apiUrl, parcour, { headers });
 }
 private getHeaders(): HttpHeaders {

@@ -24,7 +24,7 @@ const routes: Routes = [
        { path: 'Panier', component:PanierComponent},
       { path: 'Etudiant', component:EtudiantsComponent},
       
-      { path: 'Classe', component:ClasseComponent},
+      { path: 'classe', component:ClasseComponent},
      
        { path: 'Enseignants', component:EnseignantsComponent},
 

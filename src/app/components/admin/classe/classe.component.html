@@ -1,1 +1,193 @@
-<p>classe works!</p>
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h2 class="header-title">Class Management</h2>
+    <span class="header-date">{{ today | date:'mediumDate' }}</span>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="loading" class="loading">
+    <svg class="spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z"></path>
+    </svg>
+    <span>Loading...</span>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-message">
+    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="success-message">
+    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+    </svg>
+    {{ successMessage }}
+  </div>
+
+  <!-- Search Bar and Download Button -->
+  <div class="search-download">
+    <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)"
+           placeholder="Search by class name or section" class="search-input">
+   
+  </div>
+
+  <!-- Toggle Form Button -->
+  <div class="toggle-form">
+    <button (click)="toggleForm()" class="toggle-form-button">
+      {{ showForm ? 'Cancel' : '+' }}
+    </button>
+  </div>
+
+  <!-- Create/Update Class Form -->
+  <div *ngIf="showForm" class="form-container">
+    <form [formGroup]="classeForm" (ngSubmit)="onSubmit()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="nom" class="form-label">Class Name</label>
+          <input id="nom" formControlName="nom" type="text" placeholder="Enter class name" class="form-input">
+          <small *ngIf="classeForm.get('nom')?.invalid && classeForm.get('nom')?.touched" class="error-text">
+            Name is required (minimum 3 characters).
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="section" class="form-label">Section</label>
+          <input id="section" formControlName="section" type="text" placeholder="Enter section" class="form-input">
+          <small *ngIf="classeForm.get('section')?.invalid && classeForm.get('section')?.touched" class="error-text">
+            Section is required (minimum 2 characters).
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="parcourId" class="form-label">Parcour</label>
+          <select id="parcourId" formControlName="parcourId" class="form-input">
+            <option value="" disabled>Select a parcour</option>
+            <option *ngFor="let parcour of parcours" [ngValue]="parcour.id">{{ parcour.nom }}</option>
+          </select>
+          <small *ngIf="classeForm.get('parcourId')?.invalid && classeForm.get('parcourId')?.touched" class="error-text">
+            Parcour is required.
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="matiereIds" class="form-label">Matieres</label>
+          <select id="matiereIds" formControlName="matiereIds" multiple class="form-input multiple">
+            <option *ngFor="let matiere of matieres" [ngValue]="matiere.id">{{ matiere.nom }}</option>
+          </select>
+          <small *ngIf="classeForm.get('matiereIds')?.hasError('required') && classeForm.get('matiereIds')?.touched" class="error-text">
+            At least one matiere is required.
+          </small>
+          <small *ngIf="classeForm.get('matiereIds')?.value?.length" class="info-text">
+            Selected: {{ getMatiereNames(classeForm.get('matiereIds')?.value) }}
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="enseignantIds" class="form-label">Enseignants</label>
+          <select id="enseignantIds" formControlName="enseignantIds" multiple class="form-input multiple">
+            <option *ngFor="let enseignant of enseignants" [ngValue]="enseignant.id">{{ enseignant.nom }} {{ enseignant.prenom }}</option>
+          </select>
+          <small *ngIf="classeForm.get('enseignantIds')?.hasError('required') && classeForm.get('enseignantIds')?.touched" class="error-text">
+            At least one enseignant is required.
+          </small>
+          <small *ngIf="classeForm.get('enseignantIds')?.value?.length" class="info-text">
+            Selected: {{ getEnseignantNames(classeForm.get('enseignantIds')?.value) }}
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="etudiantIds" class="form-label">Etudiants</label>
+          <select id="etudiantIds" formControlName="etudiantIds" multiple class="form-input multiple">
+            <option *ngFor="let etudiant of etudiants" [ngValue]="etudiant.id">{{ etudiant.nom }} {{ etudiant.prenom }}</option>
+          </select>
+          <small *ngIf="classeForm.get('etudiantIds')?.hasError('required') && classeForm.get('etudiantIds')?.touched" class="error-text">
+            At least one etudiant is required.
+          </small>
+          <small *ngIf="classeForm.get('etudiantIds')?.value?.length" class="info-text">
+            Selected: {{ getEtudiantNames(classeForm.get('etudiantIds')?.value) }}
+          </small>
+        </div>
+      </div>
+      <div class="form-submit">
+        <button type="submit" [disabled]="classeForm.invalid || loading" class="submit-button">
+          {{ editingClassId ? 'Update Class' : 'Create Class' }}
+        </button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Class List -->
+  <div id="class-list" class="class-grid">
+    <div *ngIf="loading" class="class-grid-skeleton">
+      <div class="class-card-skeleton" *ngFor="let _ of [1, 2, 3]">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+      </div>
+    </div>
+    <div *ngIf="!loading && filteredClasses.length === 0" class="no-classes">
+      No classes found.
+    </div>
+    <div *ngFor="let classe of filteredClasses" class="class-card" [attr.aria-expanded]="expandedClassId === classe.id">
+      <div class="card-header">
+        <h3 class="card-title">{{ classe.nom }} - {{ classe.section }}</h3>
+        <button (click)="toggleExpand(classe.id!)" class="expand-button" title="Toggle class details" [attr.aria-label]="'Toggle details for ' + classe.nom">
+          <svg class="icon-expand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" *ngIf="expandedClassId !== classe.id" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" *ngIf="expandedClassId === classe.id" />
+          </svg>
+        </button>
+      </div>
+      <div class="card-content">
+        <p><strong>Parcour:</strong> {{ getParcourNom(classe.parcourId) }}</p>
+        <p><strong>Matieres:</strong> {{ getMatiereNames(classe.matiereIds) }}</p>
+        <p><strong>Enseignants:</strong> {{ getEnseignantNames(classe.enseignantIds) }}</p>
+        <p><strong>Etudiants:</strong> {{ getEtudiantNames(classe.etudiantIds) }}</p>
+      </div>
+      <div *ngIf="expandedClassId === classe.id" class="card-details">
+        <div *ngIf="etudiantsByClasse[classe.id] && etudiantsByClasse[classe.id].length > 0; else noStudents">
+          <h4 class="card-subtitle">Assigned Students</h4>
+          <div class="table-container" id="student-table-{{classe.id}}">
+            <table class="student-table">
+              <thead class="table-header">
+                <tr>
+                  <th class="table-cell">ID</th>
+                  <th class="table-cell">Name</th>
+                  <th class="table-cell">Email</th>
+                  <th class="table-cell">Numero Inscription</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let etudiant of etudiantsByClasse[classe.id]" class="table-row">
+                  <td class="table-cell">{{ etudiant.id }}</td>
+                  <td class="table-cell">{{ etudiant.nom }} {{ etudiant.prenom }}</td>
+                  <td class="table-cell">{{ etudiant.email }}</td>
+                  <td class="table-cell">{{ etudiant.numeroInscription }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <ng-template #noStudents>
+          <div class="no-students">No students assigned.</div>
+        </ng-template>
+        <div class="action-buttons">
+          <button (click)="downloadClassStudents(classe.id!, classe.nom, classe.section)" class="download-button" title="Download students list (PDF)">
+            <svg class="icon-button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H3a2 2 0 01-2-2V3a2 2 0 012-2h18a2 2 0 012 2v16a2 2 0 01-2 2z" />
+            </svg>
+          </button>
+          <button (click)="editClasse(classe)" class="edit-button" title="Edit this class">
+            <svg class="icon-button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+          <button (click)="deleteClasse(classe.id!)" class="delete-button" title="Delete this class">
+            <svg class="icon-button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
