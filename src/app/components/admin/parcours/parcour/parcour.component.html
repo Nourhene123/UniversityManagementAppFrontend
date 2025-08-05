@@ -28,7 +28,7 @@
           </mat-select>
         </mat-form-field>
         <div class="form-actions">
-          <button mat-raised-button color="primary" type="submit" [disabled]="!parcourForm.valid">
+          <button mat-raised-button  type="submit" [disabled]="!parcourForm.valid">
             {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
           </button>
           <button mat-stroked-button (click)="cancelForm()">Annuler</button>
@@ -38,7 +38,7 @@
   </div>
 
   <button mat-flat-button (click)="openForm()">
-    <mat-icon>add</mat-icon> Ajouter Parcour
+    <mat-icon>add</mat-icon>
   </button>
 
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">

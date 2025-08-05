@@ -1,17 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin, of, switchMap, catchError, map, Observable, tap, finalize } from 'rxjs';
-
 import { NoteDto, TypeNote } from 'src/app/models/NoteDto';
-import { ParcourDto } from 'src/app/models/ParcourDto';
+import { ParcourDto, ParcourDtoWithEtudiants } from 'src/app/models/ParcourDto';
 import { MatiereDto } from 'src/app/models/MatiereDto';
 import { EtudiantDto } from 'src/app/models/EtudiantDto';
-import { ParcourWithStudents } from 'src/app/models/ParcourWithStudents';
 import { TypeNoteCoefficientDto } from 'src/app/models/TypeNoteCoefficientDto';
-
 import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
 import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
 import { NoteService } from 'src/app/Services/NoteService/note.service';
+import { EtudiantService } from 'src/app/Services/EtudiantService/etudiant.service';
 
 @Component({
   selector: 'app-notes',
@@ -19,7 +17,7 @@ import { NoteService } from 'src/app/Services/NoteService/note.service';
   styleUrls: ['./notes.component.css']
 })
 export class NotesComponent implements OnInit {
-  matieres: (MatiereDto & { parcours: (ParcourDto & { etudiants: EtudiantDto[] })[] })[] = [];
+  matieres: (MatiereDto & { parcours: ParcourDtoWithEtudiants[] })[] = [];
   typeNote: TypeNote | '' = '';
   noteTypes: TypeNote[] = [];
   errorMessage: string = '';
@@ -35,10 +33,16 @@ export class NotesComponent implements OnInit {
     private matiereService: MatiereService,
     private parcourService: ParcourService,
     private noteService: NoteService,
+    private etudiantService: EtudiantService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    if (!localStorage.getItem('token')) {
+      this.errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+      setTimeout(() => this.router.navigate(['/login']), 2000);
+      return;
+    }
     this.loadNoteTypes();
     this.loadMatieres();
   }
@@ -66,60 +70,75 @@ export class NotesComponent implements OnInit {
         if (!matieres || matieres.length === 0) {
           this.errorMessage = 'Aucune matière assignée à cet enseignant.';
           this.isLoading = false;
-          return of([]);
+          return of([] as (MatiereDto & { parcours: ParcourDtoWithEtudiants[] })[]);
         }
         console.log('Matieres fetched:', matieres);
         this.matiereExpanded = matieres.reduce((acc, _, index) => ({ ...acc, [index]: true }), {});
-        return this.parcourService.getStudentsGroupedByParcour().pipe(
-          switchMap(parcoursWithStudents => {
-            console.log('Parcours with students fetched:', parcoursWithStudents);
-            const parcourObservables = matieres.map(matiere =>
-              this.parcourService.getParcoursByMatiereId(matiere.id!).pipe(
-                map(parcours => {
-                  console.log(`Parcours for matiere ${matiere.nom} (ID: ${matiere.id}):`, parcours);
-                  const parcoursWithEtudiants = parcours.map(parcour => {
-                    const pws = parcoursWithStudents.find(p => p.parcourNom.toLowerCase() === parcour.nom.toLowerCase());
-                    return {
-                      ...parcour,
-                      etudiants: pws ? pws.etudiants || [] : []
-                    } as ParcourDto & { etudiants: EtudiantDto[] };
-                  });
-                  console.log(`Parcours with etudiants for matiere ${matiere.nom}:`, parcoursWithEtudiants);
-                  return {
-                    ...matiere,
-                    parcours: parcoursWithEtudiants
-                  } as MatiereDto & { parcours: (ParcourDto & { etudiants: EtudiantDto[] })[] };
-                }),
-                catchError(err => {
-                  console.error(`Erreur lors du chargement des parcours pour la matière ${matiere.nom}`, err);
-                  this.errorMessage = `Erreur lors du chargement des parcours pour ${matiere.nom}`;
-                  return of({ ...matiere, parcours: [] } as MatiereDto & { parcours: (ParcourDto & { etudiants: EtudiantDto[] })[] });
-                })
-              )
-            );
-            return forkJoin(parcourObservables);
-          }),
-          catchError(err => {
-            console.error('Erreur lors du chargement des parcours avec étudiants', err);
-            this.errorMessage = 'Erreur lors du chargement des parcours avec étudiants';
-            this.isLoading = false;
-            return of([]);
-          })
+        const matiereObservables = matieres.map(matiere =>
+          this.parcourService.getParcoursByMatiereId(matiere.id!).pipe(
+            switchMap(parcours => {
+              console.log(`Parcours for matiere ${matiere.nom} (ID: ${matiere.id}):`, parcours);
+              const etudiantObservables = parcours.map(parcour =>
+                this.etudiantService.getEtudiantsByParcour(parcour.id!).pipe(
+                  map(etudiants => ({
+                    ...parcour,
+                    etudiants: etudiants || []
+                  } as ParcourDtoWithEtudiants)),
+                  catchError(err => {
+                    if (err.message === 'Session expired. Please log in again.') {
+                      this.errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+                      setTimeout(() => this.router.navigate(['/login']), 2000);
+                      return of({ ...parcour, etudiants: [] } as ParcourDtoWithEtudiants);
+                    }
+                    console.error(`Erreur lors du chargement des étudiants pour le parcours ${parcour.nom}:`, err);
+                    return of({ ...parcour, etudiants: [] } as ParcourDtoWithEtudiants);
+                  })
+                )
+              );
+              return forkJoin(
+                etudiantObservables.length > 0
+                  ? etudiantObservables
+                  : [of({ id: 0, nom: 'Unknown', annee: 'N/A', libelle: 'Unknown', etudiants: [] } as ParcourDtoWithEtudiants)]
+              ).pipe(
+                map(parcoursWithEtudiants => ({
+                  ...matiere,
+                  parcours: parcoursWithEtudiants
+                } as MatiereDto & { parcours: ParcourDtoWithEtudiants[] }))
+              );
+            }),
+            catchError(err => {
+              if (err.message === 'Session expired. Please log in again.') {
+                this.errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+                setTimeout(() => this.router.navigate(['/login']), 2000);
+                return of({ ...matiere, parcours: [] } as MatiereDto & { parcours: ParcourDtoWithEtudiants[] });
+              }
+              console.error(`Erreur lors du chargement des parcours pour la matière ${matiere.nom}:`, err);
+              this.errorMessage = `Erreur lors du chargement des parcours pour ${matiere.nom}`;
+              return of({ ...matiere, parcours: [] } as MatiereDto & { parcours: ParcourDtoWithEtudiants[] });
+            })
+          )
+        );
+        return forkJoin(
+          matiereObservables.length > 0
+            ? matiereObservables
+            : [of({ id: 0, nom: 'Aucune matière', parcours: [] } as MatiereDto & { parcours: ParcourDtoWithEtudiants[] })]
         );
       }),
-      tap(matieresAvecParcours => console.log('Final matieres with parcours and etudiants:', matieresAvecParcours)),
+      tap(matieresAvecParcours => {
+        console.log('Final matieres with parcours and etudiants:', matieresAvecParcours);
+        this.matieres = matieresAvecParcours;
+        if (this.matieres.every(matiere => matiere.parcours.every((parcour: ParcourDtoWithEtudiants) => parcour.etudiants.length === 0))) {
+          this.errorMessage = 'Aucun étudiant trouvé pour les matières et parcours associés.';
+          console.log('No students found for any parcours');
+        }
+      }),
       catchError(err => {
         this.handleError(err, 'Erreur lors du chargement des matières');
         this.isLoading = false;
-        return of([]);
+        return of([] as (MatiereDto & { parcours: ParcourDtoWithEtudiants[] })[]);
       })
-    ).subscribe(matieresAvecParcours => {
-      this.matieres = matieresAvecParcours;
+    ).subscribe(() => {
       this.isLoading = false;
-      if (this.matieres.every(matiere => (matiere.parcours as unknown as (ParcourDto & { etudiants: EtudiantDto[] })[]).every(parcour => parcour.etudiants.length === 0))) {
-        this.errorMessage = 'Aucun étudiant trouvé pour les matières et parcours associés.';
-        console.log('No students found for any parcours');
-      }
     });
   }
 
@@ -232,7 +251,7 @@ export class NotesComponent implements OnInit {
         const currentNotesMap = { ...this.notesMap };
         this.notesMap = {};
         this.matieres.forEach(matiere => {
-          (matiere.parcours as unknown as (ParcourDto & { etudiants: EtudiantDto[] })[]).forEach(parcour => {
+          matiere.parcours.forEach((parcour: ParcourDtoWithEtudiants) => {
             parcour.etudiants.forEach((etudiant: EtudiantDto) => {
               this.noteTypes.forEach(noteType => {
                 const key = `${matiere.id}_${etudiant.id}_${noteType}`;
@@ -294,7 +313,7 @@ export class NotesComponent implements OnInit {
       };
       this.noteService.getCoefficientsByMatiere(matiereId).pipe(
         switchMap(coefficients => {
-          const existing = coefficients.find(c => c.typeNote === this.typeNote); // Corrected to c.typeNote
+          const existing = coefficients.find(c => c.typeNote === this.typeNote);
           if (existing) {
             return this.noteService.updateCoefficient(existing.id!, coefficientDto);
           } else {
@@ -328,7 +347,7 @@ export class NotesComponent implements OnInit {
     this.isLoading = true;
     this.noteService.getCoefficientsByMatiere(matiereId).pipe(
       switchMap(coefficients => {
-        const existing = coefficients.find(c => c.typeNote === this.typeNote); // Corrected to c.typeNote
+        const existing = coefficients.find(c => c.typeNote === this.typeNote);
         if (existing) {
           return this.noteService.deleteCoefficient(existing.id!).pipe(
             tap(() => {
@@ -357,7 +376,7 @@ export class NotesComponent implements OnInit {
     const noteObservables: Observable<NoteDto | null>[] = [];
 
     for (let matiere of this.matieres) {
-      for (let parcour of (matiere.parcours as unknown as (ParcourDto & { etudiants: EtudiantDto[] })[])) {
+      for (let parcour of matiere.parcours as ParcourDtoWithEtudiants[]) {
         for (let etudiant of parcour.etudiants) {
           this.noteTypes.forEach(noteType => {
             const key = `${matiere.id}_${etudiant.id}_${noteType}`;
@@ -457,9 +476,10 @@ export class NotesComponent implements OnInit {
   }
 
   handleError(err: any, message: string): void {
-    if (err.status === 403) {
-      this.errorMessage = 'Accès refusé. Veuillez vérifier vos permissions ou vous reconnecter.';
-      console.error('403 Forbidden:', err);
+    if (err.status === 403 || err.message === 'Session expired. Please log in again.') {
+      this.errorMessage = 'Accès refusé. Veuillez vous reconnecter.';
+      console.error('Authentication error:', err);
+      localStorage.removeItem('token');
       setTimeout(() => this.router.navigate(['/login']), 2000);
     } else {
       this.errorMessage = message;

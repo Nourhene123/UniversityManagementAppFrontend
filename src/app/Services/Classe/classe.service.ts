@@ -55,4 +55,9 @@ export class ClasseService {
    getEtudiantsByClasseId(classeId: number): Observable<EtudiantDto[]> {
     return this.http.get<EtudiantDto[]>(`${this.apiUrl}/${classeId}/etudiants`);
   }
+  getClassesByEnseignantId(enseignantId: number): Observable<ClasseDto[]> {
+  return this.http.get<ClasseDto[]>(`${this.apiUrl}/enseignant/${enseignantId}`).pipe(
+    catchError(this.handleError)
+  );
+}
 }

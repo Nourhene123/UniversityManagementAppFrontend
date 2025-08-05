@@ -1,3 +1,4 @@
+import { EtudiantDto } from './EtudiantDto';
 import { MatiereDto } from './MatiereDto';
 import { SemestreDto } from './SemestreDto';
 export interface ParcourDto {
@@ -5,9 +6,11 @@ export interface ParcourDto {
   nom: string;
   annee: string;
   libelle: string;
-  etudiantIds?: number[];
   panierIds?: number[];
   
   matieres?: MatiereDto[];
   semesters?: SemestreDto[];
+}
+export interface ParcourDtoWithEtudiants extends ParcourDto {
+  etudiants: EtudiantDto[];
 }

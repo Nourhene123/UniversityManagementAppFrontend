@@ -18,7 +18,7 @@ export class ParcourComponent implements OnInit {
   dataSource = new MatTableDataSource<ParcourDto>();
   showForm = false;
   editMode = false;
-  newParcour: ParcourDto = { nom: '', annee: '', libelle: '', etudiantIds: [], panierIds: [] }; // Consistent with interface
+  newParcour: ParcourDto = { nom: '', annee: '', libelle: '', panierIds: [] }; // Consistent with interface
   paniers: PanierDto[] = [];
 
   constructor(
@@ -74,7 +74,7 @@ export class ParcourComponent implements OnInit {
   openForm() {
     this.showForm = true;
     this.editMode = false;
-    this.newParcour = { nom: '', annee: '', libelle: '', etudiantIds: [], panierIds: [] };
+    this.newParcour = { nom: '', annee: '', libelle: '',  panierIds: [] };
   }
 
   cancelForm() {
@@ -87,7 +87,6 @@ export class ParcourComponent implements OnInit {
       nom: formValue.nom,
       annee: formValue.annee,
       libelle: formValue.libelle,
-      etudiantIds: formValue.etudiantIds || [], // Use array for consistency
       panierIds: formValue.panierIds || []
     };
     const serviceCall = this.editMode

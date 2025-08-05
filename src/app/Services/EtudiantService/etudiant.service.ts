@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { catchError, Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { catchError, Observable, throwError } from 'rxjs';
 import { EtudiantDto } from 'src/app/models/EtudiantDto';
-// Define or import EtudiantWithNote interface
+
 export interface EtudiantWithNote {
   etudiant: EtudiantDto;
-  notes: any[]; 
+  notes: any[];
 }
 
 @Injectable({
@@ -44,10 +44,31 @@ getEtudiantCount(): Observable<number> {
 assignParcourToEtudiants(etudiantIds: number[], parcourId: number): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/assign-parcour`, { etudiantIds, parcourId });
   }
-  getEtudiantsByParcour(parcourId: number): Observable<EtudiantDto[]> {
-  return this.http.get<EtudiantDto[]>(`${this.apiUrl}/parcours/${parcourId}/etudiants`);
-}
 
- 
+   private getHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token');
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    });
+  }
+
+  getEtudiantsByParcour(parcourId: number): Observable<EtudiantDto[]> {
+    return this.http.get<EtudiantDto[]>(`http://localhost:8080/api/etudiants/parcours/${parcourId}`, { headers: this.getHeaders() })
+      .pipe(
+        catchError(err => {
+          console.error(`Error fetching students for parcour ${parcourId}:`, err);
+          if (err.status === 403) {
+            localStorage.removeItem('token'); // Clear invalid token
+            return throwError(() => new Error('Session expired. Please log in again.'));
+          }
+          return throwError(() => new Error(`Failed to fetch students for parcour ${parcourId}`));
+        })
+      );
+  }
+
+  private handleError(err: any): Observable<never> {
+    console.error('EtudiantService error:', err);
+    return throwError(() => new Error(err.message || 'Server error'));
+  }
 }
-  

@@ -1,7 +1,7 @@
 import { NoteDto } from "./NoteDto";
 
 export interface MatiereDto {
-  parcours: never[];
+  parcours?: never[];
   id?: number; 
   nom: string;
   volumeHoraire: number;

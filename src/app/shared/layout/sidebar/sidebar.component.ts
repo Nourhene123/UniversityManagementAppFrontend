@@ -58,23 +58,13 @@ export class SidebarComponent implements OnInit, AfterViewInit {
       label: 'Matières',
       icon: 'fas fa-book-open',
       route: 'Matier',
-      exact: true,
-      submenu: [
-        { label: 'Liste des matières', route: 'Matier' },
-        { label: 'Ajouter matière', route: '/admin/Matiere/add' }
-      ],
-      expanded: false
+      exact: true
     },
     {
       label: 'Enseignants',
       icon: 'fas fa-chalkboard-teacher',
       route: 'Enseignants',
-      exact: true,
-      submenu: [
-        { label: 'Liste des enseignants', route: 'Enseignants' },
-        { label: 'Ajouter enseignant', route: '/admin/Enseignants/add' }
-      ],
-      expanded: false
+      exact: true
     },
     {
       label: 'Étudiants',

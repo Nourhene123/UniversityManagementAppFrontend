@@ -9,14 +9,11 @@
             <mat-icon>close</mat-icon>
           </button>
         </div>
-        <mat-form-field >
+        <mat-form-field>
           <mat-label>Name</mat-label>
           <input matInput name="nom" [(ngModel)]="newSemestre.nom" required>
         </mat-form-field>
-        <mat-form-field >
-          <mat-label>Panier IDs (comma-separated)</mat-label>
-          <input matInput name="panierIds" [ngModel]="panierIdsString" (ngModelChange)="updatePanierIds($event)">
-        </mat-form-field>
+        
         <div class="form-actions">
           <button mat-raised-button color="primary" type="submit" [disabled]="!semestreForm.valid">
             {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
@@ -28,7 +25,7 @@
   </div>
 
   <button mat-raised-button (click)="openForm()" style="margin-top: 10px;">
-    <mat-icon>add</mat-icon> 
+    <mat-icon>add</mat-icon>
   </button>
 
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">

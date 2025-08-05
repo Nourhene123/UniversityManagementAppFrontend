@@ -1,34 +1,58 @@
-.semestres-list {
-  padding: 24px;
-  background: linear-gradient(135deg, #1a252f 0%, #1e2a38 100%);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  margin-bottom: 24px;
-  color: #ecf0f1;
-  position: relative;
-  overflow: hidden;
+/* Root variables (aligned with dashboard) */
+:root {
+  --primary-bg: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  --secondary-bg: linear-gradient(135deg, #2d3748 0%, #4b5563 80%);
+  --border-color: #4b5563;
+  --text-color: #e5e7eb;
+  --accent-color: #3b82f6;
+  --success-color: #22c55e;
+  --error-color: #ef4444;
+  --shadow-light: 0 6px 20px rgba(0, 0, 0, 0.25);
+  --shadow-medium: 0 12px 40px rgba(0, 0, 0, 0.3);
+  --transition-speed: 0.3s ease;
 }
 
+/* Base styles for the semestres list container */
+.semestres-list {
+  padding: 1.5rem;
+  background: #1f2937;
+  border-radius: 1.25rem;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+  margin-bottom: 2.5rem;
+  color: #e5e7eb;
+  position: relative;
+  overflow: hidden;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Gradient Border */
 .semestres-list::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #3498db, #2980b9, #8e44ad);
-  border-radius: 12px 12px 0 0;
+  height: 5px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #f59e0b);
+  border-radius: 1.25rem 1.25rem 0 0;
 }
 
+/* Header Styling */
 .semestres-list h2 {
-  margin: 0 0 24px 0;
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #f9fafb;
+  margin: 0 0 2.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+  animation: slideIn 0.6s ease-out;
 }
 
-/* Modal Overlay */
+/* Modal Overlay (unchanged) */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -44,6 +68,7 @@
   animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Modal Content (unchanged) */
 .modal-content {
   background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
   padding: 32px;
@@ -67,7 +92,7 @@
   border-radius: 16px 16px 0 0;
 }
 
-/* Form Header */
+/* Form Header (unchanged) */
 .form-header {
   display: flex;
   justify-content: space-between;
@@ -85,6 +110,7 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* Close Button (unchanged) */
 .close-button {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
@@ -108,7 +134,7 @@
   font-size: 20px;
 }
 
-/* Form Styling */
+/* Form Styling (unchanged) */
 .semestre-form {
   display: flex;
   flex-direction: column;
@@ -119,7 +145,7 @@
   width: 100%;
 }
 
-/* Material Form Field Customization */
+/* Material Form Field Customization (unchanged) */
 .semestre-form ::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline,
 .semestre-form ::ng-deep .mat-form-field-appearance-fill .mat-form-field-underline {
   color: rgba(255, 255, 255, 0.2);
@@ -169,7 +195,7 @@
   color: #e74c3c;
 }
 
-/* Form Actions */
+/* Form Actions (unchanged) */
 .form-actions {
   display: flex;
   gap: 12px;
@@ -236,18 +262,21 @@
   transform: translateY(-1px);
 }
 
-/* Add Button Styling */
+/* Add Button Styling (updated to match dashboard) */
 button[mat-raised-button]:not(.form-actions button) {
-  background: linear-gradient(135deg, #27ae60, #2ecc71);
-  color: white;
-  border-radius: 8px;
-  padding: 12px 24px;
+   background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  color: #f9fafb;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
-  transition: all 0.2s ease;
-  margin-bottom: 24px;
+  letter-spacing: 0.05rem;
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.25);
+  transition: all 0.3s ease;
+  margin-bottom: 2.5rem;
+  margin-top: 0.625rem;
   position: relative;
   overflow: hidden;
 }
@@ -268,162 +297,205 @@ button[mat-raised-button]:not(.form-actions button):hover::before {
 }
 
 button[mat-raised-button]:not(.form-actions button):hover {
-  background: linear-gradient(135deg, #2ecc71, #27ae60);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(34, 105, 197, 0.4);
 }
 
 button[mat-raised-button]:not(.form-actions button) mat-icon {
-  margin-right: 8px;
+  margin-right: 0.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
-/* Table Styling */
+/* Table Styling (updated to match dashboard) */
 .mat-elevation-z8 {
-  border-radius: 8px;
-  background-color: #2c3e50;
-  border: 1px solid #34495e;
+  border-radius: 0.75rem;
   overflow: hidden;
-  box-shadow: none;
+  background: #2d3748;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-height: 600px;
+  overflow-y: auto;
 }
 
-/* Table Headers */
-mat-header-cell {
-  background-color: #34495e;
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 16px 20px;
-  border-bottom: 1px solid #3a526b;
-}
-
-/* Table Cells */
+mat-header-cell,
 mat-cell {
-  color: #ecf0f1;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #4b5563;
+  font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
-  padding: 16px 20px;
-  border-bottom: 1px solid #3a526b;
-  background-color: transparent;
+  color: #e5e7eb;
+  text-align: left;
 }
 
-/* Table Rows */
+mat-header-cell {
+  background: #4b5563;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  color: #f3f4f6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
 mat-row {
-  background-color: transparent;
-  transition: background-color 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 mat-row:hover {
-  background-color: #354a5f;
+  background: #374151;
+  transform: translateY(-2px);
+}
+
+mat-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 mat-row:last-child mat-cell {
   border-bottom: none;
 }
 
-/* Action Buttons */
+/* Action Buttons in Table (updated to match dashboard) */
 mat-cell button[mat-icon-button] {
-  width: 32px;
-  height: 32px;
-  margin-right: 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  margin-right: 0.5rem;
+}
+
+mat-cell button[mat-icon-button]:hover {
+  transform: translateY(-3px);
 }
 
 mat-cell button[color="accent"] {
-  color: #3498db;
-  background-color: transparent;
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
 }
 
 mat-cell button[color="accent"]:hover {
-  background-color: rgba(52, 152, 219, 0.1);
+  background: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3);
 }
 
 mat-cell button[color="warn"] {
-  color: #e74c3c;
-  background-color: transparent;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
 }
 
 mat-cell button[color="warn"]:hover {
-  background-color: rgba(231, 76, 60, 0.1);
+  background: rgba(239, 68, 68, 0.25);
+  box-shadow: 0 6px 15px rgba(239, 68, 68, 0.3);
 }
 
-/* Remove any extra shadows or effects */
-mat-header-row,
-mat-row {
-  box-shadow: none;
-}
-
-/* Simple scrollbar */
-.mat-elevation-z8::-webkit-scrollbar {
-  width: 6px;
-}
-
-.mat-elevation-z8::-webkit-scrollbar-track {
-  background: #34495e;
-}
-
-.mat-elevation-z8::-webkit-scrollbar-thumb {
-  background: #5a6c7d;
-  border-radius: 3px;
-}
-
-.mat-elevation-z8::-webkit-scrollbar-thumb:hover {
-  background: #6c7b8a;
-}
-
-/* Animations */
+/* Animations (aligned with dashboard) */
 @keyframes fadeIn {
-  from { 
-    opacity: 0; 
+  from {
+    opacity: 0;
   }
-  to { 
-    opacity: 1; 
+  to {
+    opacity: 1;
   }
 }
 
 @keyframes slideIn {
-  from { 
-    transform: translateY(-30px) scale(0.95); 
-    opacity: 0; 
+  from {
+    transform: translateY(30px);
+    opacity: 0;
   }
-  to { 
-    transform: translateY(0) scale(1); 
-    opacity: 1; 
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design (aligned with dashboard) */
+@media (max-width: 640px) {
+  .semestres-list {
+    padding: 1rem;
+    margin: 1rem;
+  }
+
+  .semestres-list h2 {
+    font-size: 1.75rem;
+  }
+
   .modal-content {
     width: 95%;
     padding: 24px;
     margin: 20px;
   }
-  
+
   .form-actions {
     flex-direction: column;
   }
-  
+
   .form-actions button {
     width: 100%;
     margin-bottom: 8px;
   }
-  
-  .semestres-list {
-    padding: 16px;
+
+  .mat-elevation-z8 {
+    display: block;
+    overflow-x: auto;
   }
-  
-  .semestres-list h2 {
-    font-size: 1.5rem;
+
+  mat-header-cell,
+  mat-cell {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
   }
-  
+
   .form-header h3 {
     font-size: 1.3rem;
   }
 }
 
-/* Loading States */
+@media (min-width: 1024px) {
+  .semestres-list h2 {
+    font-size: 2.75rem;
+  }
+}
+
+/* Scrollbar Styling */
+.mat-elevation-z8 {
+  scroll-behavior: smooth;
+}
+
+.mat-elevation-z8::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.mat-elevation-z8::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.mat-elevation-z8::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.mat-elevation-z8::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Focus States for Accessibility */
+button[mat-raised-button]:focus:not(.form-actions button),
+mat-cell button[mat-icon-button]:focus,
+.close-button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Loading States (unchanged) */
 .form-actions button:disabled {
   position: relative;
   color: transparent;
@@ -441,18 +513,4 @@ mat-row {
   border-radius: 50%;
   border-top-color: #ffffff;
   animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Focus States for Accessibility */
-.close-button:focus,
-.form-actions button:focus,
-button[mat-raised-button]:focus {
-  outline: 2px solid #3498db;
-  outline-offset: 2px;
 }

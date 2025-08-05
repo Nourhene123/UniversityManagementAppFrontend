@@ -47,3 +47,5 @@ export class PanierService {
     return this.http.get<PanierDto[]>(url, { headers: this.getHeaders() });
   }
 }
+
+export { PanierDto };
