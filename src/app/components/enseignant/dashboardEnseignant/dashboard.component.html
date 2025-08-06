@@ -65,7 +65,7 @@
            [attr.aria-expanded]="parcourExpanded[parcourIndex]"
            [attr.aria-controls]="'parcour-content-' + parcourIndex">
         <h3 class="text-xl font-semibold text-white">
-          {{ parcour.nom }} - {{ parcour.annee }} (Classe: {{ parcour.classeNom || 'N/A' }})
+          {{ parcour.nom }} - {{ parcour.annee }}
         </h3>
         <svg class="w-6 h-6 text-gray-200 transition-transform duration-300" [ngClass]="{'rotate-180': parcourExpanded[parcourIndex]}" aria-hidden="true" fill="none" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>

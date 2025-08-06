@@ -29,7 +29,8 @@ constructor(private http: HttpClient) {}
   }
   getUtilisateurByEmail(email: string): Observable<EnseignantDto> {
     return this.http.get<EnseignantDto>(`${this.apiUrl}/email/${email}`, { withCredentials: true });
-  }getEnseignantById(id: number): Observable<EnseignantDto> {
+  }
+  getEnseignantById(id: number): Observable<EnseignantDto> {
     return this.http.get<EnseignantDto>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
       catchError(error => {
         console.error(`Error fetching enseignant with id ${id}:`, error);

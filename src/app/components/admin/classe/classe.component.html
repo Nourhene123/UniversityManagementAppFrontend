@@ -28,11 +28,10 @@
     {{ successMessage }}
   </div>
 
-  <!-- Search Bar and Download Button -->
+  <!-- Search Bar -->
   <div class="search-download">
     <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)"
            placeholder="Search by class name or section" class="search-input">
-   
   </div>
 
   <!-- Toggle Form Button -->
@@ -71,30 +70,6 @@
           </small>
         </div>
         <div class="form-group">
-          <label for="matiereIds" class="form-label">Matieres</label>
-          <select id="matiereIds" formControlName="matiereIds" multiple class="form-input multiple">
-            <option *ngFor="let matiere of matieres" [ngValue]="matiere.id">{{ matiere.nom }}</option>
-          </select>
-          <small *ngIf="classeForm.get('matiereIds')?.hasError('required') && classeForm.get('matiereIds')?.touched" class="error-text">
-            At least one matiere is required.
-          </small>
-          <small *ngIf="classeForm.get('matiereIds')?.value?.length" class="info-text">
-            Selected: {{ getMatiereNames(classeForm.get('matiereIds')?.value) }}
-          </small>
-        </div>
-        <div class="form-group">
-          <label for="enseignantIds" class="form-label">Enseignants</label>
-          <select id="enseignantIds" formControlName="enseignantIds" multiple class="form-input multiple">
-            <option *ngFor="let enseignant of enseignants" [ngValue]="enseignant.id">{{ enseignant.nom }} {{ enseignant.prenom }}</option>
-          </select>
-          <small *ngIf="classeForm.get('enseignantIds')?.hasError('required') && classeForm.get('enseignantIds')?.touched" class="error-text">
-            At least one enseignant is required.
-          </small>
-          <small *ngIf="classeForm.get('enseignantIds')?.value?.length" class="info-text">
-            Selected: {{ getEnseignantNames(classeForm.get('enseignantIds')?.value) }}
-          </small>
-        </div>
-        <div class="form-group">
           <label for="etudiantIds" class="form-label">Etudiants</label>
           <select id="etudiantIds" formControlName="etudiantIds" multiple class="form-input multiple">
             <option *ngFor="let etudiant of etudiants" [ngValue]="etudiant.id">{{ etudiant.nom }} {{ etudiant.prenom }}</option>
@@ -108,13 +83,35 @@
         </div>
       </div>
       <div class="form-submit">
-        <button type="submit" [disabled]="classeForm.invalid || loading" class="submit-button">
-          {{ editingClassId ? 'Update Class' : 'Create Class' }}
+        <button type="submit" [disabled]="classeForm.invalid" class="submit-button">
+          {{ editingClassId ? 'Update' : 'Create' }} Class
         </button>
       </div>
     </form>
   </div>
-  
+
+  <!-- Assign Students Modal -->
+  <div *ngIf="showAssignModal" class="modal">
+    <div class="modal-content">
+      <h2>Assign Students to {{ selectedClasse?.nom }} - {{ selectedClasse?.section }}</h2>
+      <form [formGroup]="assignStudentsForm" (ngSubmit)="onAssignStudentsSubmit()">
+        <div class="form-group">
+          <label for="assignEtudiantIds" class="form-label">Select Students</label>
+          <select id="assignEtudiantIds" formControlName="etudiantIds" multiple class="form-input multiple">
+            <option *ngFor="let etudiant of etudiants" [ngValue]="etudiant.id">{{ etudiant.nom }} {{ etudiant.prenom }}</option>
+          </select>
+          <small *ngIf="assignStudentsForm.get('etudiantIds')?.hasError('required') && assignStudentsForm.get('etudiantIds')?.touched" class="error-text">
+            At least one student is required.
+          </small>
+        </div>
+        <div class="modal-actions">
+          <button type="button" (click)="closeAssignModal()" class="cancel-button">Cancel</button>
+          <button type="submit" [disabled]="assignStudentsForm.invalid" class="submit-button">Assign</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Class List -->
   <div id="class-list" class="class-grid">
     <div *ngIf="loading" class="class-grid-skeleton">
@@ -130,21 +127,20 @@
     <div *ngFor="let classe of filteredClasses" class="class-card" [attr.aria-expanded]="expandedClassId === classe.id">
       <div class="card-header">
         <h3 class="card-title">{{ classe.nom }} - {{ classe.section }}</h3>
-        <button (click)="toggleExpand(classe.id!)" class="expand-button" title="Toggle class details" [attr.aria-label]="'Toggle details for ' + classe.nom">
+        <button *ngIf="classe.id" (click)="toggleExpand(classe.id)" class="expand-button" [attr.aria-label]="'Toggle details for ' + classe.nom">
           <svg class="icon-expand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" *ngIf="expandedClassId !== classe.id" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" *ngIf="expandedClassId === classe.id" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getExpandIconPath(classe.id)" />
           </svg>
         </button>
       </div>
       <div class="card-content">
         <p><strong>Parcour:</strong> {{ getParcourNom(classe.parcourId) }}</p>
-        <p><strong>Matieres:</strong> {{ getMatiereNames(classe.matiereIds) }}</p>
-        <p><strong>Enseignants:</strong> {{ getEnseignantNames(classe.enseignantIds) }}</p>
-        <p><strong>Etudiants:</strong> {{ getEtudiantNames(classe.etudiantIds) }}</p>
+        <p><strong>Paniers:</strong> {{ getPanierNames(classe.parcourId) }}</p>
+        <p><strong>Enseignants:</strong> {{ getEnseignantNames(classe.parcourId) }}</p>
+        <p><strong>Etudiants:</strong> {{ getEtudiantNamesForClasse(classe) }}</p>
       </div>
-      <div *ngIf="expandedClassId === classe.id" class="card-details">
-        <div *ngIf="etudiantsByClasse[classe.id] && etudiantsByClasse[classe.id].length > 0; else noStudents">
+      <div *ngIf="classe.id && expandedClassId === classe.id" class="card-details">
+        <div *ngIf="etudiantsByClasse[classe.id].length > 0; else noStudents">
           <h4 class="card-subtitle">Assigned Students</h4>
           <div class="table-container" id="student-table-{{classe.id}}">
             <table class="student-table">
@@ -171,17 +167,22 @@
           <div class="no-students">No students assigned.</div>
         </ng-template>
         <div class="action-buttons">
-          <button (click)="downloadClassStudents(classe.id!, classe.nom, classe.section)" class="download-button" title="Download students list (PDF)">
+          <button *ngIf="classe.id" (click)="openAssignStudentsModal(classe.id, classe.parcourId)" class="assign-button" title="Assign students to this class">
+            <svg class="icon-button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+          <button *ngIf="classe.id" (click)="downloadClassStudents(classe.id, classe.nom, classe.section)" class="download-button" title="Download students list (PDF)">
             <svg class="icon-button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H3a2 2 0 01-2-2V3a2 2 0 012-2h18a2 2 0 012 2v16a2 2 0 01-2 2z" />
             </svg>
           </button>
-          <button (click)="editClasse(classe)" class="edit-button" title="Edit this class">
+          <button *ngIf="classe.id" (click)="editClasse(classe)" class="edit-button" title="Edit this class">
             <svg class="icon-button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
           </button>
-          <button (click)="deleteClasse(classe.id!)" class="delete-button" title="Delete this class">
+          <button *ngIf="classe.id" (click)="deleteClasse(classe.id)" class="delete-button" title="Delete this class">
             <svg class="icon-button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>

@@ -12,6 +12,148 @@
   --transition-speed: 0.3s ease;
 }
 
+/* Filter Container */
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  color: var(--text-color);
+  background: #1f2937; /* Matches .paniers-list */
+  border-radius: 1rem;
+  box-shadow: var(--shadow-light);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Matches .modal-content */
+}
+
+
+/* Filter Semestre Dropdown */
+.filter-semestre {
+  flex: 1;
+  max-width: 300px; /* Matches form field proportions */
+}
+
+.filter-semestre ::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
+  color: rgba(255, 255, 255, 0.2); /* Matches .panier-form */
+  border-radius: 8px;
+}
+
+.filter-semestre ::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
+  color: var(--accent-color); /* Matches .panier-form */
+  border-width: 2px;
+}
+
+.filter-semestre ::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline-thick {
+  color: rgba(255, 255, 255, 0.3); /* Matches .panier-form */
+}
+
+.filter-semestre ::ng-deep .mat-form-field-label {
+  color: rgba(255, 255, 255, 0.7); /* Matches .panier-form */
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-semestre ::ng-deep .mat-focused .mat-form-field-label {
+  color: var(--accent-color); /* Matches .panier-form */
+}
+
+.filter-semestre ::ng-deep .mat-select-value,
+.filter-semestre ::ng-deep .mat-select-arrow {
+  color: var(--text-color);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+}
+
+.filter-semestre ::ng-deep .mat-select-panel {
+  background: #2d3748; /* Matches table background */
+  border-radius: 8px;
+  box-shadow: var(--shadow-medium);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filter-semestre ::ng-deep .mat-option {
+  color: var(--text-color);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  transition: background var(--transition-speed);
+}
+
+.filter-semestre ::ng-deep .mat-option:hover,
+.filter-semestre ::ng-deep .mat-option.mat-selected:not(.mat-option-disabled) {
+  background: rgba(59, 130, 246, 0.15); /* Matches hover in .panier-form */
+}
+
+/* Clear Filter Button */
+.clear-filter-button {
+  height: 48px; /* Matches form-actions button */
+  border-radius: 8px;
+  background: transparent;
+  border: 2px solid rgba(243, 242, 242, 0.2); /* Matches form-actions button[mat-stroked-button] */
+  color: var(--text-color);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 1.5rem;
+  transition: all var(--transition-speed);
+  position: relative;
+  overflow: hidden;
+}
+
+.clear-filter-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent); /* Matches form-actions button */
+  transition: left 0.5s ease;
+}
+
+.clear-filter-button:hover::before {
+  left: 100%;
+}
+
+.clear-filter-button:hover {
+  background: rgba(255, 255, 255, 0.05); /* Matches form-actions button[mat-stroked-button] */
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px); /* Matches form-actions button[mat-stroked-button] */
+  box-shadow: var(--shadow-light);
+}
+
+.clear-filter-button:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px; /* Matches other focus states */
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .filter-semestre {
+    max-width: 100%;
+  }
+
+  .clear-filter-button {
+    width: 100%;
+    margin-top: 0.75rem;
+  }
+}
+
+
 /* Base styles for the paniers list container */
 .paniers-list {
   padding: 1.5rem;

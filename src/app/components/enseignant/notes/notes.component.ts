@@ -121,7 +121,7 @@ export class NotesComponent implements OnInit {
         return forkJoin(
           matiereObservables.length > 0
             ? matiereObservables
-            : [of({ id: 0, nom: 'Aucune matière', parcours: [] } as MatiereDto & { parcours: ParcourDtoWithEtudiants[] })]
+            : [of({ id: 0, nom: 'Aucune matière', parcours: [] } as unknown as MatiereDto & { parcours: ParcourDtoWithEtudiants[] })]
         );
       }),
       tap(matieresAvecParcours => {

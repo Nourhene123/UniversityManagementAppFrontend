@@ -7,11 +7,9 @@ import { MatiereDto } from 'src/app/models/MatiereDto';
 import { ParcourDto, ParcourDtoWithEtudiants } from 'src/app/models/ParcourDto';
 import { EtudiantDto } from 'src/app/models/EtudiantDto';
 import { MatiereAverageDto } from 'src/app/models/MatiereAverageDto';
-import { ClasseDto } from 'src/app/models/ClasseDto'; // Import ClasseDto
 import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
 import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
 import { EtudiantService } from 'src/app/Services/EtudiantService/etudiant.service';
-import { ClasseService } from 'src/app/Services/Classe/classe.service';
 
 interface MatiereWithAverages extends MatiereDto {
   averages: MatiereAverageDto[];
@@ -20,7 +18,6 @@ interface MatiereWithAverages extends MatiereDto {
 interface ParcourWithMatieres extends ParcourDto {
   matieres: MatiereWithAverages[];
   etudiants: EtudiantDto[];
-  classeNom?: string; // Add classeNom
 }
 
 interface StudentPerformance {
@@ -73,7 +70,6 @@ export class DashboardComponent implements OnInit {
     private matiereService: MatiereService,
     private parcourService: ParcourService,
     private etudiantService: EtudiantService,
-    private classeService: ClasseService, 
     private router: Router
   ) {}
 
@@ -100,8 +96,7 @@ export class DashboardComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    // Assume enseignantId is stored in localStorage or provided via a service
-    const enseignantId = Number(localStorage.getItem('enseignantId')) || 1; // Replace with actual logic to get enseignantId
+    const enseignantId = Number(localStorage.getItem('enseignantId')) || 1;
 
     this.matiereService.getMatieresByEnseignant().pipe(
       switchMap((matieres: MatiereDto[]) => {
@@ -145,36 +140,21 @@ export class DashboardComponent implements OnInit {
             })
           )
         );
-        return forkJoin(matiereObservables.length > 0 ? matiereObservables : [of({ matiere: { id: 0, nom: '', volumeHoraire: 0, coefficient: 0, averages: [], parcours: [] } as MatiereWithAverages, parcours: [] })]).pipe(
-          switchMap(matiereParcours => {
-            // Fetch classes for the teacher
-            return this.classeService.getClassesByEnseignantId(enseignantId).pipe(
-              map(classes => ({ matiereParcours, classes })),
-              catchError(err => {
-                console.error('Failed to load classes:', err);
-                this.errorMessage = 'Erreur lors du chargement des classes.';
-                return of({ matiereParcours, classes: [] as ClasseDto[] });
-              })
-            );
-          })
-        );
+        return forkJoin(matiereObservables.length > 0 ? matiereObservables : [of({ matiere: { id: 0, nom: '', volumeHoraire: 0, coefficient: 0, averages: [], parcours: [] } as MatiereWithAverages, parcours: [] })]);
       }),
-      map(({ matiereParcours, classes }) => {
+      map(matiereParcours => {
         const parcoursMap = new Map<number, ParcourWithMatieres>();
         matiereParcours.forEach(({ matiere, parcours }: { matiere: MatiereWithAverages; parcours: ParcourDtoWithEtudiants[] }) => {
           parcours.forEach((p: ParcourDtoWithEtudiants) => {
-            if (!p.id) return; // Skip invalid parcours
+            if (!p.id) return;
             if (!parcoursMap.has(p.id)) {
-              // Find the class for this parcour
-              const classe = classes.find((c: { parcourId: number | undefined; }) => c.parcourId === p.id);
               parcoursMap.set(p.id, {
                 id: p.id,
                 nom: p.nom || 'Unknown',
                 annee: p.annee || 'N/A',
                 libelle: p.libelle || p.nom || 'Unknown',
                 etudiants: p.etudiants || [],
-                matieres: [],
-                classeNom: classe ? classe.nom : 'N/A' // Assign class name
+                matieres: []
               });
             }
             const existingParcour = parcoursMap.get(p.id)!;
@@ -307,7 +287,7 @@ export class DashboardComponent implements OnInit {
   }
 
   updateSuccessRateChart(): void {
-    const labels = this.parcours.map(p => `${p.nom} (${p.annee})${p.classeNom ? ' - ' + p.classeNom : ''}`);
+    const labels = this.parcours.map(p => `${p.nom} (${p.annee})`);
     const successRates = this.parcours.map(parcour => {
       const validStudents = parcour.etudiants.filter(e => {
         const averages = parcour.matieres

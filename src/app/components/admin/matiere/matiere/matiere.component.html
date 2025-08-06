@@ -10,44 +10,39 @@
           </button>
         </div>
         <mat-form-field appearance="fill">
-          <mat-label>Name</mat-label>
+          <mat-label>Nom</mat-label>
           <input matInput formControlName="nom" required>
           <mat-error *ngIf="matiereForm.get('nom')?.hasError('required')">
-            Name is required
+            Le nom est requis
           </mat-error>
         </mat-form-field>
         <mat-form-field appearance="fill">
           <mat-label>Volume Horaire</mat-label>
           <input matInput type="number" formControlName="volumeHoraire" required>
           <mat-error *ngIf="matiereForm.get('volumeHoraire')?.hasError('required')">
-            Volume Horaire is required
+            Le volume horaire est requis
           </mat-error>
           <mat-error *ngIf="matiereForm.get('volumeHoraire')?.hasError('min')">
-            Volume Horaire must be at least 1
+            Le volume horaire doit être supérieur à 0
           </mat-error>
         </mat-form-field>
         <mat-form-field appearance="fill">
           <mat-label>Coefficient</mat-label>
           <input matInput type="number" formControlName="coefficient" required>
           <mat-error *ngIf="matiereForm.get('coefficient')?.hasError('required')">
-            Coefficient is required
+            Le coefficient est requis
           </mat-error>
           <mat-error *ngIf="matiereForm.get('coefficient')?.hasError('min')">
-            Coefficient must be at least 1
+            Le coefficient doit être supérieur à 0
           </mat-error>
-        </mat-form-field>
-        <mat-form-field appearance="fill">
-          <mat-label>Panier</mat-label>
-          <mat-select formControlName="panierId">
-            <mat-option [value]="null">None</mat-option>
-            <mat-option *ngFor="let panier of paniers" [value]="panier.id">{{ panier.nom }}</mat-option>
-          </mat-select>
         </mat-form-field>
         <mat-form-field appearance="fill">
           <mat-label>Enseignant</mat-label>
           <mat-select formControlName="enseignantId">
-            <mat-option [value]="null">None</mat-option>
-            <mat-option *ngFor="let enseignant of enseignants" [value]="enseignant.id">{{ enseignant.nom }}</mat-option>
+            <mat-option [value]="null">Aucun</mat-option>
+            <mat-option *ngFor="let enseignant of enseignants" [value]="enseignant.id">
+              {{ enseignant.nom }} {{ enseignant.prenom }}
+            </mat-option>
           </mat-select>
         </mat-form-field>
         <div class="form-actions">
@@ -61,7 +56,7 @@
   </div>
 
   <button mat-raised-button (click)="openForm()">
-    <mat-icon>add</mat-icon>
+    <mat-icon>add</mat-icon> 
   </button>
   <mat-table [dataSource]="matieres" class="mat-elevation-z8">
     <ng-container matColumnDef="id">
@@ -69,20 +64,16 @@
       <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="nom">
-      <mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="volumeHoraire">
-      <mat-header-cell *matHeaderCellDef>Hours</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef>Volume Horaire</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.volumeHoraire }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="coefficient">
       <mat-header-cell *matHeaderCellDef>Coefficient</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.coefficient }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="panierNom">
-      <mat-header-cell *matHeaderCellDef>Panier</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ getPanierNom(element.panierId) }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="enseignantNom">
       <mat-header-cell *matHeaderCellDef>Enseignant</mat-header-cell>

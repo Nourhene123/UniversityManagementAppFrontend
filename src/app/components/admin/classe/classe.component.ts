@@ -3,15 +3,16 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { forkJoin, of, switchMap, catchError, Observable, Subject } from 'rxjs';
 import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ClasseDto } from 'src/app/models/ClasseDto';
-import { EnseignantDto } from 'src/app/models/EnseignantDto';
 import { EtudiantDto } from 'src/app/models/EtudiantDto';
-import { MatiereDto } from 'src/app/models/MatiereDto';
 import { ParcourDto } from 'src/app/models/ParcourDto';
+import { PanierDto } from 'src/app/models/PanierDto';
+import { MatiereDto } from 'src/app/models/MatiereDto';
+import { EnseignantDto } from 'src/app/models/EnseignantDto';
 import { ClasseService } from 'src/app/Services/Classe/classe.service';
-import { EnseignantService } from 'src/app/Services/EnseignantService/enseignant.service';
 import { EtudiantService } from 'src/app/Services/EtudiantService/etudiant.service';
-import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
 import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
+import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
+import { EnseignantService } from 'src/app/Services/EnseignantService/enseignant.service';
 import { Router } from '@angular/router';
 import * as jsPDFModule from 'jspdf';
 const jsPDF = jsPDFModule.jsPDF;
@@ -24,51 +25,53 @@ import html2canvas from 'html2canvas';
 })
 export class ClasseComponent implements OnInit {
   classeForm: FormGroup;
+  assignStudentsForm: FormGroup;
   classes: ClasseDto[] = [];
   filteredClasses: ClasseDto[] = [];
   parcours: ParcourDto[] = [];
-  enseignants: EnseignantDto[] = [];
-  matieres: MatiereDto[] = [];
   etudiants: EtudiantDto[] = [];
+  enseignants: EnseignantDto[] = [];
+  paniersByParcour: { [key: number]: PanierDto[] } = {};
+  matieresByPanier: { [key: number]: MatiereDto[] } = {};
   etudiantsByClasse: { [key: number]: EtudiantDto[] } = {};
   loading = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
   showForm = false;
-  expandedClassId: number | null = null;
+  showAssignModal = false;
+  selectedClasse: ClasseDto | null = null;
   editingClassId: number | null = null;
+  expandedClassId: number | null = null;
   today: Date = new Date();
   searchTerm: string = '';
-  isAdmin: boolean = false; // Flag for admin role
+  isAdmin: boolean = false;
   private searchSubject = new Subject<string>();
 
   constructor(
     private fb: FormBuilder,
     private classeService: ClasseService,
     private parcourService: ParcourService,
-    private enseignantService: EnseignantService,
-    private matiereService: MatiereService,
     private etudiantService: EtudiantService,
+    private matiereService: MatiereService,
+    private enseignantService: EnseignantService,
     private router: Router
   ) {
     this.classeForm = this.fb.group({
       nom: ['', [Validators.required, Validators.minLength(3)]],
       section: ['', [Validators.required, Validators.minLength(2)]],
       parcourId: ['', [Validators.required, Validators.min(1)]],
-      matiereIds: [[], Validators.required],
-      enseignantIds: [[], Validators.required],
+      etudiantIds: [[], Validators.required]
+    });
+    this.assignStudentsForm = this.fb.group({
       etudiantIds: [[], Validators.required]
     });
   }
 
   ngOnInit(): void {
-   
-
     this.loadClasses();
     this.loadParcours();
-    this.loadEnseignants();
-    this.loadMatieres();
     this.loadEtudiants();
+    this.loadEnseignants();
     this.setupSearch();
     this.classeForm.get('parcourId')?.valueChanges.pipe(
       switchMap(parcourId => {
@@ -124,28 +127,69 @@ export class ClasseComponent implements OnInit {
   loadClasses(): void {
     this.loading = true;
     this.etudiantsByClasse = {};
+    this.paniersByParcour = {};
+    this.matieresByPanier = {};
     this.classeService.getAllClasses().pipe(
       switchMap(classes => {
         this.classes = classes || [];
         this.filteredClasses = classes || [];
         console.log('Loaded classes:', this.classes);
-        const etudiantObservables = this.classes
-          .filter(classe => classe.id)
+        const classObservables = this.classes
+          .filter(classe => classe.id !== undefined)
           .map(classe =>
-            this.classeService.getEtudiantsByClasseId(classe.id!).pipe(
-              map((etudiants: EtudiantDto[]) => {
+            forkJoin({
+              etudiants: this.classeService.getEtudiantsByClasseId(classe.id!).pipe(
+                catchError(err => {
+                  console.error(`Error loading students for class ${classe.nom}:`, err);
+                  return of([]);
+                })
+              ),
+              paniers: this.parcourService.getAllParcours().pipe(
+                map(parcours => {
+                  const parcour = parcours.find(p => p.id === classe.parcourId);
+                  return parcour?.paniers || [];
+                }),
+                switchMap(paniers => {
+                  this.paniersByParcour[classe.parcourId] = paniers;
+                  const matiereObservables = paniers
+                    .filter((panier: PanierDto) => panier.id !== undefined)
+                    .map((panier: PanierDto) =>
+                      this.matiereService.getAllMatieres().pipe(
+                        map(matieres => ({
+                          panierId: panier.id!,
+                          matieres: matieres.filter(m => panier.matiereIds?.includes(m.id!)) || []
+                        })),
+                        catchError(err => {
+                          console.error(`Error loading matieres for panier ${panier.nom}:`, err);
+                          return of({ panierId: panier.id!, matieres: [] });
+                        })
+                      )
+                    );
+                  return forkJoin(matiereObservables.length > 0 ? matiereObservables : [of({ panierId: 0, matieres: [] })]).pipe(
+                    map((matiereResults: { panierId: number; matieres: MatiereDto[] }[]) => {
+                      matiereResults.forEach(({ panierId, matieres }) => {
+                        this.matieresByPanier[panierId] = matieres;
+                      });
+                      return paniers;
+                    })
+                  );
+                }),
+                catchError(err => {
+                  console.error(`Error loading paniers for parcour ${classe.parcourId}:`, err);
+                  return of([]);
+                })
+              )
+            }).pipe(
+              map(({ etudiants }) => {
                 console.log(`Loaded students for class ${classe.nom} (ID: ${classe.id}):`, etudiants);
-                this.etudiantsByClasse[classe.id!] = etudiants || [];
+                if (classe.id !== undefined) {
+                  this.etudiantsByClasse[classe.id] = etudiants || [];
+                }
                 return classe;
-              }),
-              catchError(err => {
-                console.error(`Error loading students for class ${classe.nom}:`, err);
-                this.etudiantsByClasse[classe.id!] = [];
-                return of(classe);
               })
             )
           );
-        return forkJoin(etudiantObservables.length > 0 ? etudiantObservables : [of(null)]).pipe(
+        return forkJoin(classObservables.length > 0 ? classObservables : [of(null)]).pipe(
           map(() => classes)
         );
       }),
@@ -172,32 +216,6 @@ export class ClasseComponent implements OnInit {
     });
   }
 
-  loadEnseignants(): void {
-    this.enseignantService.getAllEnseignants().subscribe({
-      next: (data) => {
-        this.enseignants = data || [];
-        console.log('Loaded enseignants:', this.enseignants);
-      },
-      error: (err) => {
-        console.error('Error loading enseignants:', err);
-        this.errorMessage = 'Failed to load enseignants';
-      }
-    });
-  }
-
-  loadMatieres(): void {
-    this.matiereService.getAllMatieres().subscribe({
-      next: (data) => {
-        this.matieres = data || [];
-        console.log('Loaded matieres:', this.matieres);
-      },
-      error: (err) => {
-        console.error('Error loading matieres:', err);
-        this.errorMessage = 'Failed to load matieres';
-      }
-    });
-  }
-
   loadEtudiants(): void {
     this.etudiantService.getAllEtudiants().subscribe({
       next: (data) => {
@@ -211,17 +229,30 @@ export class ClasseComponent implements OnInit {
     });
   }
 
+  loadEnseignants(): void {
+    this.enseignantService.getAllEnseignants().subscribe({
+      next: (data) => {
+        this.enseignants = data || [];
+        console.log('Loaded enseignants:', this.enseignants);
+      },
+      error: (err) => {
+        console.error('Error loading enseignants:', err);
+        this.errorMessage = 'Failed to load enseignants';
+      }
+    });
+  }
+
   downloadClassStudents(classId: number, classNom: string, classSection: string): void {
     const element = document.getElementById(`student-table-${classId}`);
     if (element) {
-      html2canvas(element).then((canvas: { toDataURL: (arg0: string) => any; }) => {
+      html2canvas(element).then((canvas: { toDataURL: (arg0: string) => any }) => {
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
         const imgProps = pdf.getImageProperties(imgData);
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.text(`Students of ${classNom} - ${classSection}`, 10, 10); // Add title
-        pdf.addImage(imgData, 'PNG', 10, 20, pdfWidth - 20, pdfHeight); // Adjust position
+        pdf.text(`Students of ${classNom} - ${classSection}`, 10, 10);
+        pdf.addImage(imgData, 'PNG', 10, 20, pdfWidth - 20, pdfHeight);
         pdf.save(`students-${classNom}-${classSection}.pdf`);
       });
     } else {
@@ -235,21 +266,39 @@ export class ClasseComponent implements OnInit {
     return parcour ? parcour.nom : 'N/A';
   }
 
-  getMatiereNames(matiereIds: number[]): string {
-    return matiereIds
-      .map(id => this.matieres.find(m => m.id === id)?.nom)
-      .filter((name): name is string => !!name)
-      .join(', ') || 'None';
+  getPanierNames(parcourId: number): string {
+    const paniers = this.paniersByParcour[parcourId] || [];
+    return paniers.map(p => p.nom).join(', ') || 'None';
   }
 
-  getEnseignantNames(enseignantIds: number[]): string {
-    return enseignantIds
+  getEnseignantNames(parcourId: number): string {
+    const paniers = this.paniersByParcour[parcourId] || [];
+    const enseignantIds = new Set<number>();
+    paniers.forEach(panier => {
+      const matieres = this.matieresByPanier[panier.id!] || [];
+      matieres.forEach(matiere => {
+        if (matiere.enseignantId) {
+          enseignantIds.add(matiere.enseignantId);
+        }
+      });
+    });
+    return Array.from(enseignantIds)
       .map(id => {
         const enseignant = this.enseignants.find(e => e.id === id);
         return enseignant ? `${enseignant.nom} ${enseignant.prenom}` : null;
       })
       .filter((name): name is string => !!name)
       .join(', ') || 'None';
+  }
+
+  getEtudiantNamesForClasse(classe: ClasseDto): string {
+    if (!classe.id || !this.etudiantsByClasse[classe.id]) {
+      return 'None';
+    }
+    const etudiantIds = this.etudiantsByClasse[classe.id]
+      .map(e => e.id)
+      .filter((id): id is number => id !== undefined);
+    return this.getEtudiantNames(etudiantIds);
   }
 
   getEtudiantNames(etudiantIds: number[]): string {
@@ -260,6 +309,12 @@ export class ClasseComponent implements OnInit {
       })
       .filter((name): name is string => !!name)
       .join(', ') || 'None';
+  }
+
+  getExpandIconPath(classeId: number | undefined): string {
+    return classeId && this.expandedClassId === classeId
+      ? 'M5 15l7-7 7 7'
+      : 'M19 9l-7 7-7-7';
   }
 
   toggleForm(): void {
@@ -274,14 +329,56 @@ export class ClasseComponent implements OnInit {
     }
   }
 
+  openAssignStudentsModal(classeId: number, parcourId: number): void {
+    this.selectedClasse = this.classes.find(c => c.id === classeId) || null;
+    this.showAssignModal = true;
+    this.assignStudentsForm.reset();
+    this.parcourService.getEtudiantsByParcourId(parcourId).subscribe({
+      next: (data) => {
+        this.etudiants = data || [];
+        console.log('Loaded students for assign modal:', data);
+      },
+      error: (err) => {
+        console.error('Error loading students for parcour:', err);
+        this.errorMessage = 'Failed to load students for parcour';
+      }
+    });
+  }
+
+  closeAssignModal(): void {
+    this.showAssignModal = false;
+    this.selectedClasse = null;
+    this.assignStudentsForm.reset();
+    this.etudiants = [];
+  }
+
+  onAssignStudentsSubmit(): void {
+    if (this.assignStudentsForm.valid && this.selectedClasse?.id) {
+      this.loading = true;
+      const etudiantIds: number[] = this.assignStudentsForm.get('etudiantIds')?.value;
+      this.classeService.assignStudentsToClasse(this.selectedClasse.id, etudiantIds).subscribe({
+        next: () => {
+          this.successMessage = 'Students assigned successfully!';
+          this.loading = false;
+          this.closeAssignModal();
+          this.loadClasses();
+          setTimeout(() => this.successMessage = null, 2000);
+        },
+        error: (err) => {
+          console.error('Error assigning students:', err);
+          this.errorMessage = err.message || 'Failed to assign students';
+          this.loading = false;
+        }
+      });
+    }
+  }
+
   editClasse(classe: ClasseDto): void {
     this.editingClassId = classe.id || null;
     this.classeForm.patchValue({
       nom: classe.nom,
       section: classe.section,
       parcourId: classe.parcourId,
-      matiereIds: classe.matiereIds || [],
-      enseignantIds: classe.enseignantIds || [],
       etudiantIds: classe.etudiantIds || []
     });
     if (classe.parcourId) {
@@ -314,13 +411,17 @@ export class ClasseComponent implements OnInit {
           if (response.id) {
             return this.classeService.getEtudiantsByClasseId(response.id).pipe(
               map((etudiants: EtudiantDto[]) => {
-                this.etudiantsByClasse[response.id!] = etudiants || [];
+                if (response.id !== undefined) {
+                  this.etudiantsByClasse[response.id] = etudiants || [];
+                }
                 console.log(`Loaded students for class ID ${response.id}:`, etudiants);
                 return response;
               }),
               catchError(err => {
                 console.error(`Error loading students for class ID ${response.id}:`, err);
-                this.etudiantsByClasse[response.id!] = [];
+                if (response.id !== undefined) {
+                  this.etudiantsByClasse[response.id] = [];
+                }
                 return of(response);
               })
             );

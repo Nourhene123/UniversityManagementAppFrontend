@@ -1,6 +1,18 @@
-
 <div class="paniers-list">
   <h2>Gestion des Paniers</h2>
+
+  <div class="filter-container">
+  <mat-form-field appearance="outline" class="filter-semestre">
+    <mat-label>Filtrer par Semestre</mat-label>
+    <mat-select [(ngModel)]="selectedSemestreId" (ngModelChange)="filterBySemestre($event)">
+      <mat-option [value]="undefined">Tous les semestres</mat-option>
+      <mat-option *ngFor="let semestre of allSemestres" [value]="semestre.id">
+        {{ semestre.nom }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <button mat-stroked-button class="clear-filter-button" (click)="clearSemestreFilter()">Effacer le filtre</button>
+</div>
   <div class="modal-overlay" *ngIf="showForm">
     <div class="modal-content">
       <form #panierForm="ngForm" (ngSubmit)="onSubmit(panierForm.value)" class="panier-form">
@@ -23,14 +35,6 @@
           <mat-select name="semestreId" [(ngModel)]="newPanier.semestreId" required>
             <mat-option *ngFor="let semestre of allSemestres" [value]="semestre.id">
               {{ semestre.nom }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Parcour</mat-label>
-          <mat-select name="parcourId" [(ngModel)]="newPanier.parcourId" required>
-            <mat-option *ngFor="let parcour of allParcours" [value]="parcour.id">
-              {{ parcour.nom }}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -72,10 +76,6 @@
     <ng-container matColumnDef="semestre">
       <mat-header-cell *matHeaderCellDef>Semestre</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ getSemestreNom(element.semestreId) }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="parcourNom">
-      <mat-header-cell *matHeaderCellDef>Parcour Nom</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ getParcourNom(element.parcourId) }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="listeMatieres">
       <mat-header-cell *matHeaderCellDef>Liste des Matières</mat-header-cell>

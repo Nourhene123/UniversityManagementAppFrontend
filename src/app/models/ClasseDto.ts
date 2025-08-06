@@ -3,7 +3,5 @@ export interface ClasseDto {
   nom: string;
   section: string;
   parcourId: number;
-  matiereIds: number[];
-  enseignantIds: number[];
   etudiantIds: number[];
 }

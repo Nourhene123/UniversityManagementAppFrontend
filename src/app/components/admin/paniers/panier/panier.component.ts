@@ -1,15 +1,12 @@
-
 import { Component, inject, OnInit } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { PanierDto } from 'src/app/models/PanierDto';
 import { PanierService } from 'src/app/Services/PanierService/panier.service';
-import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
 import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { ParcourDto } from 'src/app/models/ParcourDto';
 import { MatiereDto } from 'src/app/models/MatiereDto';
-import { SemestreDto } from 'src/app/models/SemestreDto'; 
+import { SemestreDto } from 'src/app/models/SemestreDto';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
 @Component({
@@ -18,75 +15,84 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
   styleUrls: ['./panier.component.css']
 })
 export class PanierComponent implements OnInit {
-  displayedColumns: string[] = ['id', 'nom', 'coefficientTotal', 'semestre', 'parcourNom', 'listeMatieres', 'actions'];
+  displayedColumns: string[] = ['id', 'nom', 'coefficientTotal', 'semestre', 'listeMatieres', 'actions'];
   dataSource = new MatTableDataSource<PanierDto>([]);
   showForm = false;
   editMode = false;
   newPanier: PanierDto = {
     nom: '',
     coefficientTotal: 0,
-    semestreId: undefined, // Remplace semestre par semestreId
-    parcourId: undefined,
+    semestreId: undefined,
     matiereIds: []
   };
   allMatieres: MatiereDto[] = [];
-  allParcours: ParcourDto[] = [];
-  allSemestres: SemestreDto[] = []; // Ajout pour les semestres
-  parcourNomMap: { [key: number]: string } = {};
+  allSemestres: SemestreDto[] = [];
+  selectedSemestreId?: number;
+  semestreNomMap: { [key: number]: string } = {};
   matieresMap: { [key: number]: MatiereDto[] } = {};
-  semestreNomMap: { [key: number]: string } = {}; // Pour mapper les noms des semestres
+
+  private http = inject(HttpClient);
 
   constructor(
     private panierService: PanierService,
-    private parcourService: ParcourService,
     private matiereService: MatiereService
   ) {}
 
   ngOnInit(): void {
-    this.loadPaniers();
     this.loadAllData();
+    this.loadPaniers();
   }
 
   loadPaniers(): void {
-    this.panierService.getAllPaniers().subscribe({
-      next: (paniers) => {
-        this.dataSource.data = paniers;
-        console.log('Paniers loaded:', paniers);
-        this.loadAdditionalData(paniers);
-      },
-      error: (err: HttpErrorResponse) => {
-        console.error('Error fetching paniers:', err.status, err.statusText, err.error);
-        alert('Failed to load paniers: ' + err.message);
-      }
-    });
+    if (this.selectedSemestreId) {
+      this.panierService.getPaniersBySemestre(this.selectedSemestreId).subscribe({
+        next: (paniers) => {
+          this.dataSource.data = paniers;
+          console.log('Paniers loaded for semestre:', paniers);
+          this.loadAdditionalData(paniers);
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Error fetching paniers:', err.status, err.statusText, err.error);
+          alert('Failed to load paniers: ' + err.message);
+        }
+      });
+    } else {
+      this.panierService.getAllPaniers().subscribe({
+        next: (paniers) => {
+          this.dataSource.data = paniers;
+          console.log('Paniers loaded:', paniers);
+          this.loadAdditionalData(paniers);
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Error fetching paniers:', err.status, err.statusText, err.error);
+          alert('Failed to load paniers: ' + err.message);
+        }
+      });
+    }
   }
 
   loadAllData(): void {
     forkJoin({
       matieres: this.matiereService.getAllMatieres(),
-      parcours: this.parcourService.getAllParcours(),
-      semestres: this.getAllSemestres() // Ajout du chargement des semestres
+      semestres: this.getAllSemestres()
     }).subscribe({
-      next: ({ matieres, parcours, semestres }) => {
+      next: ({ matieres, semestres }) => {
         this.allMatieres = matieres;
-        this.allParcours = parcours;
         this.allSemestres = semestres;
         this.allSemestres.forEach(semestre => {
           this.semestreNomMap[semestre.id!] = semestre.nom;
         });
         console.log('Semestres loaded:', semestres);
         console.log('Matieres loaded:', matieres);
-        console.log('Parcours loaded:', parcours);
       },
       error: (err: HttpErrorResponse) => {
-        console.error('Error fetching matieres, parcours, or semestres:', err.status, err.statusText, err.error);
-        alert('Failed to load matieres, parcours, or semestres: ' + err.message);
+        console.error('Error fetching matieres or semestres:', err.status, err.statusText, err.error);
+        alert('Failed to load matieres or semestres: ' + err.message);
       }
     });
   }
 
   getAllSemestres(): Observable<SemestreDto[]> {
-    // Implémentez un service pour récupérer les semestres (exemple)
     return this.http.get<SemestreDto[]>('http://localhost:8080/api/semestres', { headers: this.getHeaders() })
       .pipe(
         catchError((err: HttpErrorResponse) => {
@@ -96,7 +102,6 @@ export class PanierComponent implements OnInit {
       );
   }
 
-  private http = inject(HttpClient); // Ajout pour utiliser HttpClient
   private getHeaders(): HttpHeaders {
     return new HttpHeaders({
       'Content-Type': 'application/json',
@@ -105,26 +110,7 @@ export class PanierComponent implements OnInit {
   }
 
   loadAdditionalData(paniers: PanierDto[]): void {
-    const parcourObservables: Observable<void>[] = [];
     const matiereObservables: Observable<void>[] = [];
-
-    const uniqueParcourIds = [...new Set(paniers.map(p => p.parcourId).filter(id => id !== undefined && id !== 0))] as number[];
-    uniqueParcourIds.forEach(parcourId => {
-      if (!this.parcourNomMap[parcourId]) {
-        parcourObservables.push(
-          this.parcourService.getParcourById(parcourId).pipe(
-            map((parcour: ParcourDto) => {
-              this.parcourNomMap[parcourId] = parcour.nom;
-            }),
-            catchError((err) => {
-              console.error(`Error fetching parcour ID ${parcourId}:`, err);
-              this.parcourNomMap[parcourId] = 'Not Found';
-              return of(void 0);
-            })
-          )
-        );
-      }
-    });
 
     paniers.forEach(panier => {
       if (panier.matiereIds && panier.matiereIds.length > 0 && !this.matieresMap[panier.id!]) {
@@ -144,8 +130,8 @@ export class PanierComponent implements OnInit {
       }
     });
 
-    if (parcourObservables.length > 0 || matiereObservables.length > 0) {
-      forkJoin([...parcourObservables, ...matiereObservables]).subscribe({
+    if (matiereObservables.length > 0) {
+      forkJoin(matiereObservables).subscribe({
         next: () => {
           console.log('Additional data loaded');
         },
@@ -155,6 +141,16 @@ export class PanierComponent implements OnInit {
         }
       });
     }
+  }
+
+  filterBySemestre(semestreId: number): void {
+    this.selectedSemestreId = semestreId;
+    this.loadPaniers();
+  }
+
+  clearSemestreFilter(): void {
+    this.selectedSemestreId = undefined;
+    this.loadPaniers();
   }
 
   openForm(): void {
@@ -174,8 +170,7 @@ export class PanierComponent implements OnInit {
       id: this.editMode ? this.newPanier.id : undefined,
       nom: formValue.nom,
       coefficientTotal: formValue.coefficientTotal,
-      semestreId: formValue.semestreId, // Utilise semestreId au lieu de semestre
-      parcourId: formValue.parcourId,
+      semestreId: formValue.semestreId,
       matiereIds: this.newPanier.matiereIds
     };
     console.log('Panier to send:', panier);
@@ -240,22 +235,17 @@ export class PanierComponent implements OnInit {
     this.newPanier = {
       nom: '',
       coefficientTotal: 0,
-      semestreId: undefined, // Remplace semestre par semestreId
-      parcourId: undefined,
+      semestreId: undefined,
       matiereIds: []
     };
   }
 
-  getParcourNom(parcourId: number): string {
-    return this.parcourNomMap[parcourId] || 'Not Found';
+  getSemestreNom(semestreId?: number): string {
+    return semestreId !== undefined ? this.semestreNomMap[semestreId] || 'Not Found' : 'Not Assigned';
   }
 
   getListeMatieres(panierId: number): string {
     const matieres = this.matieresMap[panierId] || [];
     return matieres.map(m => m.nom).join(', ') || 'No Matieres';
-  }
-
-  getSemestreNom(semestreId?: number): string {
-    return semestreId !== undefined ? this.semestreNomMap[semestreId] || 'Not Found' : 'Not Assigned';
   }
 }
