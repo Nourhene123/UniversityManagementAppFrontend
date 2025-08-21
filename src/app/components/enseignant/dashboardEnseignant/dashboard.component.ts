@@ -10,14 +10,24 @@ import { MatiereAverageDto } from 'src/app/models/MatiereAverageDto';
 import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
 import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
 import { EtudiantService } from 'src/app/Services/EtudiantService/etudiant.service';
+import { ClasseDto } from 'src/app/models/ClasseDto';
+import { ClasseService } from 'src/app/Services/Classe/classe.service';
+import { AuthService } from 'src/app/Services/Auth/auth.service';
+import { UserResponse } from 'src/app/models/UserResponse';
+import { ClasseWithMatieresDto } from 'src/app/models/ClasseWithMatieresDto';
 
 interface MatiereWithAverages extends MatiereDto {
   averages: MatiereAverageDto[];
 }
 
-interface ParcourWithMatieres extends ParcourDto {
-  matieres: MatiereWithAverages[];
+interface ClasseWithEtudiants extends ClasseDto {
   etudiants: EtudiantDto[];
+  matieres: MatiereWithAverages[];
+}
+
+interface ParcourWithClasses extends ParcourDto {
+  etudiants: EtudiantDto[];
+  classes: ClasseWithEtudiants[];
 }
 
 interface StudentPerformance {
@@ -31,12 +41,13 @@ interface StudentPerformance {
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
-  parcours: ParcourWithMatieres[] = [];
+  parcours: ParcourWithClasses[] = [];
   isLoading: boolean = true;
   errorMessage: string = '';
   successMessage: string = '';
   currentDate: Date = new Date();
   parcourExpanded: { [key: number]: boolean } = {};
+  classExpanded: { [key: string]: boolean } = {};
   successRateChartData: ChartData<'bar'> = { labels: [], datasets: [] };
   successRateChartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -70,6 +81,8 @@ export class DashboardComponent implements OnInit {
     private matiereService: MatiereService,
     private parcourService: ParcourService,
     private etudiantService: EtudiantService,
+    private classeService: ClasseService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
@@ -96,82 +109,125 @@ export class DashboardComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    const enseignantId = Number(localStorage.getItem('enseignantId')) || 1;
-
-    this.matiereService.getMatieresByEnseignant().pipe(
-      switchMap((matieres: MatiereDto[]) => {
-        if (matieres.length === 0) {
-          console.warn('No matieres found for the current teacher.');
-          this.errorMessage = 'Aucune matière trouvée pour cet enseignant.';
-          return of([]);
+    this.authService.getCurrentUser().pipe(
+      switchMap((user: UserResponse | null) => {
+        if (!user || !user.id) {
+          console.error('No authenticated user found or invalid user ID');
+          this.errorMessage = 'Utilisateur non authentifié. Veuillez vous reconnecter.';
+          this.router.navigate(['/login']);
+          throw new Error('No authenticated user');
         }
-        const matiereWithAverages = matieres.map(matiere =>
-          this.matiereService.getMatiereAverages(matiere.id!).pipe(
-            map(averages => ({ matiere, averages })),
-            catchError(err => {
-              console.error(`Failed to load averages for matiere ${matiere.nom}:`, err);
-              return of({ matiere, averages: [] });
-            })
-          )
-        );
-        return forkJoin(matiereWithAverages.length > 0 ? matiereWithAverages : [of({ matiere: { id: 0, nom: '', volumeHoraire: 0, coefficient: 0, averages: [], parcours: [] } as MatiereWithAverages, averages: [] })]);
-      }),
-      switchMap((matiereWithAverages: { matiere: MatiereDto; averages: MatiereAverageDto[] }[]) => {
-        const matiereObservables: Observable<{ matiere: MatiereWithAverages; parcours: ParcourDtoWithEtudiants[] }>[] = matiereWithAverages.map(({ matiere, averages }) =>
-          this.parcourService.getParcoursByMatiereId(matiere.id!).pipe(
-            switchMap(parcours => {
-              const etudiantObservables = parcours.map(p =>
-                this.etudiantService.getEtudiantsByParcour(p.id!).pipe(
-                  map(etudiants => ({ ...p, etudiants: etudiants || [] } as ParcourDtoWithEtudiants)),
-                  catchError(err => {
-                    console.error(`Erreur lors du chargement des étudiants pour le parcours ${p.nom}:`, err);
-                    return of({ ...p, etudiants: [] } as ParcourDtoWithEtudiants);
-                  })
-                )
-              );
-              return forkJoin(etudiantObservables.length > 0 ? etudiantObservables : [of({ id: 0, nom: 'Unknown', annee: 'N/A', libelle: 'Unknown', etudiants: [] } as ParcourDtoWithEtudiants)]).pipe(
-                map(parcoursWithEtudiants => ({ matiere: { ...matiere, averages } as MatiereWithAverages, parcours: parcoursWithEtudiants }))
-              );
-            }),
-            catchError(err => {
-              console.error(`Erreur lors du chargement des parcours pour la matière ${matiere.nom}:`, err);
-              this.errorMessage = `Erreur lors du chargement des parcours pour ${matiere.nom}`;
-              return of({ matiere: { ...matiere, averages: [] } as MatiereWithAverages, parcours: [] });
-            })
-          )
-        );
-        return forkJoin(matiereObservables.length > 0 ? matiereObservables : [of({ matiere: { id: 0, nom: '', volumeHoraire: 0, coefficient: 0, averages: [], parcours: [] } as MatiereWithAverages, parcours: [] })]);
-      }),
-      map(matiereParcours => {
-        const parcoursMap = new Map<number, ParcourWithMatieres>();
-        matiereParcours.forEach(({ matiere, parcours }: { matiere: MatiereWithAverages; parcours: ParcourDtoWithEtudiants[] }) => {
-          parcours.forEach((p: ParcourDtoWithEtudiants) => {
-            if (!p.id) return;
-            if (!parcoursMap.has(p.id)) {
-              parcoursMap.set(p.id, {
-                id: p.id,
-                nom: p.nom || 'Unknown',
-                annee: p.annee || 'N/A',
-                libelle: p.libelle || p.nom || 'Unknown',
-                etudiants: p.etudiants || [],
-                matieres: []
-              });
+
+        const enseignantId = Number(user.id);
+        console.log('Loading dashboard data for connected enseignantId:', enseignantId);
+
+        return this.classeService.getClassesByEnseignantId(enseignantId).pipe(
+          tap(classes => console.log('Classes by enseignantId', enseignantId, ':', classes)),
+          switchMap((classes: ClasseWithMatieresDto[]) => {
+            if (classes.length === 0) {
+              console.warn('No classes found for the current teacher.');
+              this.errorMessage = 'Aucune classe trouvée pour cet enseignant.';
+              return of([]);
             }
-            const existingParcour = parcoursMap.get(p.id)!;
-            existingParcour.matieres.push(matiere);
+
+            const parcoursMap = new Map<number, ParcourWithClasses>();
+            classes.forEach(classe => {
+              if (!classe.parcourId) return;
+              if (!parcoursMap.has(classe.parcourId)) {
+                parcoursMap.set(classe.parcourId, {
+                  id: classe.parcourId,
+                  nom: 'Unknown',
+                  annee: 'N/A',
+                  libelle: 'Unknown',
+                  etudiants: [],
+                  classes: []
+                });
+              }
+              const parcour = parcoursMap.get(classe.parcourId)!;
+              parcour.classes.push({
+                ...classe,
+                etudiants: [],
+                matieres: classe.matieres ? classe.matieres.map(matiere => ({ ...matiere, averages: [] } as MatiereWithAverages)) : []
+              });
+            });
+
+            const parcourObservables = Array.from(parcoursMap.entries()).map(([parcourId, parcour]) => {
+              return forkJoin({
+                parcourDetails: this.parcourService.getParcourById(parcourId).pipe(
+                  catchError(err => {
+                    console.error(`Failed to load parcour ${parcourId}:`, err);
+                    return of({ id: parcourId, nom: 'Unknown', annee: 'N/A', libelle: 'Unknown' } as ParcourDto);
+                  })
+                ),
+                classesWithEtudiants: forkJoin(
+                  parcour.classes.map(classe =>
+                    forkJoin({
+                      etudiants: this.classeService.getEtudiantsByClasseId(classe.id!).pipe(
+                        map(etudiants => etudiants || []),
+                        catchError(err => {
+                          console.error(`Failed to load etudiants for classe ${classe.nom}:`, err);
+                          return of([]);
+                        })
+                      ),
+                      matieresWithAverages: classe.matieres.length > 0 ? forkJoin(
+                        classe.matieres.map(matiere =>
+                          this.matiereService.getMatiereAverages(matiere.id!).pipe(
+                            map(averages => ({ ...matiere, averages } as MatiereWithAverages)),
+                            catchError(err => {
+                              console.error(`Failed to load averages for matiere ${matiere.nom}:`, err);
+                              return of({ ...matiere, averages: [] } as MatiereWithAverages);
+                            })
+                          )
+                        )
+                      ) : of([] as MatiereWithAverages[])
+                    }).pipe(
+                      map(({ etudiants, matieresWithAverages }) => ({
+                        ...classe,
+                        etudiants,
+                        matieres: matieresWithAverages
+                      } as ClasseWithEtudiants))
+                    )
+                  )
+                )
+              }).pipe(
+                map(({ parcourDetails, classesWithEtudiants }) => ({
+                  ...parcour,
+                  id: parcourDetails.id,
+                  nom: parcourDetails.nom || 'Unknown',
+                  annee: parcourDetails.annee || 'N/A',
+                  libelle: parcourDetails.libelle || parcourDetails.nom || 'Unknown',
+                  classes: classesWithEtudiants,
+                  etudiants: classesWithEtudiants.flatMap(c => c.etudiants)
+                } as ParcourWithClasses))
+              );
+            });
+
+            return forkJoin(parcourObservables.length > 0 ? parcourObservables : [of({
+              id: 0,
+              nom: 'Unknown',
+              annee: 'N/A',
+              libelle: 'Unknown',
+              etudiants: [],
+              classes: []
+            } as ParcourWithClasses)]);
+          })
+        );
+      }),
+      tap((parcours: ParcourWithClasses[]) => {
+        this.parcours = parcours.filter(p => p.classes.length > 0);
+        this.parcourExpanded = this.parcours.reduce((acc, _, index) => ({ ...acc, [index]: true }), {});
+        this.classExpanded = {};
+        this.parcours.forEach((p, pi) => {
+          p.classes.forEach((_, ci) => {
+            this.classExpanded[`${pi}-${ci}`] = true;
           });
         });
-        return Array.from(parcoursMap.values()).filter(p => p.etudiants.length > 0 || p.matieres.length > 0);
-      }),
-      tap((parcours: ParcourWithMatieres[]) => {
-        this.parcours = parcours;
-        this.parcourExpanded = this.parcours.reduce((acc, _, index) => ({ ...acc, [index]: true }), {});
         this.updateSuccessRateChart();
         this.updateTopBottomChart();
         if (this.parcours.length > 0) {
           this.successMessage = 'Données du tableau de bord chargées avec succès !';
         } else {
-          this.errorMessage = 'Aucun parcours avec étudiants ou matières trouvé.';
+          this.errorMessage = 'Aucune classe ou matière trouvée pour cet enseignant.';
         }
         this.isLoading = false;
       }),
@@ -187,20 +243,36 @@ export class DashboardComponent implements OnInit {
     return matiere.averages.find(avg => avg.etudiantId === etudiantId)?.moyenne;
   }
 
+  getStudentAverage(classe: ClasseWithEtudiants, etudiantId: number): number | undefined {
+    const averages = classe.matieres
+      .map(m => this.getMatiereAverage(m, etudiantId))
+      .filter((avg): avg is number => avg !== undefined);
+    return averages.length > 0 ? averages.reduce((sum, avg) => sum + avg, 0) / averages.length : undefined;
+  }
+
   getTotalStudents(): number {
-    return this.parcours.reduce((total, parcour) => total + (parcour.etudiants?.length || 0), 0);
+    return this.parcours.reduce((total, p) => total + p.classes.reduce((sub, c) => sub + c.etudiants.length, 0), 0);
   }
 
   getTotalMatieres(): number {
-    return this.parcours.reduce((total, parcour) => total + parcour.matieres.length, 0);
+    const uniqueMatieres = new Set<number>();
+    this.parcours.forEach(parcour => {
+      parcour.classes.forEach(classe => {
+        classe.matieres.forEach(matiere => {
+          if (matiere.id) {
+            uniqueMatieres.add(matiere.id);
+          }
+        });
+      });
+    });
+    return uniqueMatieres.size;
   }
 
   getOverallAverage(): number {
     const allAverages = this.parcours.flatMap(parcour =>
-      parcour.etudiants.flatMap(etudiant =>
-        parcour.matieres
-          .map(m => this.getMatiereAverage(m, etudiant.id!))
-          .filter((avg): avg is number => avg !== undefined)
+      parcour.classes.flatMap(classe => classe.etudiants
+        .map(etudiant => this.getStudentAverage(classe, etudiant.id!))
+        .filter((avg): avg is number => avg !== undefined)
       )
     );
     return allAverages.length > 0 ? allAverages.reduce((sum, avg) => sum + avg, 0) / allAverages.length : 0;
@@ -208,27 +280,20 @@ export class DashboardComponent implements OnInit {
 
   getStudentsAboveThreshold(threshold: number = 10): number {
     const validStudents = this.parcours.flatMap(parcour =>
-      parcour.etudiants.filter(etudiant => {
-        const averages = parcour.matieres
-          .map(m => this.getMatiereAverage(m, etudiant.id!))
-          .filter((avg): avg is number => avg !== undefined);
-        if (averages.length === 0) return false;
-        const studentAverage = averages.reduce((sum, avg) => sum + avg, 0) / averages.length;
-        return studentAverage >= threshold;
-      })
+      parcour.classes.flatMap(classe => classe.etudiants.filter(etudiant => {
+        const studentAverage = this.getStudentAverage(classe, etudiant.id!);
+        return studentAverage !== undefined && studentAverage >= threshold;
+      }))
     );
     return validStudents.length;
   }
 
   getTopBottomStudents(): { top?: StudentPerformance; bottom?: StudentPerformance } {
     const studentAverages = this.parcours.flatMap(parcour =>
-      parcour.etudiants.map(etudiant => {
-        const averages = parcour.matieres
-          .map(m => this.getMatiereAverage(m, etudiant.id!))
-          .filter((avg): avg is number => avg !== undefined);
-        const average = averages.length > 0 ? averages.reduce((sum, avg) => sum + avg, 0) / averages.length : 0;
+      parcour.classes.flatMap(classe => classe.etudiants.map(etudiant => {
+        const average = this.getStudentAverage(classe, etudiant.id!) || 0;
         return { nom: `${etudiant.nom} ${etudiant.prenom}`, average };
-      })
+      }))
     );
 
     if (studentAverages.length === 0) return { top: undefined, bottom: undefined };
@@ -277,6 +342,11 @@ export class DashboardComponent implements OnInit {
     this.parcourExpanded[index] = !this.parcourExpanded[index];
   }
 
+  toggleClass(parcourIndex: number, classIndex: number): void {
+    const key = `${parcourIndex}-${classIndex}`;
+    this.classExpanded[key] = !this.classExpanded[key];
+  }
+
   handleError(err: any, message: string): void {
     if (err.status === 403) {
       this.errorMessage = 'Accès refusé. Veuillez vérifier vos permissions ou vous reconnecter.';
@@ -289,15 +359,12 @@ export class DashboardComponent implements OnInit {
   updateSuccessRateChart(): void {
     const labels = this.parcours.map(p => `${p.nom} (${p.annee})`);
     const successRates = this.parcours.map(parcour => {
-      const validStudents = parcour.etudiants.filter(e => {
-        const averages = parcour.matieres
-          .map(m => this.getMatiereAverage(m, e.id!))
-          .filter((avg): avg is number => avg !== undefined);
-        if (averages.length === 0) return false;
-        const totalAverage = averages.reduce((sum, avg) => sum + avg, 0) / averages.length;
-        return totalAverage >= 10;
-      });
-      return (validStudents.length / (parcour.etudiants.length || 1)) * 100;
+      const validStudents = parcour.classes.flatMap(classe => classe.etudiants.filter(e => {
+        const totalAverage = this.getStudentAverage(classe, e.id!);
+        return totalAverage !== undefined && totalAverage >= 10;
+      }));
+      const totalStudents = parcour.classes.reduce((t, c) => t + c.etudiants.length, 0) || 1;
+      return (validStudents.length / totalStudents) * 100;
     });
 
     this.successRateChartData = {

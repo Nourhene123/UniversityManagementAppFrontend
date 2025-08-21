@@ -1,7 +1,7 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { TokenService } from '../token.service';
 import { UserResponse } from 'src/app/models/UserResponse';
@@ -31,8 +31,49 @@ login(credentials: { email: string; password: string; staySignedIn: boolean }): 
     );
   }
 
-  register(user: { email: string; password: string; nom: string; prenom: string; departement: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, user);
+  register(user: {
+    email: string;
+    password: string;
+    nom: string;
+    prenom: string;
+    departement?: string;
+    numeroInscription?: string;
+    role?: string;
+  }): Observable<any> {
+    const payload = {
+      nom: user.nom?.trim(),
+      prenom: user.prenom?.trim(),
+      email: user.email?.trim(),
+      password: user.password?.trim(),
+      departement: user.departement?.trim() || null,
+      numeroInscription: user.numeroInscription?.trim() || null,
+      role: 'Etudiant' 
+    };
+
+    // Client-side validation
+    if (!payload.nom || payload.nom.length < 2 || payload.nom.length > 50) {
+      return throwError(() => new Error('Nom must be between 2 and 50 characters'));
+    }
+    if (!payload.prenom || payload.prenom.length < 2 || payload.prenom.length > 50) {
+      return throwError(() => new Error('Prénom must be between 2 and 50 characters'));
+    }
+    if (!payload.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      return throwError(() => new Error('Invalid email format'));
+    }
+    if (!payload.password || payload.password.length < 8) {
+      return throwError(() => new Error('Password must be at least 8 characters'));
+    }
+    if (!payload.role) {
+      return throwError(() => new Error('Role is required'));
+    }
+
+    console.log('Sending payload to /api/utilisateurs/register:', JSON.stringify(payload, null, 2));
+    return this.http.post(`${this.apiUrl}/register`, payload).pipe(
+      catchError(error => {
+        console.error('Registration error:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
  getCurrentUser(): Observable<UserResponse | null> {

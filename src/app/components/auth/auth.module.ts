@@ -13,6 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from 'src/app/Services/Auth/auth.service';
 import { TokenService } from 'src/app/Services/token.service';
+import { NgChartsModule } from 'ng2-charts';
 
 @NgModule({
   declarations: [
@@ -24,6 +25,7 @@ import { TokenService } from 'src/app/Services/token.service';
     HttpClientModule, 
     AuthRoutingModule,
     MatCardModule,
+    NgChartsModule,
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,

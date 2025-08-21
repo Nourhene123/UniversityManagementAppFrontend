@@ -1,14 +1,12 @@
-<h2 mat-dialog-title>
-  {{ mode === 'assignParcour' ? 'Affecter un Parcours aux Étudiants' : 'Affecter des Étudiants au Parcours' }}
-</h2>
 
-<mat-dialog-content>
+
+<mat-dialog-content class="dialog-content">
   <div *ngIf="isLoading" class="loading">Chargement...</div>
 
   <ng-container *ngIf="!isLoading">
-    <!-- Choix du parcours (UN SEUL) -->
+    <!-- Assign a parcours to students -->
     <ng-container *ngIf="mode === 'assignParcour'; else assignToParcour">
-      <mat-form-field appearance="fill" class="full-width">
+      <mat-form-field appearance="fill" class="full-width select-field">
         <mat-label>Choisir un parcours</mat-label>
         <mat-select [(ngModel)]="selectedParcourId">
           <mat-option *ngFor="let parcour of parcours" [value]="parcour.id">
@@ -18,30 +16,35 @@
       </mat-form-field>
     </ng-container>
 
-    <!-- Liste des étudiants à sélectionner -->
+    <!-- Assign students to a parcours -->
     <ng-template #assignToParcour>
-      <mat-selection-list [(ngModel)]="selectedEtudiantIds">
-        <mat-list-option *ngFor="let etudiant of etudiants" [value]="etudiant.id">
+      <mat-selection-list
+        class="selection-list"
+        [(ngModel)]="selectedEtudiantIds">
+        <mat-list-option
+          *ngFor="let etudiant of etudiants"
+          [value]="etudiant.id"
+          class="list-option">
           {{ etudiant.prenom }} {{ etudiant.nom }} ({{ etudiant.email }})
         </mat-list-option>
       </mat-selection-list>
     </ng-template>
   </ng-container>
-
-  <!-- Boutons -->
-  <mat-dialog-actions align="end">
-    <button mat-button (click)="cancel()" [disabled]="isLoading">Annuler</button>
-    <button
-      mat-raised-button
-      color="primary"
-      (click)="save()"
-      [disabled]="
-        isLoading ||
-        (mode === 'assignParcour' && !selectedParcourId) ||
-        (mode === 'assignToParcour' && selectedEtudiantIds.length === 0)
-      "
-    >
-      Affecter
-    </button>
-  </mat-dialog-actions>
 </mat-dialog-content>
+
+<mat-dialog-actions class="dialog-actions" align="end">
+  <button mat-button class="cancel-button" (click)="cancel()" [disabled]="isLoading">Annuler</button>
+  <button
+    mat-raised-button
+    class="save-button"
+    color="primary"
+    (click)="save()"
+    [disabled]="
+      isLoading ||
+      (mode === 'assignParcour' && !selectedParcourId) ||
+      (mode === 'assignToParcour' && selectedEtudiantIds.length === 0)
+    "
+  >
+    Affecter
+  </button>
+</mat-dialog-actions>

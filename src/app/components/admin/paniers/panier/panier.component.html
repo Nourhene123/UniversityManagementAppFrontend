@@ -1,65 +1,80 @@
-<div class="paniers-list">
-  <h2>Gestion des Paniers</h2>
 
-  <div class="filter-container">
-  <mat-form-field appearance="outline" class="filter-semestre">
-    <mat-label>Filtrer par Semestre</mat-label>
-    <mat-select [(ngModel)]="selectedSemestreId" (ngModelChange)="filterBySemestre($event)">
-      <mat-option [value]="undefined">Tous les semestres</mat-option>
-      <mat-option *ngFor="let semestre of allSemestres" [value]="semestre.id">
-        {{ semestre.nom }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <button mat-stroked-button class="clear-filter-button" (click)="clearSemestreFilter()">Effacer le filtre</button>
-</div>
-  <div class="modal-overlay" *ngIf="showForm">
-    <div class="modal-content">
-      <form #panierForm="ngForm" (ngSubmit)="onSubmit(panierForm.value)" class="panier-form">
-        <div class="form-header">
-          <h3>{{ editMode ? 'Modifier Panier' : 'Ajouter un Nouveau Panier' }}</h3>
-          <button mat-icon-button (click)="cancelForm()" class="close-button">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-        <mat-form-field>
-          <mat-label>Nom</mat-label>
-          <input matInput name="nom" [(ngModel)]="newPanier.nom" required>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Coefficient Total</mat-label>
-          <input matInput type="number" name="coefficientTotal" [(ngModel)]="newPanier.coefficientTotal" required>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Semestre</mat-label>
-          <mat-select name="semestreId" [(ngModel)]="newPanier.semestreId" required>
-            <mat-option *ngFor="let semestre of allSemestres" [value]="semestre.id">
-              {{ semestre.nom }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Matieres</mat-label>
-          <mat-select name="matiereIds" [(ngModel)]="newPanier.matiereIds" multiple required>
-            <mat-option *ngFor="let matiere of allMatieres" [value]="matiere.id">
-              {{ matiere.nom }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <div class="form-actions">
-          <button mat-raised-button color="primary" type="submit" [disabled]="!panierForm.valid">
-            {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
-          </button>
-          <button mat-stroked-button (click)="cancelForm()">Annuler</button>
-        </div>
-      </form>
-    </div>
+<div class="modal-overlay" *ngIf="showForm">
+  <div class="modal-content">
+    <form [formGroup]="panierForm" (ngSubmit)="onSubmit()" class="panier-form">
+      <div class="form-header">
+        <h3>{{ editMode ? 'Modifier Panier' : 'Ajouter un Nouveau Panier' }}</h3>
+        <button mat-icon-button (click)="cancelForm()" class="close-button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <mat-form-field appearance="fill">
+        <mat-label>Nom</mat-label>
+        <input matInput formControlName="nom" required>
+        <mat-error *ngIf="panierForm.get('nom')?.hasError('required')">
+          Le nom est requis
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Coefficient Total</mat-label>
+        <input matInput type="number" formControlName="coefficientTotal" required>
+        <mat-error *ngIf="panierForm.get('coefficientTotal')?.hasError('required')">
+          Le coefficient total est requis
+        </mat-error>
+        <mat-error *ngIf="panierForm.get('coefficientTotal')?.hasError('min')">
+          Le coefficient total doit être supérieur à 0
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Semestre</mat-label>
+        <mat-select formControlName="semestreId" required>
+          <mat-option *ngFor="let semestre of allSemestres" [value]="semestre.id ">
+            {{ semestre.nom }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="panierForm.get('semestreId')?.hasError('required')">
+          Le semestre est requis
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Matières</mat-label>
+        <mat-select formControlName="matiereIds" multiple required>
+          <mat-option *ngFor="let matiere of allMatieres" [value]="matiere.id ">
+            {{ matiere.nom }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="panierForm.get('matiereIds')?.hasError('required')">
+          Au moins une matière est requise
+        </mat-error>
+      </mat-form-field>
+      <div class="form-actions">
+        <button mat-raised-button color="primary" type="submit" [disabled]="panierForm.invalid || isSubmitting">
+          {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+        </button>
+        <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
+      </div>
+    </form>
   </div>
+</div>
 
+<!-- List, filter, and add button displayed only when showAddFormOnly is false -->
+<div class="paniers-list" *ngIf="!showAddFormOnly">
+  <h2>Gestion des Paniers</h2>
+  <div class="filter-container">
+    <mat-form-field  class="filter-semestre">
+      <mat-label>Filtrer par Semestre</mat-label>
+      <mat-select [(ngModel)]="selectedSemestreId" (ngModelChange)="filterBySemestre($event)">
+        <mat-option [value]="undefined">Tous les semestres</mat-option>
+        <mat-option *ngFor="let semestre of allSemestres" [value]="semestre.id">
+          {{ semestre.nom }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-stroked-button class="clear-filter-button" (click)="clearSemestreFilter()">Effacer le filtre</button>
+  </div>
   <button mat-flat-button color="primary" (click)="openForm()" style="margin-top: 10px;">
     <mat-icon>add</mat-icon>
   </button>
-
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>

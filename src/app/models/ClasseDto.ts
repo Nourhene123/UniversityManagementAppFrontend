@@ -1,5 +1,5 @@
 export interface ClasseDto {
-  id?: number;
+  id: number;
   nom: string;
   section: string;
   parcourId: number;

@@ -1,0 +1,208 @@
+:root {
+  --primary-bg: linear-gradient(135deg, #232526 0%, #414345 100%);
+  --secondary-bg: linear-gradient(135deg, #232526 0%, #393e46 80%);
+  --border-color: #393e46;
+  --text-color: #f8fafc;
+  --accent-color: #ec4899;
+  --accent-color-2: #a21caf;
+  --success-color: #22d3ee;
+  --error-color: #f87171;
+  --shadow-light: 0 8px 32px rgba(0, 0, 0, 0.20);
+  --shadow-medium: 0 20px 60px rgba(0, 0, 0, 0.35);
+  --transition-speed: 0.28s cubic-bezier(.4,0,.2,1);
+}
+
+/* Dialog Title */
+.dialog-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  padding: 1.2rem 2rem 1rem 2rem;
+  background: -webkit-linear-gradient(90deg, var(--accent-color), var(--accent-color-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 3px 12px #0004;
+  position: relative;
+}
+.dialog-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 80px;
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-color), var(--accent-color-2), #8b5cf6);
+  opacity: 0.8;
+  animation: expandBar 0.8s cubic-bezier(.7,.1,.4,1) both;
+}
+
+/* Dialog Content */
+.dialog-content {
+  background: var(--secondary-bg);
+  border-radius: 1.1rem;
+  padding: 2rem 1.5rem;
+  box-shadow: var(--shadow-medium);
+  border: 1.5px solid #444a;
+  margin-bottom: 0.25rem;
+  min-width: 320px;
+  color: var(--text-color);
+  font-family: 'Poppins', 'Inter', Arial, sans-serif;
+}
+
+/* Loading State */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--accent-color-2);
+  font-weight: 600;
+  padding: 1.3rem 1rem;
+  letter-spacing: 0.04em;
+  font-size: 1.1rem;
+  animation: fadeIn 0.4s;
+}
+
+/* Select & List Styles */
+.full-width, .select-field {
+  width: 100%;
+}
+.select-field mat-select {
+  font-weight: 600;
+  color: var(--accent-color-2);
+}
+.select-field mat-option {
+  color: var(--text-color);
+  background: #232526;
+  padding: 0.7rem 1.2rem;
+  font-weight: 500;
+  border-radius: 0.4rem;
+  transition: background var(--transition-speed);
+}
+.select-field mat-option:hover,
+.select-field mat-option:focus {
+  background: var(--accent-color-2);
+  color: #fff;
+}
+
+.selection-list {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1.5px solid #a21caf55;
+  border-radius: 0.8rem;
+  background: rgba(35,37,38,0.77);
+  box-shadow: 0 2px 8px #a21caf18;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.list-option {
+  color: var(--accent-color);
+  background: transparent;
+  padding: 0.85rem 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 0.4rem;
+  margin: 0.1rem 0;
+  transition: background var(--transition-speed), color var(--transition-speed);
+}
+.list-option:hover,
+.list-option:focus,
+.list-option.mat-list-item-selected {
+  background: linear-gradient(90deg, var(--accent-color-2) 60%, var(--accent-color) 100%);
+  color: #fff;
+}
+
+.selection-list::-webkit-scrollbar {
+  width: 8px;
+}
+.selection-list::-webkit-scrollbar-thumb {
+  background: var(--accent-color-2);
+  border-radius: 4px;
+}
+
+/* Dialog Actions (Buttons) */
+.dialog-actions {
+  padding-top: 1.2rem;
+  border-top: 1.5px solid #a21caf33;
+  display: flex;
+  gap: 1.2rem;
+}
+.cancel-button, .save-button {
+  border-radius: 0.8rem;
+  padding: 0.82rem 2.3rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  transition: all var(--transition-speed);
+  font-size: 1.08rem;
+  border: none;
+  outline: none;
+}
+.cancel-button {
+  color: var(--accent-color-2);
+  background: transparent;
+  border: 2px solid var(--accent-color-2);
+}
+.cancel-button:hover, .cancel-button:focus {
+  background: var(--accent-color-2);
+  color: #fff;
+  box-shadow: 0 3px 12px #a21caf9c;
+  border-color: var(--accent-color-2);
+}
+.save-button {
+  background: linear-gradient(90deg, var(--accent-color), var(--accent-color-2));
+  color: #fff;
+  box-shadow: 0 6px 18px #a21caf23;
+}
+.save-button:hover, .save-button:focus {
+  background: linear-gradient(90deg, var(--accent-color-2), var(--accent-color));
+  color: #fff;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 10px 32px #a21caf54;
+}
+.cancel-button:disabled,
+.save-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes expandBar {
+  from { width: 0; opacity: 0; }
+  to { width: 80px; opacity: 0.8; }
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .dialog-title {
+    font-size: 1.3rem;
+    padding: 1rem 0.5rem 0.8rem 0.5rem;
+  }
+  .dialog-content {
+    padding: 1rem 0.4rem;
+    min-width: unset;
+  }
+  .dialog-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .cancel-button, .save-button {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+  }
+  .selection-list {
+    max-height: 170px;
+    font-size: 0.98rem;
+  }
+}

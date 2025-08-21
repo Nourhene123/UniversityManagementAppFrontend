@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+input.filled:not(:placeholder-shown) {
+  color: #2563eb; /* Matches Tailwind's blue-600 */
+}

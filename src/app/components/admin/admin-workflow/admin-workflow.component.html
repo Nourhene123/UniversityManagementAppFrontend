@@ -1,0 +1,112 @@
+<mat-card class="mb-3 workflow-header">
+  <mat-card-title>📊 Admin Workflow - Création Université</mat-card-title>
+  <div class="progress-bar" [style.width.%]="(stepper.selectedIndex / (stepper.steps.length - 1)) * 100"></div>
+</mat-card>
+
+<mat-horizontal-stepper linear #stepper>
+  <!-- Enseignant Step -->
+  <mat-step label="Enseignant" [completed]="enseignants.length > 0">
+    <div class="mat-card p-4 workflow-step">
+      <button mat-raised-button color="primary" (click)="openEnseignantForm()">
+        <mat-icon>add</mat-icon> Ajouter un enseignant
+      </button>
+      <app-enseignants #enseignantComp [showAddFormOnly]="true" (enseignantAdded)="onEnseignantChange($event)" class="workflow-content"></app-enseignants>
+    </div>
+    <div class="workflow-controls">
+      <button mat-button matStepperNext [disabled]="enseignants.length === 0">Suivant</button>
+    </div>
+  </mat-step>
+
+  <!-- Semestre Step -->
+  <mat-step label="Semestre" [completed]="semestresData.length > 0">
+    <div class="mat-card p-4 workflow-step">
+      <button mat-raised-button color="primary" (click)="openSemestreForm()">
+        <mat-icon>add</mat-icon> Ajouter un semestre
+      </button>
+      <app-semestre #semestreComp [showAddFormOnly]="true" (semestreAdded)="onSemestreChange($event)" class="workflow-content"></app-semestre>
+    </div>
+    <div class="workflow-controls">
+      <button mat-button matStepperPrevious>Précédent</button>
+      <button mat-button matStepperNext [disabled]="semestresData.length === 0">Suivant</button>
+    </div>
+  </mat-step>
+
+  <!-- Matière Step -->
+  <mat-step label="Matière" [completed]="matieresData.length > 0">
+    <div class="mat-card p-4 workflow-step">
+      <button mat-raised-button color="primary" (click)="openMatiereForm()">
+        <mat-icon>add</mat-icon> Ajouter une matière
+      </button>
+      <app-matiere #matiereComp [showAddFormOnly]="true" [enseignantsInput]="enseignants" (matiereAdded)="onMatiereChange($event)" class="workflow-content"></app-matiere>
+    </div>
+    <div class="workflow-controls">
+      <button mat-button matStepperPrevious>Précédent</button>
+      <button mat-button matStepperNext [disabled]="matieresData.length === 0">Suivant</button>
+    </div>
+  </mat-step>
+
+  <!-- Panier Step -->
+  <mat-step label="Panier" [completed]="paniersData.length > 0">
+    <div class="mat-card p-4 workflow-step">
+      <button mat-raised-button color="primary" (click)="openPanierForm()">
+        <mat-icon>add</mat-icon> Ajouter un panier
+      </button>
+      <app-panier #panierComp [showAddFormOnly]="true" [matieresInput]="matieresData" [semestresInput]="semestresData" (panierAdded)="onPanierChange($event)" class="workflow-content"></app-panier>
+    </div>
+    <div class="workflow-controls">
+      <button mat-button matStepperPrevious>Précédent</button>
+      <button mat-button matStepperNext [disabled]="paniersData.length === 0">Suivant</button>
+    </div>
+  </mat-step>
+
+  <!-- Étudiant Step -->
+  <mat-step label="Étudiant" [completed]="etudiants.length > 0">
+    <div class="mat-card p-4 workflow-step">
+      <button mat-raised-button color="primary" (click)="openEtudiantForm()">
+        <mat-icon>add</mat-icon> Ajouter un étudiant
+      </button>
+      <app-etudiants #etudiantComp [showAddFormOnly]="true" (etudiantAdded)="onEtudiantChange($event)" class="workflow-content"></app-etudiants>
+    </div>
+    <div class="workflow-controls">
+      <button mat-button matStepperPrevious>Précédent</button>
+      <button mat-button matStepperNext [disabled]="etudiants.length === 0">Suivant</button>
+    </div>
+  </mat-step>
+
+  <!-- Parcours Step -->
+  <mat-step label="Parcours" [completed]="parcoursData.length > 0 && allStudentsAssignedToWorkflowParcour()">
+    <div class="mat-card p-4 workflow-step">
+      <button mat-raised-button color="primary" (click)="openParcourForm()">
+        <mat-icon>add</mat-icon> Ajouter un parcours
+      </button>
+      <button mat-raised-button color="accent" (click)="openAssignStudentsToParcour()" [disabled]="parcoursData.length === 0 || etudiants.length === 0">
+        <mat-icon>group_add</mat-icon> Affecter des étudiants
+      </button>
+      <app-parcour #parcourComp [showAddFormOnly]="true" [paniersInput]="paniersData" (parcourAdded)="onParcourChange($event)" class="workflow-content"></app-parcour>
+    </div>
+    <div class="workflow-controls">
+      <button mat-button matStepperPrevious>Précédent</button>
+      <button mat-button matStepperNext [disabled]="parcoursData.length === 0 || !allStudentsAssignedToWorkflowParcour()">Suivant</button>
+    </div>
+  </mat-step>
+
+  <!-- Classe Step -->
+  <mat-step label="Classe" [completed]="classesData.length > 0 && allStudentsAssignedToClasse()">
+    <div class="mat-card p-4 workflow-step">
+      <button mat-raised-button color="primary" (click)="openClasseForm()">
+        <mat-icon>add</mat-icon> Ajouter une classe
+      </button>
+      <button mat-raised-button color="accent" (click)="openAssignStudentsToClasse()" [disabled]="classesData.length === 0 || etudiants.length === 0">
+        <mat-icon>group_add</mat-icon> Affecter des étudiants à une classe
+      </button>
+      <app-classe #classeComp [showAddFormOnly]="true" [parcoursInput]="parcoursData" [etudiantsInput]="etudiants" (classeAdded)="onClasseChange($event)" class="workflow-content"></app-classe>
+    </div>
+    <div class="workflow-controls">
+      <button mat-button matStepperPrevious>Précédent</button>
+      <button mat-raised-button color="accent" (click)="saveAll()" [disabled]="isSubmitting || classesData.length === 0 || !allStudentsAssignedToClasse()">
+        <span *ngIf="!isSubmitting">💾 Sauvegarder tout</span>
+        <mat-progress-spinner *ngIf="isSubmitting" mode="indeterminate" diameter="20"></mat-progress-spinner>
+      </button>
+    </div>
+  </mat-step>
+</mat-horizontal-stepper>

@@ -1,60 +1,61 @@
-<div class="matieres-list">
-  <h2>Liste des matières</h2>
-  <div class="modal-overlay" *ngIf="showForm">
-    <div class="modal-content">
-      <form [formGroup]="matiereForm" (ngSubmit)="onSubmit()" class="semestre-form" #matiereFormElement="ngForm">
-        <div class="form-header">
-          <h3>{{ editMode ? 'Modifier Matière' : 'Ajouter une Nouvelle Matière' }}</h3>
-          <button mat-icon-button (click)="cancelForm()" class="close-button">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-        <mat-form-field appearance="fill">
-          <mat-label>Nom</mat-label>
-          <input matInput formControlName="nom" required>
-          <mat-error *ngIf="matiereForm.get('nom')?.hasError('required')">
-            Le nom est requis
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field appearance="fill">
-          <mat-label>Volume Horaire</mat-label>
-          <input matInput type="number" formControlName="volumeHoraire" required>
-          <mat-error *ngIf="matiereForm.get('volumeHoraire')?.hasError('required')">
-            Le volume horaire est requis
-          </mat-error>
-          <mat-error *ngIf="matiereForm.get('volumeHoraire')?.hasError('min')">
-            Le volume horaire doit être supérieur à 0
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field appearance="fill">
-          <mat-label>Coefficient</mat-label>
-          <input matInput type="number" formControlName="coefficient" required>
-          <mat-error *ngIf="matiereForm.get('coefficient')?.hasError('required')">
-            Le coefficient est requis
-          </mat-error>
-          <mat-error *ngIf="matiereForm.get('coefficient')?.hasError('min')">
-            Le coefficient doit être supérieur à 0
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field appearance="fill">
-          <mat-label>Enseignant</mat-label>
-          <mat-select formControlName="enseignantId">
-            <mat-option [value]="null">Aucun</mat-option>
-            <mat-option *ngFor="let enseignant of enseignants" [value]="enseignant.id">
-              {{ enseignant.nom }} {{ enseignant.prenom }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <div class="form-actions">
-          <button mat-raised-button color="primary" type="submit" [disabled]="matiereForm.invalid || isSubmitting">
-            {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
-          </button>
-          <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
-        </div>
-      </form>
-    </div>
+<div class="modal-overlay" *ngIf="showForm">
+  <div class="modal-content">
+    <form [formGroup]="matiereForm" (ngSubmit)="onSubmit()" class="semestre-form" #matiereFormElement="ngForm">
+      <div class="form-header">
+        <h3>{{ editMode ? 'Modifier Matière' : 'Ajouter une Nouvelle Matière' }}</h3>
+        <button mat-icon-button (click)="cancelForm()" class="close-button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <mat-form-field appearance="fill">
+        <mat-label>Nom</mat-label>
+        <input matInput formControlName="nom" required>
+        <mat-error *ngIf="matiereForm.get('nom')?.hasError('required')">
+          Le nom est requis
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Volume Horaire</mat-label>
+        <input matInput type="number" formControlName="volumeHoraire" required>
+        <mat-error *ngIf="matiereForm.get('volumeHoraire')?.hasError('required')">
+          Le volume horaire est requis
+        </mat-error>
+        <mat-error *ngIf="matiereForm.get('volumeHoraire')?.hasError('min')">
+          Le volume horaire doit être supérieur à 0
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Coefficient</mat-label>
+        <input matInput type="number" formControlName="coefficient" required>
+        <mat-error *ngIf="matiereForm.get('coefficient')?.hasError('required')">
+          Le coefficient est requis
+        </mat-error>
+        <mat-error *ngIf="matiereForm.get('coefficient')?.hasError('min')">
+          Le coefficient doit être supérieur à 0
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Enseignant</mat-label>
+        <mat-select formControlName="enseignantId">
+          <mat-option [value]="null">Aucun</mat-option>
+          <mat-option *ngFor="let enseignant of enseignants" [value]="enseignant.id ">
+            {{ enseignant.nom }} {{ enseignant.prenom }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div class="form-actions">
+        <button mat-raised-button color="primary" type="submit" [disabled]="matiereForm.invalid || isSubmitting">
+          {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+        </button>
+        <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
+      </div>
+    </form>
   </div>
+</div>
 
+<!-- List and add button displayed only when showAddFormOnly is false -->
+<div class="matieres-list" *ngIf="!showAddFormOnly">
+  <h2>Liste des matières</h2>
   <button mat-raised-button (click)="openForm()">
     <mat-icon>add</mat-icon> 
   </button>

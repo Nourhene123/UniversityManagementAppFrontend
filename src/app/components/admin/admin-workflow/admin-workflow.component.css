@@ -1,0 +1,332 @@
+/* Consolidated and enhanced CSS for Admin Workflow Dashboard */
+
+/* Global variables for consistent theming */
+:root {
+  /* Light Theme */
+  --bg-primary: #f7fafc;
+  --bg-secondary: #edf2f7;
+  --bg-tertiary: #e2e8f0;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --bg-glass: rgba(255, 255, 255, 0.15);
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+  --border-color: #e2e8f0;
+  --hover-bg: rgba(79, 172, 254, 0.08);
+  --primary-color: #5a67d8;
+  --primary-gradient: linear-gradient(45deg, #5a67d8, #7f9cf5);
+  --success-gradient: linear-gradient(45deg, #38a169, #68d391);
+  --warning-gradient: linear-gradient(45deg, #d69e2e, #ecc94b);
+  --danger-gradient: linear-gradient(45deg, #e53e3e, #f56565);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme */
+.dark-theme {
+  --bg-primary: #1a202c;
+  --bg-secondary: #2d3748;
+  --bg-tertiary: #4a5568;
+  --bg-card: rgba(45, 55, 72, 0.1);
+  --bg-glass: rgba(45, 55, 72, 0.15);
+  --text-primary: #e2e8f0;
+  --text-secondary: #a0aec0;
+  --text-muted: #718096;
+  --border-color: #4a5568;
+  --hover-bg: rgba(79, 172, 254, 0.12);
+}
+
+/* Space below the header card */
+.mb-3 {
+  margin-bottom: 2rem;
+}
+
+/* Header card styling */
+.workflow-header {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.workflow-header mat-card-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Progress bar */
+.progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: var(--primary-gradient);
+  transition: width var(--transition);
+  z-index: 1;
+}
+
+/* Stepper container styling */
+mat-horizontal-stepper {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+/* Stepper step styling */
+.workflow-step {
+  background: var(--bg-glass);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  padding: 1.8rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.workflow-step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--primary-gradient);
+  opacity: 0.2;
+  z-index: 0;
+}
+
+/* Step label styling */
+::ng-deep .mat-step-label {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+::ng-deep .mat-step-label-selected {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* Step icon styling */
+::ng-deep .mat-step-icon {
+  background: var(--primary-gradient);
+  color: var(--text-primary);
+  font-weight: 600;
+  border-radius: 50%;
+  transition: var(--transition);
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+}
+
+::ng-deep .mat-step-icon-not-touched {
+  background: var(--bg-glass);
+  color: var(--text-muted);
+}
+
+::ng-deep .mat-stepper-horizontal-line {
+  border-top: 2px solid var(--border-color);
+  transition: border-color var(--transition);
+}
+
+::ng-deep .mat-stepper-horizontal-line.mat-stepper-active {
+  border-top: 2px solid var(--primary-color);
+}
+
+/* Button container for stepper navigation */
+.workflow-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+/* Button styling */
+button[mat-button], button[mat-raised-button] {
+  border-radius: var(--radius-md);
+  transition: var(--transition-fast);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  min-width: 120px;
+  text-align: center;
+}
+
+button[mat-raised-button] {
+  background: var(--primary-gradient);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+button[mat-button] {
+  color: var(--primary-color);
+  background: transparent;
+}
+
+button[mat-raised-button][color="accent"] {
+  background: var(--success-gradient);
+  color: var(--text-primary);
+}
+
+button[mat-raised-button][color="warn"] {
+  background: var(--danger-gradient);
+  color: var(--text-primary);
+}
+
+button[mat-button]:hover, button[mat-raised-button]:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+button[mat-button][disabled], button[mat-raised-button][disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Inner card content styling */
+.workflow-content {
+  margin-top: 1.5rem;
+}
+
+/* Component-specific hiding */
+.workflow-matiere :host h2,
+.workflow-matiere :host mat-table,
+.workflow-matiere :host .matieres-list > *:not(button):not(.modal-overlay) {
+  display: none !important;
+}
+
+.workflow-matiere :host button[mat-raised-button] {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.workflow-matiere :host .modal-overlay {
+  display: block;
+}
+
+/* Component-specific classes for consistency */
+.workflow-enseignant, .workflow-semestre, .workflow-matiere,
+.workflow-panier, .workflow-etudiant, .workflow-parcour, .workflow-classe {
+  margin-top: 1rem;
+}
+
+/* Margin top for added lists */
+.mt-4 {
+  margin-top: 1.5rem;
+}
+
+/* Workflow summary styling (if added later) */
+.workflow-summary {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.workflow-summary h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+/* Chart container (if integrated) */
+.chart-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: var(--bg-glass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(5px);
+}
+
+/* Workflow controls */
+.workflow-controls button {
+  margin-top: 0; /* Override any inherited margin */
+}
+
+/* Focus states for accessibility */
+button, a, input {
+  outline: none;
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Animation for progress spinner */
+mat-progress-spinner {
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .workflow-header, .mat-card, .workflow-step {
+    padding: 1rem;
+  }
+
+  .workflow-header mat-card-title {
+    font-size: 1.4rem;
+  }
+
+  ::ng-deep .mat-step-label {
+    font-size: 0.95rem;
+  }
+
+  button[mat-button], button[mat-raised-button] {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+    min-width: 100px;
+  }
+
+  .workflow-controls {
+    flex-direction: column;
+    gap: 0.8rem;
+    justify-content: center;
+  }
+
+  mat-horizontal-stepper {
+    padding: 1.5rem;
+  }
+
+  .workflow-step {
+    margin-bottom: 1rem;
+  }
+
+  .chart-container {
+    max-width: 100%;
+    height: 300px;
+    padding: 1rem;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  button, a, input, .mat-step-icon, .mat-stepper-horizontal-line, .progress-bar {
+    transition: none !important;
+  }
+}

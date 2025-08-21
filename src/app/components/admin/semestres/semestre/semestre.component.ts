@@ -1,11 +1,14 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+// src/app/semestres/semestre/semestre.component.ts
+import { Component, OnInit, ChangeDetectorRef, Input, Output, EventEmitter, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
+import { MatTableDataSource, MatTable } from '@angular/material/table';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatTable } from '@angular/material/table';
-import { NgForm } from '@angular/forms';
 import { SemestreService } from 'src/app/Services/SemestreService/semestre.service';
-import { PanierService, PanierDto } from 'src/app/Services/PanierService/panier.service';
+import { PanierService } from 'src/app/Services/PanierService/panier.service';
 import { SemestreDto } from 'src/app/models/SemestreDto';
+import { ChatService } from 'src/app/Services/ChatService';
 
 @Component({
   selector: 'app-semestre',
@@ -16,127 +19,127 @@ export class SemestreComponent implements OnInit {
   semestres$: Observable<SemestreDto[] | null> = this.semestreService.getAllSemestres();
   dataSource = new MatTableDataSource<SemestreDto>();
   displayedColumns: string[] = ['id', 'nom', 'actions'];
-  selectedSemestre$: Observable<SemestreDto> | null = null;
+  semestreForm: FormGroup;
   showForm: boolean = false;
   editMode: boolean = false;
-  newSemestre: SemestreDto = { nom: '' };
+  isSubmitting: boolean = false;
+  selectedSemestre: SemestreDto = { nom: '' };
+
+  @Input() showAddFormOnly: boolean = false;
+  @Output() semestreAdded = new EventEmitter<SemestreDto>();
 
   @ViewChild(MatTable) table!: MatTable<SemestreDto>;
-  @ViewChild('semestreForm') semestreForm!: NgForm;
 
   constructor(
     private semestreService: SemestreService,
-    private panierService: PanierService
-  ) {}
+    private panierService: PanierService,
+    private fb: FormBuilder,
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef,
+    private chatService: ChatService
+  ) {
+    this.semestreForm = this.fb.group({
+      nom: ['', Validators.required]
+    });
+  }
 
-  ngOnInit() {
-    // Charger les semestres
+  ngOnInit(): void {
+    if (!this.showAddFormOnly) {
+      this.loadSemestres();
+    }
+  }
+
+  loadSemestres(): void {
     this.semestres$.subscribe({
       next: (data) => {
-        if (data) {
-          this.dataSource.data = data;
-        } else {
-          this.dataSource.data = [];
-        }
+        this.dataSource.data = data || [];
+        this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('Error fetching semestres:', err.message);
-        alert(err.message);
-      }
-    });
-
-   
-  }
-
-  getSemestre(id: number) {
-    this.selectedSemestre$ = this.semestreService.getSemestreById(id);
-  }
-
-  createSemestre(semestre: SemestreDto) {
-    this.semestreService.createSemestre(semestre).subscribe({
-      next: () => {
-        this.semestres$ = this.semestreService.getAllSemestres();
-        this.semestres$.subscribe(data => {
-          if (data) this.dataSource.data = data;
-        });
-        this.showForm = false;
-        this.semestreForm.reset();
-        this.newSemestre = { nom: '' };
-     
-        this.editMode = false;
-      },
-      error: (err) => {
-        console.error('Error creating semestre:', err.message);
-        alert(err.message);
+      error: (err: HttpErrorResponse) => {
+        this.snackBar.open('Échec du chargement des semestres.', 'Fermer', { duration: 3000 });
+        this.dataSource.data = [];
+        this.cdr.detectChanges();
       }
     });
   }
 
-  updateSemestre(semestre: SemestreDto) {
-    if (semestre.id) {
-      this.semestreService.updateSemestre(semestre).subscribe({
-        next: () => {
-          this.semestres$ = this.semestreService.getAllSemestres();
-          this.semestres$.subscribe(data => {
-            if (data) this.dataSource.data = data;
-          });
-          this.showForm = false;
-          this.semestreForm.reset();
-          this.newSemestre = { nom: '' };
-         
-          this.editMode = false;
+  openForm(): void {
+    this.showForm = true;
+    this.editMode = false;
+    this.isSubmitting = false;
+    this.selectedSemestre = { nom: '' };
+    this.semestreForm.reset({ nom: '' });
+  }
+
+  toggleForm(): void {
+    this.showForm = !this.showForm;
+    if (this.showForm) {
+      this.semestreForm.reset({ nom: '' });
+      this.editMode = false;
+      this.selectedSemestre = { nom: '' };
+    }
+  }
+
+  editSemestre(semestre: SemestreDto): void {
+    this.showForm = true;
+    this.editMode = true;
+    this.isSubmitting = false;
+    this.selectedSemestre = { ...semestre };
+    this.semestreForm.patchValue(semestre);
+  }
+
+  onSubmit(): void {
+    if (this.semestreForm.valid && !this.isSubmitting) {
+      this.isSubmitting = true;
+      const semestre: SemestreDto = { ...this.selectedSemestre, ...this.semestreForm.value };
+      const operation = this.editMode && this.selectedSemestre.id
+        ? this.semestreService.updateSemestre(semestre)
+        : this.semestreService.createSemestre(semestre);
+
+      operation.subscribe({
+        next: (response) => {
+          if (!this.editMode) {
+            this.semestreAdded.emit(response); // Emit server response
+            this.chatService.sendSemestre(response); // Notify with server response
+          }
+          if (!this.showAddFormOnly) {
+            this.loadSemestres();
+          }
+          this.cancelForm();
+          this.snackBar.open(`Semestre ${this.editMode ? 'mis à jour' : 'créé'} avec succès !`, 'Fermer', { duration: 3000 });
         },
-        error: (err) => {
-          console.error('Error updating semestre:', err.message);
-          alert(err.message);
+        error: (err: HttpErrorResponse) => {
+          this.snackBar.open(`Échec de ${this.editMode ? 'la mise à jour' : 'la création'} du semestre.`, 'Fermer', { duration: 3000 });
+          this.isSubmitting = false;
+        },
+        complete: () => {
+          this.isSubmitting = false;
+        }
+      });
+    } else {
+      this.snackBar.open('Veuillez remplir tous les champs requis correctement.', 'Fermer', { duration: 3000 });
+    }
+  }
+
+  deleteSemestre(id: number): void {
+    if (id && confirm('Êtes-vous sûr de vouloir supprimer ce semestre ?')) {
+      this.semestreService.deleteSemestre(id).subscribe({
+        next: () => {
+          this.loadSemestres();
+          this.snackBar.open('Semestre supprimé avec succès !', 'Fermer', { duration: 3000 });
+        },
+        error: (err: HttpErrorResponse) => {
+          this.snackBar.open('Échec de la suppression du semestre.', 'Fermer', { duration: 3000 });
         }
       });
     }
   }
 
-  deleteSemestre(id: number) {
-    this.semestreService.deleteSemestre(id).subscribe({
-      next: () => {
-        this.semestres$ = this.semestreService.getAllSemestres();
-        this.semestres$.subscribe(data => {
-          if (data) this.dataSource.data = data;
-        });
-      },
-      error: (err) => {
-        console.error('Error deleting semestre:', err.message);
-        alert(err.message);
-      }
-    });
-  }
-
-  onSubmit(formValue: any) {
-    const semestre: SemestreDto = {
-      id: this.editMode ? this.newSemestre.id : undefined,
-      nom: formValue.nom,
-    };
-    if (this.editMode) {
-      this.updateSemestre(semestre);
-    } else {
-      this.createSemestre(semestre);
-    }
-  }
-
-  openForm() {
-    this.showForm = true;
-    this.editMode = false;
-    this.newSemestre = { nom: ''};
-  }
-
-  cancelForm() {
+  cancelForm(): void {
     this.showForm = false;
-    this.semestreForm.reset();
-    this.newSemestre = { nom: ''};
     this.editMode = false;
-  }
-
-  editSemestre(element: SemestreDto) {
-    this.editMode = true;
-    this.showForm = true;
-    this.newSemestre = { ...element };
+    this.isSubmitting = false;
+    this.selectedSemestre = { nom: '' };
+    this.semestreForm.reset({ nom: '' });
   }
 }

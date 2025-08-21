@@ -1,12 +1,14 @@
-// src/app/components/admin/UserManagement/enseignants/enseignants.component.ts
-import { Component, OnInit, ViewChild } from '@angular/core';
+// src/app/UserManagement/enseignants/enseignants.component.ts
+import { Component, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { MatTableDataSource, MatTable } from '@angular/material/table';
 import { Observable } from 'rxjs';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { EnseignantDto } from 'src/app/models/EnseignantDto';
 import { EnseignantService } from 'src/app/Services/EnseignantService/enseignant.service';
 import { Router } from '@angular/router';
 import { TokenService } from 'src/app/Services/token.service';
+import { ChatService } from 'src/app/Services/ChatService';
 
 @Component({
   selector: 'app-enseignants',
@@ -22,34 +24,44 @@ export class EnseignantsComponent implements OnInit {
   selectedEnseignant: EnseignantDto = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
   errorMessage: string = '';
   successMessage: string = '';
+  isSubmitting: boolean = false;
 
   @ViewChild(MatTable) table!: MatTable<EnseignantDto>;
   @ViewChild('enseignantForm') enseignantForm!: NgForm;
 
+  @Input() showAddFormOnly: boolean = false;
+  @Output() enseignantAdded = new EventEmitter<EnseignantDto>();
+
   constructor(
     private enseignantService: EnseignantService,
     private tokenService: TokenService,
-    private router: Router
+    private router: Router,
+    private snackBar: MatSnackBar,
+    private chatService: ChatService
   ) {}
 
   ngOnInit() {
     const user = this.tokenService.user;
     if (!this.tokenService.token || !user || user.role.toLowerCase() !== 'administrateur') {
-      this.errorMessage = 'Access denied. Admin privileges required.';
+      this.errorMessage = 'Accès refusé. Privilèges d\'administrateur requis.';
+      this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
       this.router.navigate(['/login']);
       return;
     }
-    this.loadEnseignants();
+    if (!this.showAddFormOnly) {
+      this.loadEnseignants();
+    }
   }
 
-  // Rest of the component remains unchanged
   loadEnseignants() {
     this.enseignants$.subscribe({
       next: (data) => {
         this.dataSource.data = data ? data.filter(e => e.role === 'Enseignant') : [];
+        this.table?.renderRows();
       },
       error: (error) => {
-        this.errorMessage = error.message;
+        this.errorMessage = error.message || 'Erreur lors du chargement des enseignants.';
+        this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
         this.successMessage = '';
       }
     });
@@ -65,11 +77,14 @@ export class EnseignantsComponent implements OnInit {
 
   cancelForm() {
     this.showForm = false;
-    this.enseignantForm.reset();
-    this.selectedEnseignant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
-    this.editMode = false;
-    this.errorMessage = '';
-    this.successMessage = '';
+    setTimeout(() => {
+      this.enseignantForm?.reset();
+      this.selectedEnseignant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
+      this.editMode = false;
+      this.errorMessage = '';
+      this.successMessage = '';
+      this.isSubmitting = false;
+    }, 0);
   }
 
   editEnseignant(enseignant: EnseignantDto) {
@@ -81,72 +96,74 @@ export class EnseignantsComponent implements OnInit {
   }
 
   onSubmit(formValue: any) {
-    if (!this.enseignantForm.valid) {
-      this.errorMessage = 'Please fill out all required fields correctly';
+    if (!this.enseignantForm.valid || this.isSubmitting) {
+      this.errorMessage = 'Veuillez remplir correctement tous les champs requis.';
+      this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
       return;
     }
 
     if (!this.tokenService.token) {
-      this.errorMessage = 'Please log in as an admin first';
+      this.errorMessage = 'Veuillez vous connecter en tant qu\'administrateur d\'abord.';
+      this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
       this.router.navigate(['/login']);
       return;
     }
 
     const enseignant: EnseignantDto = {
-      id: this.editMode ? this.selectedEnseignant.id : 0,
       nom: formValue.nom,
       prenom: formValue.prenom,
       email: formValue.email,
       password: formValue.password || undefined,
       role: 'Enseignant',
-      departement: formValue.departement
+      departement: formValue.departement || ''
     };
 
-    if (this.editMode && enseignant.id) {
-      this.enseignantService.updateEnseignant(enseignant.id, enseignant).subscribe({
-        next: () => {
-          this.successMessage = 'Enseignant updated successfully!';
-          this.errorMessage = '';
-          this.showForm = false;
-          this.enseignantForm.reset();
-          this.selectedEnseignant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
-          this.editMode = false;
-          this.loadEnseignants();
-        },
-        error: (error) => {
-          this.errorMessage = error.message;
-          this.successMessage = '';
-        }
-      });
-    } else {
-      this.enseignantService.createEnseignant(enseignant).subscribe({
-        next: () => {
-          this.successMessage = 'Enseignant created successfully!';
-          this.errorMessage = '';
-          this.showForm = false;
-          this.enseignantForm.reset();
-          this.selectedEnseignant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
-          this.loadEnseignants();
-        },
-        error: (error) => {
-          this.errorMessage = error.message;
-          this.successMessage = '';
-        }
-      });
+    if (this.editMode && this.selectedEnseignant.id) {
+      enseignant.id = this.selectedEnseignant.id;
     }
+
+    this.isSubmitting = true;
+    const operation = this.editMode && enseignant.id
+      ? this.enseignantService.updateEnseignant(enseignant.id, enseignant)
+      : this.enseignantService.createEnseignant(enseignant);
+
+    operation.subscribe({
+      next: (response) => {
+        this.successMessage = `Enseignant ${this.editMode ? 'mis à jour' : 'créé'} avec succès !`;
+        this.errorMessage = '';
+        this.snackBar.open(this.successMessage, 'Fermer', { duration: 3000 });
+        if (!this.editMode) {
+          this.enseignantAdded.emit(response); // Emit server response with real ID
+          this.chatService.sendEnseignant(response); // Notify via ChatService
+        }
+        if (!this.showAddFormOnly) {
+          this.loadEnseignants();
+        }
+        this.cancelForm();
+      },
+      error: (error) => {
+        this.errorMessage = error.error?.error || error.message || `Échec de la ${this.editMode ? 'mise à jour' : 'création'} de l'enseignant.`;
+        this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
+        this.isSubmitting = false;
+      },
+      complete: () => {
+        this.isSubmitting = false;
+      }
+    });
   }
 
   deleteEnseignant(id: number) {
-    if (confirm('Are you sure you want to delete this enseignant?')) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cet enseignant ?')) {
       this.enseignantService.deleteEnseignant(id).subscribe({
         next: () => {
-          this.successMessage = 'Enseignant deleted successfully!';
+          this.successMessage = 'Enseignant supprimé avec succès !';
           this.errorMessage = '';
+          this.snackBar.open(this.successMessage, 'Fermer', { duration: 3000 });
           this.loadEnseignants();
         },
         error: (error) => {
-          this.errorMessage = error.message;
-          this.successMessage = '';
+          this.errorMessage = error.error?.error || error.message || 'Échec de la suppression de l\'enseignant.';
+          this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
         }
       });
     }

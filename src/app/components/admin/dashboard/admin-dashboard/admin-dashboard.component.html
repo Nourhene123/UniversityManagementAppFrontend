@@ -14,18 +14,19 @@
     </div>
   </div>
 
-  <!-- Parcour Statistics as List -->
+  <!-- Parcour Statistics as Chart -->
   <div class="parcour-stats" *ngIf="!isLoading">
     <h2>Étudiants par Parcour</h2>
-    <div class="stats-list" *ngIf="parcourStats.length > 0; else noData">
-      <div class="stat-item" *ngFor="let stat of parcourStats">
-        <h4>{{ stat.parcourNom }}</h4>
-        <p>{{ stat.studentCount }} étudiant(s)</p>
-      </div>
+    <div class="chart-container">
+      <canvas baseChart
+              [data]="barChartData"
+              [options]="barChartOptions"
+              [type]="'bar'">
+      </canvas>
     </div>
-    <ng-template #noData>
+    <div *ngIf="parcourStats.length === 0" class="no-data">
       <p>Aucun parcours trouvé.</p>
-    </ng-template>
+    </div>
   </div>
 
   <ng-template #loading>

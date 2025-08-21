@@ -1,53 +1,72 @@
-<!-- src/app/components/admin/UserManagement/etudiants/etudiants.component.html -->
 <div class="etudiants-management">
-  <h2>Étudiant Management</h2>
+  
 
-  <div class="modal-overlay" *ngIf="showForm">
-    <div class="modal-content">
-      <form #etudiantForm="ngForm" (ngSubmit)="onSubmit(etudiantForm.value)" class="semestre-form">
-        <div class="form-header">
-          <h3>{{ editMode ? 'Modifier Étudiant' : 'Ajouter un Nouvel Étudiant' }}</h3>
-          <button mat-icon-button (click)="cancelForm()" class="close-button">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-        <mat-form-field appearance="fill">
-          <mat-label>Nom</mat-label>
-          <input matInput name="nom" [(ngModel)]="selectedEtudiant.nom" required>
-        </mat-form-field>
-        <mat-form-field appearance="fill">
-          <mat-label>Prénom</mat-label>
-          <input matInput name="prenom" [(ngModel)]="selectedEtudiant.prenom" required>
-        </mat-form-field>
-        <mat-form-field appearance="fill">
-          <mat-label>Email</mat-label>
-          <input matInput name="email" [(ngModel)]="selectedEtudiant.email" required type="email">
-        </mat-form-field>
-        <mat-form-field appearance="fill">
-          <mat-label>Password</mat-label>
-          <input matInput name="password" [(ngModel)]="selectedEtudiant.password" required type="password">
-        </mat-form-field>
-        <mat-form-field appearance="fill">
-          <mat-label>Numéro d'Inscription</mat-label>
-          <input matInput name="numeroInscription" [(ngModel)]="selectedEtudiant.numeroInscription" required>
-        </mat-form-field>
-        <div class="form-actions">
-          <button mat-raised-button color="primary" type="submit" [disabled]="!etudiantForm.valid">
-            {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
-          </button>
-          <button mat-raised-button (click)="cancelForm()">Annuler</button>
-        </div>
-      </form>
-    </div>
+ <div class="modal-overlay" *ngIf="showForm">
+  <div class="modal-content">
+    <form #etudiantForm="ngForm" (ngSubmit)="onSubmit(etudiantForm.value)" class="etudiant-form">
+      <div class="form-header">
+        <h3>{{ editMode ? 'Modifier Étudiant' : 'Ajouter un Nouvel Étudiant' }}</h3>
+        <button mat-icon-button (click)="cancelForm()" class="close-button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <mat-form-field appearance="fill">
+        <mat-label>Nom</mat-label>
+        <input matInput name="nom" [(ngModel)]="selectedEtudiant.nom" required>
+        <mat-error *ngIf="etudiantForm.controls['nom']?.hasError('required')">
+          Le nom est requis
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Prénom</mat-label>
+        <input matInput name="prenom" [(ngModel)]="selectedEtudiant.prenom" required>
+        <mat-error *ngIf="etudiantForm.controls['prenom']?.hasError('required')">
+          Le prénom est requis
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Email</mat-label>
+        <input matInput name="email" [(ngModel)]="selectedEtudiant.email" required email>
+        <mat-error *ngIf="etudiantForm.controls['email']?.hasError('required')">
+          L'email est requis
+        </mat-error>
+        <mat-error *ngIf="etudiantForm.controls['email']?.hasError('email')">
+          Format d'email invalide
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill" *ngIf="!editMode">
+        <mat-label>Mot de passe</mat-label>
+        <input matInput type="password" name="password" [(ngModel)]="selectedEtudiant.password" required>
+        <mat-error *ngIf="etudiantForm.controls['password']?.hasError('required')">
+          Le mot de passe est requis
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Numéro d'Inscription</mat-label>
+        <input matInput name="numeroInscription" [(ngModel)]="selectedEtudiant.numeroInscription" required>
+        <mat-error *ngIf="etudiantForm.controls['numeroInscription']?.hasError('required')">
+          Le numéro d'inscription est requis
+        </mat-error>
+      </mat-form-field>
+      <input type="hidden" name="role" [(ngModel)]="selectedEtudiant.role" value="Etudiant">
+      <div class="form-actions">
+        <button mat-raised-button color="primary" type="submit" [disabled]="etudiantForm.invalid || isSubmitting">
+          {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+        </button>
+        <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
+      </div>
+    </form>
   </div>
+</div>
 
-  <button mat-raised-button (click)="openForm()">
+<div class="etudiants-list" *ngIf="!showAddFormOnly">
+  <h2>Liste des étudiants</h2>
+  <button mat-raised-button color="primary" (click)="openForm()">
     <mat-icon>add</mat-icon> 
   </button>
   <button mat-raised-button color="primary" (click)="openAffectationDialog()" [disabled]="selectedEtudiantIds.length === 0">
     <mat-icon>assignment</mat-icon> Affecter Parcours
   </button>
-
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="select">
       <mat-header-cell *matHeaderCellDef>
@@ -91,4 +110,5 @@
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
     <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
   </mat-table>
+</div>
 </div>

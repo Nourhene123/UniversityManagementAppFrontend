@@ -1,194 +1,264 @@
-<div class="container">
-  <!-- Header -->
-  <div class="header">
-    <h2 class="header-title">Class Management</h2>
-    <span class="header-date">{{ today | date:'mediumDate' }}</span>
-  </div>
-
-  <!-- Messages -->
-  <div *ngIf="loading" class="loading">
-    <svg class="spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8 8 8 0 01-8-8z"></path>
-    </svg>
-    <span>Loading...</span>
-  </div>
-
-  <div *ngIf="errorMessage" class="error-message">
-    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-    {{ errorMessage }}
-  </div>
-
-  <div *ngIf="successMessage" class="success-message">
-    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-    </svg>
-    {{ successMessage }}
-  </div>
-
-  <!-- Search Bar -->
-  <div class="search-download">
-    <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)"
-           placeholder="Search by class name or section" class="search-input">
-  </div>
-
-  <!-- Toggle Form Button -->
-  <div class="toggle-form">
-    <button (click)="toggleForm()" class="toggle-form-button">
-      {{ showForm ? 'Cancel' : '+' }}
-    </button>
-  </div>
-
-  <!-- Create/Update Class Form -->
-  <div *ngIf="showForm" class="form-container">
-    <form [formGroup]="classeForm" (ngSubmit)="onSubmit()">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="nom" class="form-label">Class Name</label>
-          <input id="nom" formControlName="nom" type="text" placeholder="Enter class name" class="form-input">
-          <small *ngIf="classeForm.get('nom')?.invalid && classeForm.get('nom')?.touched" class="error-text">
-            Name is required (minimum 3 characters).
-          </small>
-        </div>
-        <div class="form-group">
-          <label for="section" class="form-label">Section</label>
-          <input id="section" formControlName="section" type="text" placeholder="Enter section" class="form-input">
-          <small *ngIf="classeForm.get('section')?.invalid && classeForm.get('section')?.touched" class="error-text">
-            Section is required (minimum 2 characters).
-          </small>
-        </div>
-        <div class="form-group">
-          <label for="parcourId" class="form-label">Parcour</label>
-          <select id="parcourId" formControlName="parcourId" class="form-input">
-            <option value="" disabled>Select a parcour</option>
-            <option *ngFor="let parcour of parcours" [ngValue]="parcour.id">{{ parcour.nom }}</option>
-          </select>
-          <small *ngIf="classeForm.get('parcourId')?.invalid && classeForm.get('parcourId')?.touched" class="error-text">
-            Parcour is required.
-          </small>
-        </div>
-        <div class="form-group">
-          <label for="etudiantIds" class="form-label">Etudiants</label>
-          <select id="etudiantIds" formControlName="etudiantIds" multiple class="form-input multiple">
-            <option *ngFor="let etudiant of etudiants" [ngValue]="etudiant.id">{{ etudiant.nom }} {{ etudiant.prenom }}</option>
-          </select>
-          <small *ngIf="classeForm.get('etudiantIds')?.hasError('required') && classeForm.get('etudiantIds')?.touched" class="error-text">
-            At least one etudiant is required.
-          </small>
-          <small *ngIf="classeForm.get('etudiantIds')?.value?.length" class="info-text">
-            Selected: {{ getEtudiantNames(classeForm.get('etudiantIds')?.value) }}
-          </small>
-        </div>
-      </div>
-      <div class="form-submit">
-        <button type="submit" [disabled]="classeForm.invalid" class="submit-button">
-          {{ editingClassId ? 'Update' : 'Create' }} Class
-        </button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Assign Students Modal -->
-  <div *ngIf="showAssignModal" class="modal">
+<div *ngIf="showAddFormOnly; else fullView">
+  <div class="modal-overlay">
     <div class="modal-content">
-      <h2>Assign Students to {{ selectedClasse?.nom }} - {{ selectedClasse?.section }}</h2>
-      <form [formGroup]="assignStudentsForm" (ngSubmit)="onAssignStudentsSubmit()">
-        <div class="form-group">
-          <label for="assignEtudiantIds" class="form-label">Select Students</label>
-          <select id="assignEtudiantIds" formControlName="etudiantIds" multiple class="form-input multiple">
-            <option *ngFor="let etudiant of etudiants" [ngValue]="etudiant.id">{{ etudiant.nom }} {{ etudiant.prenom }}</option>
-          </select>
-          <small *ngIf="assignStudentsForm.get('etudiantIds')?.hasError('required') && assignStudentsForm.get('etudiantIds')?.touched" class="error-text">
-            At least one student is required.
-          </small>
+      <form [formGroup]="classeForm" (ngSubmit)="onSubmit()" class="classe-form">
+        <div class="form-header">
+          <h3>{{ editingClassId ? 'Modifier Classe' : 'Ajouter une Nouvelle Classe' }}</h3>
+          <button mat-icon-button (click)="toggleForm()" class="close-button">
+            <mat-icon>close</mat-icon>
+          </button>
         </div>
-        <div class="modal-actions">
-          <button type="button" (click)="closeAssignModal()" class="cancel-button">Cancel</button>
-          <button type="submit" [disabled]="assignStudentsForm.invalid" class="submit-button">Assign</button>
+        <mat-form-field appearance="fill">
+          <mat-label>Nom</mat-label>
+          <input matInput formControlName="nom" required>
+          <mat-error *ngIf="classeForm.get('nom')?.hasError('required') && classeForm.get('nom')?.touched">
+            Le nom est requis
+          </mat-error>
+          <mat-error *ngIf="classeForm.get('nom')?.hasError('minlength') && classeForm.get('nom')?.touched">
+            Le nom doit contenir au moins 3 caractères
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Section</mat-label>
+          <input matInput formControlName="section" required>
+          <mat-error *ngIf="classeForm.get('section')?.hasError('required') && classeForm.get('section')?.touched">
+            La section est requise
+          </mat-error>
+          <mat-error *ngIf="classeForm.get('section')?.hasError('minlength') && classeForm.get('section')?.touched">
+            La section doit contenir au moins 2 caractères
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Parcour</mat-label>
+          <mat-select formControlName="parcourId" required>
+            <mat-option *ngFor="let parcour of parcours" [value]="parcour.id">
+              {{ parcour.nom }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="classeForm.get('parcourId')?.hasError('required') && classeForm.get('parcourId')?.touched">
+            Le parcour est requis
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Étudiants</mat-label>
+          <mat-select formControlName="etudiantIds" multiple>
+            <mat-option *ngFor="let etudiant of filteredEtudiants" [value]="etudiant.id">
+              {{ etudiant.nom }} {{ etudiant.prenom }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="classeForm.invalid || loading">
+            {{ editingClassId ? 'Mettre à jour' : 'Ajouter' }}
+          </button>
+          <button mat-raised-button (click)="toggleForm()" [disabled]="loading">Annuler</button>
         </div>
       </form>
     </div>
   </div>
+</div>
 
-  <!-- Class List -->
-  <div id="class-list" class="class-grid">
-    <div *ngIf="loading" class="class-grid-skeleton">
-      <div class="class-card-skeleton" *ngFor="let _ of [1, 2, 3]">
-        <div class="skeleton-header"></div>
-        <div class="skeleton-line"></div>
-        <div class="skeleton-line"></div>
+<ng-template #fullView>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h2 class="header-title">Class Management</h2>
+      <span class="header-date">{{ today | date:'mediumDate' }}</span>
+    </div>
+
+    <!-- Messages -->
+    <div *ngIf="loading" class="loading">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>Loading...</span>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      <mat-icon class="icon">error_outline</mat-icon>
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="successMessage" class="success-message">
+      <mat-icon class="icon">check_circle</mat-icon>
+      {{ successMessage }}
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-download">
+      <mat-form-field appearance="fill" class="search-input">
+        <mat-label>Search by class name or section</mat-label>
+        <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{standalone: true}">
+      </mat-form-field>
+    </div>
+
+    <!-- Toggle Form Button -->
+    <div class="toggle-form">
+      <button mat-raised-button color="primary" (click)="toggleForm()" class="toggle-form-button">
+        {{ showForm ? 'Cancel' : 'Add Class' }}
+          <mat-icon>add</mat-icon>
+      </button>
+    </div>
+
+    <!-- Class Form -->
+    <div *ngIf="showForm" class="modal-overlay">
+      <div class="modal-content">
+        <form [formGroup]="classeForm" (ngSubmit)="onSubmit()" class="classe-form">
+          <div class="form-header">
+            <h3>{{ editingClassId ? 'Modifier Classe' : 'Ajouter une Nouvelle Classe' }}</h3>
+            <button mat-icon-button (click)="toggleForm()" class="close-button">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <mat-form-field appearance="fill">
+            <mat-label>Nom</mat-label>
+            <input matInput formControlName="nom" required>
+            <mat-error *ngIf="classeForm.get('nom')?.hasError('required') && classeForm.get('nom')?.touched">
+              Le nom est requis
+            </mat-error>
+            <mat-error *ngIf="classeForm.get('nom')?.hasError('minlength') && classeForm.get('nom')?.touched">
+              Le nom doit contenir au moins 3 caractères
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Section</mat-label>
+            <input matInput formControlName="section" required>
+            <mat-error *ngIf="classeForm.get('section')?.hasError('required') && classeForm.get('section')?.touched">
+              La section est requise
+            </mat-error>
+            <mat-error *ngIf="classeForm.get('section')?.hasError('minlength') && classeForm.get('section')?.touched">
+              La section doit contenir au moins 2 caractères
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Parcour</mat-label>
+            <mat-select formControlName="parcourId" required>
+              <mat-option *ngFor="let parcour of parcours" [value]="parcour.id">
+                {{ parcour.nom }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="classeForm.get('parcourId')?.hasError('required') && classeForm.get('parcourId')?.touched">
+              Le parcour est requis
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Étudiants</mat-label>
+            <mat-select formControlName="etudiantIds" multiple>
+              <mat-option *ngFor="let etudiant of filteredEtudiants" [value]="etudiant.id">
+                {{ etudiant.nom }} {{ etudiant.prenom }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="form-actions">
+            <button mat-raised-button color="primary" type="submit" [disabled]="classeForm.invalid || loading">
+              {{ editingClassId ? 'Mettre à jour' : 'Ajouter' }}
+            </button>
+            <button mat-raised-button (click)="toggleForm()" [disabled]="loading">Annuler</button>
+          </div>
+        </form>
       </div>
     </div>
-    <div *ngIf="!loading && filteredClasses.length === 0" class="no-classes">
-      No classes found.
+
+    <!-- Assign Students Modal -->
+    <div *ngIf="showAssignModal" class="modal-overlay">
+      <div class="modal-content">
+        <h2>Assign Students to {{ selectedClasse?.nom }} - {{ selectedClasse?.section }}</h2>
+        <form [formGroup]="assignStudentsForm" (ngSubmit)="onAssignStudentsSubmit()">
+          <mat-form-field appearance="fill">
+            <mat-label>Select Students</mat-label>
+            <mat-select formControlName="etudiantIds" multiple>
+              <mat-option *ngFor="let etudiant of filteredEtudiants" [value]="etudiant.id">
+                {{ etudiant.nom }} {{ etudiant.prenom }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="assignStudentsForm.get('etudiantIds')?.hasError('required') && assignStudentsForm.get('etudiantIds')?.touched">
+              At least one student is required.
+            </mat-error>
+          </mat-form-field>
+          <div class="modal-actions">
+            <button mat-raised-button color="warn" type="button" (click)="closeAssignModal()">Cancel</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="assignStudentsForm.invalid">Assign</button>
+          </div>
+        </form>
+      </div>
     </div>
-    <div *ngFor="let classe of filteredClasses" class="class-card" [attr.aria-expanded]="expandedClassId === classe.id">
-      <div class="card-header">
-        <h3 class="card-title">{{ classe.nom }} - {{ classe.section }}</h3>
-        <button *ngIf="classe.id" (click)="toggleExpand(classe.id)" class="expand-button" [attr.aria-label]="'Toggle details for ' + classe.nom">
-          <svg class="icon-expand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getExpandIconPath(classe.id)" />
-          </svg>
-        </button>
+
+    <!-- Class List -->
+    <div id="class-list" class="class-grid">
+      <div *ngIf="loading" class="class-grid-skeleton">
+        <div class="class-card-skeleton" *ngFor="let _ of [1, 2, 3]">
+          <div class="skeleton-header"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+        </div>
       </div>
-      <div class="card-content">
-        <p><strong>Parcour:</strong> {{ getParcourNom(classe.parcourId) }}</p>
-        <p><strong>Paniers:</strong> {{ getPanierNames(classe.parcourId) }}</p>
-        <p><strong>Enseignants:</strong> {{ getEnseignantNames(classe.parcourId) }}</p>
-        <p><strong>Etudiants:</strong> {{ getEtudiantNamesForClasse(classe) }}</p>
+      <div *ngIf="!loading && pagedClasses.length === 0" class="no-classes">
+        No classes found.
       </div>
-      <div *ngIf="classe.id && expandedClassId === classe.id" class="card-details">
-        <div *ngIf="etudiantsByClasse[classe.id].length > 0; else noStudents">
-          <h4 class="card-subtitle">Assigned Students</h4>
-          <div class="table-container" id="student-table-{{classe.id}}">
-            <table class="student-table">
-              <thead class="table-header">
-                <tr>
-                  <th class="table-cell">ID</th>
-                  <th class="table-cell">Name</th>
-                  <th class="table-cell">Email</th>
-                  <th class="table-cell">Numero Inscription</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let etudiant of etudiantsByClasse[classe.id]" class="table-row">
-                  <td class="table-cell">{{ etudiant.id }}</td>
-                  <td class="table-cell">{{ etudiant.nom }} {{ etudiant.prenom }}</td>
-                  <td class="table-cell">{{ etudiant.email }}</td>
-                  <td class="table-cell">{{ etudiant.numeroInscription }}</td>
-                </tr>
-              </tbody>
-            </table>
+      <div *ngFor="let classe of pagedClasses" class="class-card" [attr.aria-expanded]="expandedClassId === classe.id">
+        <div class="card-header">
+          <h3 class="card-title">{{ classe.nom }} - {{ classe.section }}</h3>
+          <button *ngIf="classe.id" mat-icon-button (click)="toggleExpand(classe.id)" class="expand-button" [attr.aria-label]="'Toggle details for ' + classe.nom">
+            <mat-icon>{{ expandedClassId === classe.id ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+        </div>
+        <div class="card-content">
+          <p><strong>Parcour:</strong> {{ getParcourNom(classe.parcourId) }}</p>
+          <p><strong>Paniers:</strong> {{ getPanierNames(classe.id) }}</p>
+          <p><strong>Enseignants:</strong> {{ getEnseignantNames(classe.id) }}</p>
+        </div>
+        <div *ngIf="classe.id && expandedClassId === classe.id" class="card-details">
+          <div *ngIf="etudiantsByClasse[classe.id].length > 0; else noStudents">
+            <h4 class="card-subtitle">Assigned Students</h4>
+            <div class="table-container" id="student-table-{{classe.id}}">
+              <table mat-table [dataSource]="etudiantsByClasse[classe.id]" class="student-table">
+                <ng-container matColumnDef="id">
+                  <th mat-header-cell *matHeaderCellDef>ID</th>
+                  <td mat-cell *matCellDef="let etudiant">{{ etudiant.id }}</td>
+                </ng-container>
+                <ng-container matColumnDef="name">
+                  <th mat-header-cell *matHeaderCellDef>Name</th>
+                  <td mat-cell *matCellDef="let etudiant">{{ etudiant.nom }} {{ etudiant.prenom }}</td>
+                </ng-container>
+                <ng-container matColumnDef="email">
+                  <th mat-header-cell *matHeaderCellDef>Email</th>
+                  <td mat-cell *matCellDef="let etudiant">{{ etudiant.email }}</td>
+                </ng-container>
+                <ng-container matColumnDef="numeroInscription">
+                  <th mat-header-cell *matHeaderCellDef>Numero Inscription</th>
+                  <td mat-cell *matCellDef="let etudiant">{{ etudiant.numeroInscription }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['id', 'name', 'email', 'numeroInscription']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['id', 'name', 'email', 'numeroInscription']"></tr>
+              </table>
+            </div>
+          </div>
+          <ng-template #noStudents>
+            <div class="no-students">No students assigned.</div>
+          </ng-template>
+          <div class="action-buttons">
+            <button mat-icon-button *ngIf="classe.id" (click)="openAssignStudentsModal(classe.id, classe.parcourId)" class="assign-button" title="Assign students to this class">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button mat-icon-button *ngIf="classe.id" (click)="downloadClassStudents(classe.id, classe.nom, classe.section)" class="download-button" title="Download students list (PDF)">
+              <mat-icon>download</mat-icon>
+            </button>
+            <button mat-icon-button *ngIf="classe.id" (click)="editClasse(classe)" class="edit-button" title="Edit this class">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button *ngIf="classe.id" (click)="deleteClasse(classe.id)" class="delete-button" title="Delete this class">
+              <mat-icon>delete</mat-icon>
+            </button>
           </div>
         </div>
-        <ng-template #noStudents>
-          <div class="no-students">No students assigned.</div>
-        </ng-template>
-        <div class="action-buttons">
-          <button *ngIf="classe.id" (click)="openAssignStudentsModal(classe.id, classe.parcourId)" class="assign-button" title="Assign students to this class">
-            <svg class="icon-button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
-          <button *ngIf="classe.id" (click)="downloadClassStudents(classe.id, classe.nom, classe.section)" class="download-button" title="Download students list (PDF)">
-            <svg class="icon-button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H3a2 2 0 01-2-2V3a2 2 0 012-2h18a2 2 0 012 2v16a2 2 0 01-2 2z" />
-            </svg>
-          </button>
-          <button *ngIf="classe.id" (click)="editClasse(classe)" class="edit-button" title="Edit this class">
-            <svg class="icon-button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-          </button>
-          <button *ngIf="classe.id" (click)="deleteClasse(classe.id)" class="delete-button" title="Delete this class">
-            <svg class="icon-button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
       </div>
     </div>
+    <mat-paginator
+      *ngIf="!loading && filteredClasses.length > 0"
+      [length]="filteredClasses.length"
+      [pageSize]="pageSize"
+      [pageIndex]="pageIndex"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPageChange($event)"
+      aria-label="Select page of classes"
+    ></mat-paginator>
   </div>
-</div>
+</ng-template>

@@ -9,13 +9,16 @@ import { AuthModule } from './components/auth/auth.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { MatSelectModule } from '@angular/material/select';
-import { EvaluationDashboardComponent } from './components/etudiant/evaluation-dashboard/evaluation-dashboard.component';
-
+import { NgChartsModule } from 'ng2-charts';
+// Angular Material
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 
 @NgModule({
   declarations: [
-    AppComponent,
-    EvaluationDashboardComponent,
+    AppComponent
   ],
   imports: [
     BrowserModule,
@@ -26,8 +29,12 @@ import { EvaluationDashboardComponent } from './components/etudiant/evaluation-d
     FormsModule,
     AuthModule,
     FontAwesomeModule,
-    AppRoutingModule
-
+    AppRoutingModule,
+ NgChartsModule ,
+ MatStepperModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule
   ],
   providers: [
     {

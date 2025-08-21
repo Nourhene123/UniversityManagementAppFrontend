@@ -1,61 +1,79 @@
-<div class="parcours-list">
-  <h2>Parcours List</h2>
-  <div class="modal-overlay" *ngIf="showForm">
-    <div class="modal-content">
-      <form #parcourForm="ngForm" (ngSubmit)="onSubmit(parcourForm.value)" class="parcour-form">
-        <div class="form-header">
-          <h3>{{ editMode ? 'Modifier Parcour' : 'Ajouter un Nouveau Parcour' }}</h3>
-          <button mat-icon-button (click)="cancelForm()" class="close-button">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-        <mat-form-field>
-          <mat-label>Nom</mat-label>
-          <input matInput name="nom" [(ngModel)]="newParcour.nom" required>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Année</mat-label>
-          <input matInput name="annee" [(ngModel)]="newParcour.annee" required>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Libellé</mat-label>
-          <input matInput name="libelle" [(ngModel)]="newParcour.libelle" required>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Paniers</mat-label>
-          <mat-select name="panierIds" [(ngModel)]="newParcour.panierIds" multiple>
-            <mat-option *ngFor="let panier of paniers" [value]="panier.id">{{ panier.nom }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <div class="form-actions">
-          <button mat-raised-button  type="submit" [disabled]="!parcourForm.valid">
-            {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
-          </button>
-          <button mat-stroked-button (click)="cancelForm()">Annuler</button>
-        </div>
-      </form>
-    </div>
+<!-- Form displayed in both contexts when showForm is true -->
+<div class="modal-overlay" *ngIf="showForm">
+  <div class="modal-content">
+    <form [formGroup]="parcourForm" (ngSubmit)="onSubmit()" class="parcour-form">
+      <div class="form-header">
+        <h3>{{ editMode ? 'Modifier Parcours' : 'Ajouter un Nouveau Parcours' }}</h3>
+        <button mat-icon-button (click)="cancelForm()" class="close-button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <mat-form-field appearance="fill">
+        <mat-label>Nom</mat-label>
+        <input matInput formControlName="nom" required>
+        <mat-error *ngIf="parcourForm.get('nom')?.hasError('required') && parcourForm.get('nom')?.touched">
+          Le nom est requis
+        </mat-error>
+        <mat-error *ngIf="parcourForm.get('nom')?.hasError('minlength') && parcourForm.get('nom')?.touched">
+          Le nom doit contenir au moins 2 caractères
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Année</mat-label>
+        <input matInput formControlName="annee" required>
+        <mat-error *ngIf="parcourForm.get('annee')?.hasError('required') && parcourForm.get('annee')?.touched">
+          L'année est requise
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Libellé</mat-label>
+        <input matInput formControlName="libelle" required>
+        <mat-error *ngIf="parcourForm.get('libelle')?.hasError('required') && parcourForm.get('libelle')?.touched">
+          Le libellé est requis
+        </mat-error>
+        <mat-error *ngIf="parcourForm.get('libelle')?.hasError('minlength') && parcourForm.get('libelle')?.touched">
+          Le libellé doit contenir au moins 2 caractères
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Paniers</mat-label>
+        <mat-select formControlName="panierIds" multiple>
+          <mat-option *ngFor="let panier of paniers" [value]="panier.id ">{{ panier.nom }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div class="form-actions">
+        <button mat-raised-button color="primary" type="submit" [disabled]="parcourForm.invalid || isSubmitting">
+          {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+        </button>
+        <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
+      </div>
+    </form>
   </div>
+</div>
 
-  <button mat-flat-button (click)="openForm()">
-    <mat-icon>add</mat-icon>
+<!-- List and add button displayed only when showAddFormOnly is false -->
+<div class="parcours-list" *ngIf="!showAddFormOnly">
+  <h2>Gestion des Parcours</h2>
+  <button  mat-flat-button   (click)="openForm()">
+    <mat-icon>add</mat-icon> 
   </button>
-
+  <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="nom">
-      <mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="annee">
-      <mat-header-cell *matHeaderCellDef>Year</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef>Année</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.annee }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="libelle">
-      <mat-header-cell *matHeaderCellDef>Label</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef>Libellé</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.libelle }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="paniers">
@@ -71,7 +89,7 @@
         <button mat-icon-button color="warn" (click)="deleteParcour(element.id)">
           <mat-icon>delete</mat-icon>
         </button>
-       
+      
       </mat-cell>
     </ng-container>
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>

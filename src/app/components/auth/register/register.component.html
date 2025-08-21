@@ -1,29 +1,109 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-100">
-  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Sign Up</h2>
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-6">
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 px-4">
+  <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md transform transition-all hover:scale-[1.01] duration-300">
+    <h2 class="text-3xl font-extrabold text-center text-gray-900 mb-8">Create Your Account</h2>
+    <div *ngIf="errorMessage" class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg mb-6" role="alert" aria-live="assertive">
+      {{ errorMessage }}
+    </div>
+    <div *ngIf="successMessage" class="bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg mb-6" role="alert" aria-live="assertive">
+      {{ successMessage }}
+    </div>
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-5">
       <div>
-        <label for="email" class="block text-sm font-medium text-gray-700">Email*</label>
-        <input id="email" formControlName="email" type="email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your email">
+        <label for="email" class="block text-sm font-medium text-gray-700">Email <span class="text-red-500">*</span></label>
+        <input
+          id="email"
+          formControlName="email"
+          type="email"
+          class="mt-1 block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 placeholder-gray-400 text-gray-900"
+          placeholder="Enter your email"
+          [class.border-red-500]="isFieldInvalid('email')"
+          aria-describedby="email-error"
+          required
+        >
+        <div *ngIf="isFieldInvalid('email')" id="email-error" class="text-red-500 text-xs mt-1">
+          {{ registerForm.get('email')?.hasError('required') ? 'Email is required' : 'Invalid email format' }}
+        </div>
       </div>
       <div>
-        <label for="password" class="block text-sm font-medium text-gray-700">Password*</label>
-        <input id="password" formControlName="password" type="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your password">
+        <label for="password" class="block text-sm font-medium text-gray-700">Password <span class="text-red-500">*</span></label>
+        <input
+          id="password"
+          formControlName="password"
+          type="password"
+          class="mt-1 block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 placeholder-gray-400 text-gray-900"
+          placeholder="Enter your password"
+          [class.border-red-500]="isFieldInvalid('password')"
+          aria-describedby="password-error"
+          required
+        >
+        <div *ngIf="isFieldInvalid('password')" id="password-error" class="text-red-500 text-xs mt-1">
+          {{ registerForm.get('password')?.hasError('required') ? 'Password is required' : 'Password must be at least 8 characters' }}
+        </div>
       </div>
       <div>
-        <label for="nom" class="block text-sm font-medium text-gray-700">Nom*</label>
-        <input id="nom" formControlName="nom" type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your nom">
+        <label for="nom" class="block text-sm font-medium text-gray-700">Nom <span class="text-red-500">*</span></label>
+        <input
+          id="nom"
+          formControlName="nom"
+          type="text"
+          class="mt-1 block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 placeholder-gray-400 text-gray-900"
+          placeholder="Enter your nom"
+          [class.border-red-500]="isFieldInvalid('nom')"
+          aria-describedby="nom-error"
+          required
+        >
+        <div *ngIf="isFieldInvalid('nom')" id="nom-error" class="text-red-500 text-xs mt-1">
+          {{ registerForm.get('nom')?.hasError('required') ? 'Nom is required' : 'Nom must be 2-50 characters' }}
+        </div>
       </div>
       <div>
-        <label for="prenom" class="block text-sm font-medium text-gray-700">Prenom*</label>
-        <input id="prenom" formControlName="prenom" type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your prenom">
+        <label for="prenom" class="block text-sm font-medium text-gray-700">Prénom <span class="text-red-500">*</span></label>
+        <input
+          id="prenom"
+          formControlName="prenom"
+          type="text"
+          class="mt-1 block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 placeholder-gray-400 text-gray-900"
+          placeholder="Enter your prénom"
+          [class.border-red-500]="isFieldInvalid('prenom')"
+          aria-describedby="prenom-error"
+          required
+        >
+        <div *ngIf="isFieldInvalid('prenom')" id="prenom-error" class="text-red-500 text-xs mt-1">
+          {{ registerForm.get('prenom')?.hasError('required') ? 'Prénom is required' : 'Prénom must be 2-50 characters' }}
+        </div>
       </div>
       <div>
-        <label for="departement" class="block text-sm font-medium text-gray-700">Departement</label>
-        <input id="departement" formControlName="departement" type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your departement">
+        <label for="departement" class="block text-sm font-medium text-gray-700">Département</label>
+        <input
+          id="departement"
+          formControlName="departement"
+          type="text"
+          class="mt-1 block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 placeholder-gray-400 text-gray-900"
+          placeholder="Enter your département"
+        >
       </div>
-      <button type="submit" [disabled]="registerForm.invalid" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Register</button>
-      <p class="text-center text-sm text-gray-600">Already have an account? <a href="/login" class="text-blue-600 hover:underline">Login</a></p>
+      <div>
+        <label for="numeroInscription" class="block text-sm font-medium text-gray-700">Numéro d'Inscription</label>
+        <input
+          id="numeroInscription"
+          formControlName="numeroInscription"
+          type="text"
+          class="mt-1 block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 placeholder-gray-400 text-gray-900"
+          placeholder="Enter your numéro d'inscription"
+        >
+      </div>
+      <input type="hidden" formControlName="role" value="Etudiant">
+      <button
+        type="submit"
+        [disabled]="registerForm.invalid"
+        class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        [attr.aria-disabled]="registerForm.invalid ? 'true' : 'false'"
+      >
+        Register
+      </button>
+      <p class="mt-6 text-center text-sm text-gray-600">
+        Already have an account? <a href="/login" class="text-indigo-600 hover:text-indigo-800 hover:underline font-medium transition duration-200">Login</a>
+      </p>
     </form>
   </div>
 </div>

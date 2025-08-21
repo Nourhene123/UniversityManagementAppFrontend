@@ -10,6 +10,8 @@ import { EnseignantsComponent } from './UserManagement/enseignants/enseignants.c
 import { PanierComponent } from './paniers/panier/panier.component';
 import { LayoutComponent } from 'src/app/shared/layout/layout.component';
 import { ClasseComponent } from './classe/classe.component';
+import { AdminWorkflowComponent } from './admin-workflow/admin-workflow.component';
+
 
 const routes: Routes = [
    {
@@ -27,6 +29,7 @@ const routes: Routes = [
       { path: 'classe', component:ClasseComponent},
      
        { path: 'Enseignants', component:EnseignantsComponent},
+        { path: 'workflow', component:AdminWorkflowComponent},
 
         
 

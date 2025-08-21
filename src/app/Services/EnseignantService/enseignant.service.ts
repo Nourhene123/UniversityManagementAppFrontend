@@ -40,7 +40,7 @@ constructor(private http: HttpClient) {}
   }
 
   createEnseignant(enseignant: EnseignantDto): Observable<EnseignantDto> {
-    return this.http.post<EnseignantDto>(`${this.apiUrl}/admin/register`, enseignant); 
+    return this.http.post<EnseignantDto>(`${this.apiUrl}/enseignant/register`, enseignant); 
   }
 
   updateEnseignant(id: number, enseignant: EnseignantDto): Observable<EnseignantDto> {

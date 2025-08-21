@@ -2,6 +2,7 @@ import { NoteDto } from "./NoteDto";
 
 export interface EtudiantDto {
   parcourId: number | null;
+
   id?: number;
   nom: string;
   prenom: string;

@@ -1,4 +1,3 @@
-
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -48,7 +47,7 @@ export class LoginComponent {
               this.router.navigate(['/enseignant/dashboard']);
               break;
             case 'etudiant':
-              this.router.navigate(['']);
+              this.router.navigate(['etudaint/dashboard']); 
               break;
             default:
               this.errorMessage = `Unknown role: ${response.role}. Please contact support.`;

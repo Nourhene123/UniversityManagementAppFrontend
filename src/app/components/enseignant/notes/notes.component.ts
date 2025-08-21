@@ -2,14 +2,23 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin, of, switchMap, catchError, map, Observable, tap, finalize } from 'rxjs';
 import { NoteDto, TypeNote } from 'src/app/models/NoteDto';
-import { ParcourDto, ParcourDtoWithEtudiants } from 'src/app/models/ParcourDto';
 import { MatiereDto } from 'src/app/models/MatiereDto';
 import { EtudiantDto } from 'src/app/models/EtudiantDto';
 import { TypeNoteCoefficientDto } from 'src/app/models/TypeNoteCoefficientDto';
-import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
-import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
+import { ClasseDto} from 'src/app/models/ClasseDto';
 import { NoteService } from 'src/app/Services/NoteService/note.service';
 import { EtudiantService } from 'src/app/Services/EtudiantService/etudiant.service';
+import { ClasseService } from 'src/app/Services/Classe/classe.service';
+import { AuthService } from 'src/app/Services/Auth/auth.service';
+import { ClasseWithMatieresDto } from 'src/app/models/ClasseWithMatieresDto';
+
+interface MatiereWithClasses extends MatiereDto {
+  classes: ClasseWithEtudiants[];
+}
+
+interface ClasseWithEtudiants extends ClasseDto {
+  etudiants: EtudiantDto[];
+}
 
 @Component({
   selector: 'app-notes',
@@ -17,7 +26,7 @@ import { EtudiantService } from 'src/app/Services/EtudiantService/etudiant.servi
   styleUrls: ['./notes.component.css']
 })
 export class NotesComponent implements OnInit {
-  matieres: (MatiereDto & { parcours: ParcourDtoWithEtudiants[] })[] = [];
+  matieres: MatiereWithClasses[] = [];
   typeNote: TypeNote | '' = '';
   noteTypes: TypeNote[] = [];
   errorMessage: string = '';
@@ -28,12 +37,13 @@ export class NotesComponent implements OnInit {
   isLoading: boolean = true;
   currentDate: Date = new Date();
   matiereExpanded: { [key: number]: boolean } = {};
+  classExpanded: { [key: string]: boolean } = {};
 
   constructor(
-    private matiereService: MatiereService,
-    private parcourService: ParcourService,
     private noteService: NoteService,
     private etudiantService: EtudiantService,
+    private classeService: ClasseService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
@@ -65,77 +75,93 @@ export class NotesComponent implements OnInit {
 
   loadMatieres(): void {
     this.isLoading = true;
-    this.matiereService.getMatieresByEnseignant().pipe(
-      switchMap(matieres => {
-        if (!matieres || matieres.length === 0) {
-          this.errorMessage = 'Aucune matière assignée à cet enseignant.';
-          this.isLoading = false;
-          return of([] as (MatiereDto & { parcours: ParcourDtoWithEtudiants[] })[]);
+    this.authService.getCurrentUser().pipe(
+      switchMap((user) => {
+        if (!user || !user.id) {
+          this.errorMessage = 'Utilisateur non authentifié. Veuillez vous reconnecter.';
+          setTimeout(() => this.router.navigate(['/login']), 2000);
+          return of([]);
         }
-        console.log('Matieres fetched:', matieres);
-        this.matiereExpanded = matieres.reduce((acc, _, index) => ({ ...acc, [index]: true }), {});
-        const matiereObservables = matieres.map(matiere =>
-          this.parcourService.getParcoursByMatiereId(matiere.id!).pipe(
-            switchMap(parcours => {
-              console.log(`Parcours for matiere ${matiere.nom} (ID: ${matiere.id}):`, parcours);
-              const etudiantObservables = parcours.map(parcour =>
-                this.etudiantService.getEtudiantsByParcour(parcour.id!).pipe(
-                  map(etudiants => ({
-                    ...parcour,
-                    etudiants: etudiants || []
-                  } as ParcourDtoWithEtudiants)),
-                  catchError(err => {
-                    if (err.message === 'Session expired. Please log in again.') {
-                      this.errorMessage = 'Session expirée. Veuillez vous reconnecter.';
-                      setTimeout(() => this.router.navigate(['/login']), 2000);
-                      return of({ ...parcour, etudiants: [] } as ParcourDtoWithEtudiants);
-                    }
-                    console.error(`Erreur lors du chargement des étudiants pour le parcours ${parcour.nom}:`, err);
-                    return of({ ...parcour, etudiants: [] } as ParcourDtoWithEtudiants);
-                  })
-                )
-              );
-              return forkJoin(
-                etudiantObservables.length > 0
-                  ? etudiantObservables
-                  : [of({ id: 0, nom: 'Unknown', annee: 'N/A', libelle: 'Unknown', etudiants: [] } as ParcourDtoWithEtudiants)]
-              ).pipe(
-                map(parcoursWithEtudiants => ({
-                  ...matiere,
-                  parcours: parcoursWithEtudiants
-                } as MatiereDto & { parcours: ParcourDtoWithEtudiants[] }))
-              );
-            }),
-            catchError(err => {
-              if (err.message === 'Session expired. Please log in again.') {
-                this.errorMessage = 'Session expirée. Veuillez vous reconnecter.';
-                setTimeout(() => this.router.navigate(['/login']), 2000);
-                return of({ ...matiere, parcours: [] } as MatiereDto & { parcours: ParcourDtoWithEtudiants[] });
+        const enseignantId = Number(user.id);
+        return this.classeService.getClassesByEnseignantId(enseignantId).pipe(
+          switchMap((classes: ClasseWithMatieresDto[]) => {
+            if (!classes || classes.length === 0) {
+              this.errorMessage = 'Aucune classe assignée à cet enseignant.';
+              this.isLoading = false;
+              return of([] as MatiereWithClasses[]);
+            }
+            console.log('Classes fetched for enseignant:', classes);
+
+            // Group classes by matiere
+            const matiereMap = new Map<number, MatiereWithClasses>();
+            classes.forEach(classe => {
+              if (classe.matieres) {
+                classe.matieres.forEach(matiere => {
+                  if (!matiereMap.has(matiere.id!)) {
+                    matiereMap.set(matiere.id!, {
+                      ...matiere,
+                      classes: []
+                    });
+                  }
+                  matiereMap.get(matiere.id!)!.classes.push({ ...classe, etudiants: [] });
+                });
               }
-              console.error(`Erreur lors du chargement des parcours pour la matière ${matiere.nom}:`, err);
-              this.errorMessage = `Erreur lors du chargement des parcours pour ${matiere.nom}`;
-              return of({ ...matiere, parcours: [] } as MatiereDto & { parcours: ParcourDtoWithEtudiants[] });
-            })
-          )
+            });
+
+            const matiereObservables = Array.from(matiereMap.values()).map(matiere =>
+              forkJoin(
+                matiere.classes.map(classe =>
+                  this.classeService.getEtudiantsByClasseId(classe.id!).pipe(
+                    map(etudiants => ({
+                      ...classe,
+                      etudiants: etudiants || []
+                    } as ClasseWithEtudiants)),
+                    catchError(err => {
+                      if (err.message === 'Session expired. Please log in again.') {
+                        this.errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+                        setTimeout(() => this.router.navigate(['/login']), 2000);
+                        return of({ ...classe, etudiants: [] } as ClasseWithEtudiants);
+                      }
+                      console.error(`Erreur lors du chargement des étudiants pour la classe ${classe.nom}:`, err);
+                      return of({ ...classe, etudiants: [] } as ClasseWithEtudiants);
+                    })
+                  )
+                )
+              ).pipe(
+                map(classesWithEtudiants => ({
+                  ...matiere,
+                  classes: classesWithEtudiants
+                } as MatiereWithClasses))
+              )
+            );
+
+            return forkJoin(
+              matiereObservables.length > 0
+                ? matiereObservables
+                : [of({ id: 0, nom: 'Aucune matière', classes: [] } as unknown as MatiereWithClasses)]
+            );
+          }),
+          tap(matieresWithClasses => {
+            console.log('Final matieres with classes and etudiants:', matieresWithClasses);
+            this.matieres = matieresWithClasses;
+            this.matiereExpanded = this.matieres.reduce((acc, _, index) => ({ ...acc, [index]: true }), {});
+            this.classExpanded = {};
+            this.matieres.forEach((matiere, mi) => {
+              matiere.classes.forEach((_, ci) => {
+                this.classExpanded[`${mi}-${ci}`] = true;
+              });
+            });
+            if (this.matieres.every(matiere => matiere.classes.every(classe => classe.etudiants.length === 0))) {
+              this.errorMessage = 'Aucun étudiant trouvé pour les matières et classes associées.';
+              console.log('No students found for any classes');
+            }
+          }),
+          catchError(err => {
+            this.handleError(err, 'Erreur lors du chargement des classes');
+            this.isLoading = false;
+            return of([] as MatiereWithClasses[]);
+          })
         );
-        return forkJoin(
-          matiereObservables.length > 0
-            ? matiereObservables
-            : [of({ id: 0, nom: 'Aucune matière', parcours: [] } as unknown as MatiereDto & { parcours: ParcourDtoWithEtudiants[] })]
-        );
-      }),
-      tap(matieresAvecParcours => {
-        console.log('Final matieres with parcours and etudiants:', matieresAvecParcours);
-        this.matieres = matieresAvecParcours;
-        if (this.matieres.every(matiere => matiere.parcours.every((parcour: ParcourDtoWithEtudiants) => parcour.etudiants.length === 0))) {
-          this.errorMessage = 'Aucun étudiant trouvé pour les matières et parcours associés.';
-          console.log('No students found for any parcours');
-        }
-      }),
-      catchError(err => {
-        this.handleError(err, 'Erreur lors du chargement des matières');
-        this.isLoading = false;
-        return of([] as (MatiereDto & { parcours: ParcourDtoWithEtudiants[] })[]);
       })
     ).subscribe(() => {
       this.isLoading = false;
@@ -144,6 +170,11 @@ export class NotesComponent implements OnInit {
 
   toggleMatiere(index: number): void {
     this.matiereExpanded[index] = !this.matiereExpanded[index];
+  }
+
+  toggleClass(matiereIndex: number, classIndex: number): void {
+    const key = `${matiereIndex}-${classIndex}`;
+    this.classExpanded[key] = !this.classExpanded[key];
   }
 
   toggleCoefficientSection(): void {
@@ -251,8 +282,8 @@ export class NotesComponent implements OnInit {
         const currentNotesMap = { ...this.notesMap };
         this.notesMap = {};
         this.matieres.forEach(matiere => {
-          matiere.parcours.forEach((parcour: ParcourDtoWithEtudiants) => {
-            parcour.etudiants.forEach((etudiant: EtudiantDto) => {
+          matiere.classes.forEach(classe => {
+            classe.etudiants.forEach(etudiant => {
               this.noteTypes.forEach(noteType => {
                 const key = `${matiere.id}_${etudiant.id}_${noteType}`;
                 this.notesMap[key] = currentNotesMap[key] || existingNotesMap.get(key) || [undefined];
@@ -376,8 +407,8 @@ export class NotesComponent implements OnInit {
     const noteObservables: Observable<NoteDto | null>[] = [];
 
     for (let matiere of this.matieres) {
-      for (let parcour of matiere.parcours as ParcourDtoWithEtudiants[]) {
-        for (let etudiant of parcour.etudiants) {
+      for (let classe of matiere.classes) {
+        for (let etudiant of classe.etudiants) {
           this.noteTypes.forEach(noteType => {
             const key = `${matiere.id}_${etudiant.id}_${noteType}`;
             const notes = this.notesMap[key] || [];

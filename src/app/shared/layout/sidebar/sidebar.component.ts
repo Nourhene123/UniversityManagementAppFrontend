@@ -36,6 +36,13 @@ export class SidebarComponent implements OnInit, AfterViewInit {
       route: 'dashboard',
       exact: true
     },
+    
+    {
+      label: 'workflow',
+      icon: 'fas fa-graduation-cap',
+      route: 'workflow',
+      exact: true
+    },
     {
       label: 'Parcours',
       icon: 'fas fa-graduation-cap',

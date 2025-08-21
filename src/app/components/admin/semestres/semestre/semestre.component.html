@@ -1,40 +1,43 @@
-<div class="semestres-list">
-  <h2>Semestres List</h2>
-  <div class="modal-overlay" *ngIf="showForm">
-    <div class="modal-content">
-      <form #semestreForm="ngForm" (ngSubmit)="onSubmit(semestreForm.value)" class="semestre-form">
-        <div class="form-header">
-          <h3>{{ editMode ? 'Modifier Semestre' : 'Ajouter un Nouveau Semestre' }}</h3>
-          <button mat-icon-button (click)="cancelForm()" class="close-button">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-        <mat-form-field>
-          <mat-label>Name</mat-label>
-          <input matInput name="nom" [(ngModel)]="newSemestre.nom" required>
-        </mat-form-field>
-        
-        <div class="form-actions">
-          <button mat-raised-button color="primary" type="submit" [disabled]="!semestreForm.valid">
-            {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
-          </button>
-          <button mat-raised-button (click)="cancelForm()">Annuler</button>
-        </div>
-      </form>
-    </div>
+<!-- Form displayed in both contexts when showForm is true -->
+<div class="modal-overlay" *ngIf="showForm">
+  <div class="modal-content">
+    <form [formGroup]="semestreForm" (ngSubmit)="onSubmit()" class="semestre-form">
+      <div class="form-header">
+        <h3>{{ editMode ? 'Modifier Semestre' : 'Ajouter un Nouveau Semestre' }}</h3>
+        <button mat-icon-button (click)="cancelForm()" class="close-button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <mat-form-field appearance="fill">
+        <mat-label>Nom</mat-label>
+        <input matInput formControlName="nom" required>
+        <mat-error *ngIf="semestreForm.get('nom')?.hasError('required')">
+          Le nom est requis
+        </mat-error>
+      </mat-form-field>
+      <div class="form-actions">
+        <button mat-raised-button color="primary" type="submit" [disabled]="semestreForm.invalid || isSubmitting">
+          {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+        </button>
+        <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
+      </div>
+    </form>
   </div>
+</div>
 
+<!-- List and add button displayed only when showAddFormOnly is false -->
+<div class="semestres-list" *ngIf="!showAddFormOnly">
+  <h2>Liste des semestres</h2>
   <button mat-raised-button (click)="openForm()" style="margin-top: 10px;">
     <mat-icon>add</mat-icon>
   </button>
-
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="nom">
-      <mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+      <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
       <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="actions">
