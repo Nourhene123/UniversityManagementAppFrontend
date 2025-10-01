@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { forkJoin, of, switchMap, catchError, Observable, Subject, finalize } from 'rxjs';
 import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -53,9 +53,7 @@ export class ClasseComponent implements OnInit {
   today: Date = new Date();
   searchTerm: string = '';
   isAdmin: boolean = false;
-  pagedClasses: any[] = [];   
-
-  // Pagination state
+  pagedClasses: any[] = [];
   pageSize = 6;
   pageIndex = 0;
   pageSizeOptions = [3, 6, 9, 12];
@@ -89,36 +87,91 @@ export class ClasseComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    if (!this.showAddFormOnly) {
-      this.loadInitialData();
-      this.setupSearch();
-    } else {
-      this.showForm = true;
-      this.parcours = this.parcoursInput.length > 0 ? this.parcoursInput : [];
-      this.etudiants = this.etudiantsInput.length > 0 ? this.etudiantsInput : [];
-      this.updateFilteredEtudiants(this.classeForm.get('parcourId')?.value);
-      if (this.parcours.length === 0 || this.etudiants.length === 0) {
-        this.loadInitialData();
-      }
-    }
+ ngOnInit(): void {
+  console.log('ngOnInit - showAddFormOnly:', this.showAddFormOnly);
+  console.log('ngOnInit - parcoursInput:', this.parcoursInput);
+  console.log('ngOnInit - etudiantsInput:', this.etudiantsInput);
 
-    this.classeForm.get('parcourId')?.valueChanges.subscribe(parcourId => {
-      console.log('parcourId changed:', parcourId);
-      this.updateFilteredEtudiants(parcourId);
-      this.classeForm.get('etudiantIds')?.setValue([]);
-    });
-    this.updatePagedClasses();
+  if (!this.showAddFormOnly) {
+    this.loadInitialData();
+    this.setupSearch();
+  } else {
+    this.showForm = true;
+    this.parcours = this.parcoursInput.length > 0 ? [...this.parcoursInput] : [];
+    this.etudiants = this.etudiantsInput.length > 0 ? [...this.etudiantsInput] : [];
+
+    // Fallback: Load parcours and etudiants if inputs are empty
+    if (this.parcours.length === 0 || this.etudiants.length === 0) {
+      this.loading = true;
+      forkJoin({
+        parcours: this.parcourService.getAllParcours().pipe(catchError(() => of([]))),
+        etudiants: this.etudiantService.getAllEtudiants().pipe(catchError(() => of([])))
+      }).subscribe({
+        next: ({ parcours, etudiants }) => {
+          this.parcours = parcours.length > 0 ? parcours : this.parcours;
+          this.etudiants = etudiants.length > 0 ? etudiants : this.etudiants;
+          this.initializeForm();
+        },
+        error: (err) => {
+          console.error('Error loading fallback data:', err);
+          this.errorMessage = 'Échec du chargement des données initiales';
+          this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
+        },
+        complete: () => this.loading = false
+      });
+    } else {
+      this.initializeForm();
+    }
   }
+
+  // Subscribe to parcourId changes
+  this.classeForm.get('parcourId')?.valueChanges.subscribe(parcourId => {
+    this.updateFilteredEtudiants(parcourId);
+  });
+}
+
+private initializeForm(): void {
+  if (this.parcours.length > 0) {
+    const defaultParcourId = this.parcours[0].id || null;
+    this.classeForm.get('parcourId')?.setValue(defaultParcourId);
+    this.updateFilteredEtudiants(defaultParcourId);
+  } else {
+    this.classeForm.get('parcourId')?.disable();
+    this.snackBar.open('Aucun parcours disponible', 'Fermer', { duration: 3000 });
+  }
+}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['parcoursInput'] && changes['parcoursInput'].currentValue) {
-      this.parcours = this.parcoursInput;
+      this.parcours = [...this.parcoursInput];
+      console.log('parcoursInput updated:', this.parcours);
+      if (this.parcours.length > 0 && this.showForm) {
+        const defaultParcourId = this.parcours[0].id || null;
+        this.classeForm.get('parcourId')?.setValue(defaultParcourId);
+        this.updateFilteredEtudiants(defaultParcourId);
+      }
     }
     if (changes['etudiantsInput'] && changes['etudiantsInput'].currentValue) {
-      this.etudiants = this.etudiantsInput;
+      this.etudiants = [...this.etudiantsInput];
+      console.log('etudiantsInput updated:', this.etudiants);
       this.updateFilteredEtudiants(this.classeForm.get('parcourId')?.value);
     }
+    if (this.showAddFormOnly && (!this.parcoursInput.length || !this.etudiantsInput.length)) {
+      console.warn('parcoursInput or etudiantsInput is empty in showAddFormOnly mode');
+    }
+  }
+
+  loadParcours(): Observable<ParcourDto[]> {
+    this.loading = true;
+    return this.parcourService.getAllParcours().pipe(
+      catchError(err => {
+        console.error('Error loading parcours:', err);
+        this.errorMessage = 'Échec du chargement des parcours';
+        this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
+        return of([]);
+      }),
+      finalize(() => this.loading = false)
+    );
   }
 
   loadInitialData(): void {
@@ -127,40 +180,40 @@ export class ClasseComponent implements OnInit {
       parcours: this.parcourService.getAllParcours().pipe(
         catchError(err => {
           console.error('Error loading parcours:', err);
-          this.errorMessage = 'Failed to load parcours';
-          this.snackBar.open(this.errorMessage, 'Close', { duration: 3000 });
+          this.errorMessage = 'Échec du chargement des parcours';
+          this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
           return of([]);
         })
       ),
       etudiants: this.etudiantService.getAllEtudiants().pipe(
         catchError(err => {
           console.error('Error loading etudiants:', err);
-          this.errorMessage = 'Failed to load students';
-          this.snackBar.open(this.errorMessage, 'Close', { duration: 3000 });
+          this.errorMessage = 'Échec du chargement des étudiants';
+          this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
           return of([]);
         })
       ),
       enseignants: this.enseignantService.getAllEnseignants().pipe(
         catchError(err => {
           console.error('Error loading enseignants:', err);
-          this.errorMessage = 'Failed to load teachers';
-          this.snackBar.open(this.errorMessage, 'Close', { duration: 3000 });
+          this.errorMessage = 'Échec du chargement des enseignants';
+          this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
           return of([]);
         })
       ),
       paniers: this.panierService.getAllPaniers().pipe(
         catchError(err => {
           console.error('Error loading paniers:', err);
-          this.errorMessage = 'Failed to load paniers';
-          this.snackBar.open(this.errorMessage, 'Close', { duration: 3000 });
+          this.errorMessage = 'Échec du chargement des paniers';
+          this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
           return of([]);
         })
       ),
       matieres: this.matiereService.getAllMatieres().pipe(
         catchError(err => {
           console.error('Error loading matieres:', err);
-          this.errorMessage = 'Failed to load matieres';
-          this.snackBar.open(this.errorMessage, 'Close', { duration: 3000 });
+          this.errorMessage = 'Échec du chargement des matières';
+          this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
           return of([]);
         })
       )
@@ -171,15 +224,57 @@ export class ClasseComponent implements OnInit {
         this.enseignants = enseignants || [];
         this.paniers = paniers || [];
         this.matieres = matieres || [];
-        console.log('Loaded parcours:', this.parcours);
-        console.log('Loaded etudiants:', this.etudiants);
-        console.log('Loaded enseignants:', this.enseignants);
-        console.log('Loaded paniers:', this.paniers);
-        console.log('Loaded matieres:', this.matieres);
+        console.log('Loaded data:', { parcours, etudiants, enseignants, paniers, matieres });
+
+        if (this.showAddFormOnly) {
+          this.updateFilteredEtudiants(this.classeForm.get('parcourId')?.value);
+        }
+
         return this.loadClasses();
       }),
-      finalize(() => this.loading = false)
+      finalize(() => {
+        this.loading = false;
+        this.updatePagedClasses();
+      })
     ).subscribe();
+  }
+
+  updateFilteredEtudiants(parcourId: number | null): void {
+    console.log('updateFilteredEtudiants - parcourId:', parcourId);
+    console.log('updateFilteredEtudiants - etudiants:', this.etudiants);
+
+    if (!parcourId) {
+      this.filteredEtudiants = [];
+      console.log('No parcourId provided, filteredEtudiants reset to empty');
+      return;
+    }
+
+    // Fetch students for the selected parcour from the backend
+    this.loading = true;
+    this.parcourService.getEtudiantsByParcourId(parcourId).pipe(
+      catchError(err => {
+        console.error('Error fetching students for parcourId', parcourId, ':', err);
+        this.errorMessage = 'Échec du chargement des étudiants pour le parcours';
+        this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
+        return of([]);
+      }),
+      finalize(() => this.loading = false)
+    ).subscribe({
+      next: (data) => {
+        this.filteredEtudiants = data || [];
+        console.log('Fetched students for parcourId', parcourId, ':', this.filteredEtudiants);
+        
+        // Reset etudiantIds if they are not valid for the selected parcour
+        const currentEtudiantIds = this.classeForm.get('etudiantIds')?.value || [];
+        const validEtudiantIds = currentEtudiantIds.filter((id: number) =>
+          this.filteredEtudiants.some(e => e.id === id)
+        );
+        if (validEtudiantIds.length !== currentEtudiantIds.length) {
+          console.warn('Invalid student IDs removed:', currentEtudiantIds, 'Valid:', validEtudiantIds);
+          this.classeForm.get('etudiantIds')?.setValue(validEtudiantIds);
+        }
+      }
+    });
   }
 
   loadClasses(): Observable<void> {
@@ -255,42 +350,6 @@ export class ClasseComponent implements OnInit {
       }),
       finalize(() => this.loading = false)
     );
-  }
-
-  updateFilteredEtudiants(parcourId: number | null): void {
-    if (!parcourId) {
-      this.filteredEtudiants = this.etudiants;
-      console.log('No parcourId provided, showing all students:', this.filteredEtudiants);
-      return;
-    }
-    this.parcourService.getEtudiantsByParcourId(parcourId).subscribe({
-      next: (data) => {
-        this.filteredEtudiants = data || [];
-        console.log('Fetched students for parcourId', parcourId, ':', this.filteredEtudiants);
-        const currentEtudiantIds = this.classeForm.get('etudiantIds')?.value || [];
-        const validEtudiantIds = currentEtudiantIds.filter((id: number) =>
-          this.filteredEtudiants.some(e => e.id === id)
-        );
-        if (validEtudiantIds.length !== currentEtudiantIds.length) {
-          console.warn('Invalid student IDs removed:', currentEtudiantIds, 'Valid:', validEtudiantIds);
-          this.classeForm.get('etudiantIds')?.setValue(validEtudiantIds);
-        }
-      },
-      error: (err) => {
-        console.error('Error fetching students for parcour:', err);
-        this.filteredEtudiants = this.etudiants.filter(
-          etudiant => etudiant.parcourId === parcourId
-        );
-        console.log('Fallback filtered etudiants for parcourId', parcourId, ':', this.filteredEtudiants);
-        const currentEtudiantIds = this.classeForm.get('etudiantIds')?.value || [];
-        const validEtudiantIds = currentEtudiantIds.filter((id: number) =>
-          this.filteredEtudiants.some(e => e.id === id)
-        );
-        this.classeForm.get('etudiantIds')?.setValue(validEtudiantIds);
-        this.errorMessage = 'Failed to fetch students for parcour, showing available students';
-        this.snackBar.open(this.errorMessage, 'Close', { duration: 3000 });
-      }
-    });
   }
 
   createClasse(): void {
@@ -451,13 +510,8 @@ export class ClasseComponent implements OnInit {
 
   onSearchChange(term: string): void {
     this.searchSubject.next(term);
-       this.pageIndex = 0; 
+    this.pageIndex = 0;
     this.updatePagedClasses();
-  }
-   updatePagedClasses() {
-    const start = this.pageIndex * this.pageSize;
-    const end = start + this.pageSize;
-    this.pagedClasses = this.filteredClasses.slice(start, end);
   }
 
   getParcourNom(parcourId: number): string {
@@ -683,9 +737,16 @@ export class ClasseComponent implements OnInit {
       setTimeout(() => this.errorMessage = '', 2000);
     }
   }
-   onPageChange(event: PageEvent) {
+
+  onPageChange(event: PageEvent) {
     this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
     this.updatePagedClasses();
+  }
+
+  updatePagedClasses() {
+    const start = this.pageIndex * this.pageSize;
+    const end = start + this.pageSize;
+    this.pagedClasses = this.filteredClasses.slice(start, end);
   }
 }

@@ -1,4 +1,3 @@
-// src/app/UserManagement/enseignants/enseignants.component.ts
 import { Component, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { MatTableDataSource, MatTable } from '@angular/material/table';

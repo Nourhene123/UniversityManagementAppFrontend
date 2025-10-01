@@ -72,7 +72,14 @@ assignManyEtudiantsToParcour(etudiantIds: number[], parcourId: number) {
     return this.http.get<ParcourDto[]>(`${this.apiUrl}/matiere/${matiereId}`, { headers: this.getHeaders() });
   }
 
-
+ getParcoursByEtudiantId(etudiantId: number): Observable<ParcourDto[]> {
+    return this.http.get<ParcourDto[]>(`${this.apiUrl}/etudiant/${etudiantId}`, { headers: this.getHeaders() }).pipe(
+      catchError(err => {
+        console.error(`Error fetching parcours for student ID ${etudiantId}:`, err);
+        return throwError(() => new Error(`Failed to fetch parcours for student ID ${etudiantId}`));
+      })
+    );
+  }
 
 
 }

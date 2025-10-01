@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { catchError, Observable, throwError } from 'rxjs';
 import { EtudiantDto } from 'src/app/models/EtudiantDto';
+import { UserResponse } from 'src/app/models/UserResponse';
 
 export interface EtudiantWithNote {
   etudiant: EtudiantDto;
@@ -12,6 +13,9 @@ export interface EtudiantWithNote {
   providedIn: 'root'
 })
 export class EtudiantService {
+  getCourseProgress(userId: Observable<UserResponse | null>) {
+    throw new Error('Method not implemented.');
+  }
   private apiUrl = 'http://localhost:8080/api/utilisateurs'; 
 
   constructor(private http: HttpClient) {}

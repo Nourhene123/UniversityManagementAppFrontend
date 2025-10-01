@@ -22,12 +22,12 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
   ]
 })
 export class SidebarComponent implements OnInit, AfterViewInit {
-  @Input() isSidebarOpen: boolean = false; // Controlled by LayoutComponent
+  @Input() isSidebarOpen: boolean = false;
   currentUser: any = { nom: '', prenom: '', role: '' };
   isLoading = true;
   isAnimated = false;
   isDarkTheme = false;
-  isMinimized: boolean = false; // New state for minimization
+  isMinimized: boolean = false; 
 
   private adminMenuItems = [
     {
@@ -103,6 +103,27 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     },
    
   ];
+  private studentMenuItems = [
+  {
+    label: 'Dashboard',
+    icon: 'fas fa-chart-line',
+    route: 'dashboard',
+    exact: true
+  },
+  {
+    label: 'Notes',
+    icon: 'fas fa-file-alt',
+    route: 'EvaluationNote',
+    exact: true
+  },
+  
+  {
+    label: 'Academic History',
+    icon: 'fas fa-history',
+    route: 'history',
+    exact: true
+  },
+];
 
   menuItems: any[] = [];
 
@@ -134,7 +155,10 @@ export class SidebarComponent implements OnInit, AfterViewInit {
           this.menuItems = this.adminMenuItems;
         } else if (this.currentUser?.role === 'Enseignant') {
           this.menuItems = this.enseignantMenuItems;
-        } else {
+        } 
+        else if (this.currentUser?.role === 'Etudiant') {
+        this.menuItems = this.studentMenuItems; 
+      }else {
           this.menuItems = [];
           console.warn('Unknown role:', this.currentUser?.role);
         }

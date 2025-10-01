@@ -1,0 +1,52 @@
+<div class="container" role="main" aria-labelledby="grades-heading">
+  <h2 id="grades-heading">My Grades</h2>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading" role="alert" aria-live="polite">
+    <mat-spinner diameter="24" aria-label="Loading grades"></mat-spinner>
+    <span>Loading grades...</span>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="errorMessage && !isLoading" class="error" role="alert" aria-live="assertive">
+    <mat-icon class="icon" aria-hidden="true">error_outline</mat-icon>
+    {{ errorMessage }}
+    <p class="error-action">Please contact support if this issue persists.</p>
+  </div>
+
+  <!-- Grades Table -->
+  <div *ngIf="!isLoading && !errorMessage" class="table-container">
+    <table class="grades-table" role="grid" aria-label="Student Grades">
+      <thead>
+        <tr>
+          <th scope="col">Parcours Name</th>
+          <th scope="col">Date</th>
+          <th scope="col">Panier Name</th>
+          <th scope="col">Panier Coefficient</th>
+          <th scope="col">Matiere Name</th>
+          <th scope="col">Matiere Coefficient</th>
+          <th scope="col">Grade</th>
+          <th scope="col">Type of Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of getTableRows()" [ngClass]="{'high-grade': row.note && row.note.valeur >= 15, 'low-grade': row.note && row.note.valeur < 10}">
+          <td data-label="Parcours Name">{{ row.parcourName }}</td>
+          <td data-label="Date">{{ row.date }}</td>
+          <td data-label="Panier Name">{{ row.panierName }}</td>
+          <td data-label="Panier Coefficient">{{ row.panierCoefficient | number:'1.1-2' || 'N/A' }}</td>
+          <td data-label="Matiere Name">{{ row.matiereName }}</td>
+          <td data-label="Matiere Coefficient">{{ row.matiereCoefficient | number:'1.1-2' }}</td>
+          <td data-label="Grade">{{ row.note?.valeur || 'N/A' }}</td>
+          <td data-label="Type of Note">{{ row.note?.typeNote || 'N/A' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- No data case -->
+    <div *ngIf="getTableRows().length === 0 && !isLoading && !errorMessage" class="no-data" role="alert">
+      <p>No grades or parcours found.</p>
+      <p class="action-text">Please contact your academic advisor to get enrolled or check your grades.</p>
+    </div>
+  </div>
+</div>

@@ -59,4 +59,8 @@ export class NoteService {
     if (etudiantId) params = params.set('etudiantId', etudiantId.toString());
     return this.http.get<MatiereAverageDto[]>(`${this.apiUrl}/averages`, { headers: this.getHeaders(), params });
   }
+  getNotesByStudentId(studentId: number): Observable<NoteDto[]> {
+    const url = `${this.apiUrl}/student/${studentId}`;
+    return this.http.get<NoteDto[]>(url, { headers: this.getHeaders() });
+  }
 }
