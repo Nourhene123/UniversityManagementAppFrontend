@@ -3,57 +3,146 @@
 
   <!-- Header -->
   <header class="header mb-8 flex flex-col md:flex-row justify-between items-center gap-4 animate-fadeIn">
-    <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-wide uppercase">
-      Tableau de Bord - Enseignant
-    </h2>
-    <div class="date text-sm bg-gray-700 px-4 py-2 rounded-lg shadow-md">
-      Date : {{ currentDate | date:'dd/MM/yyyy HH:mm' }} CET
+    <div class="flex items-center gap-4">
+      <div class="header-icon">
+        <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-wide uppercase">
+          Tableau de Bord - Enseignant
+        </h2>
+        <p class="text-gray-400 text-sm mt-1">Vue d'ensemble de vos cours et étudiants</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="date text-sm bg-gray-700/80 px-4 py-2 rounded-lg shadow-md flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        {{ currentDate | date:'dd/MM/yyyy HH:mm' }} CET
+      </div>
     </div>
   </header>
 
-  <!-- Stats Overview -->
-  <div class="stats-grid mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-    <div class="stat-card p-6 rounded-xl shadow-xl transform hover:scale-105 transition duration-300 ease-out">
-      <h3 class="text-base font-semibold text-blue-300 uppercase tracking-wider">Total Étudiants</h3>
-      <p class="text-3xl font-bold text-white mt-3">{{ getTotalStudents() }}</p>
-    </div>
-    <div class="stat-card p-6 rounded-xl shadow-xl transform hover:scale-105 transition duration-300 ease-out">
-      <h3 class="text-base font-semibold text-blue-300 uppercase tracking-wider">Parcours Actifs</h3>
-      <p class="text-3xl font-bold text-white mt-3">{{ parcours.length }}</p>
-    </div>
-    <div class="stat-card p-6 rounded-xl shadow-xl transform hover:scale-105 transition duration-300 ease-out">
-      <h3 class="text-base font-semibold text-blue-300 uppercase tracking-wider">Matières Enseignées</h3>
-      <p class="text-3xl font-bold text-white mt-3">{{ getTotalMatieres() }}</p>
-    </div>
-    <div class="stat-card p-6 rounded-xl shadow-xl transform hover:scale-105 transition duration-300 ease-out">
-      <h3 class="text-base font-semibold text-blue-300 uppercase tracking-wider">Moyenne Générale</h3>
-      <p class="text-3xl font-bold text-white mt-3">{{ getOverallAverage() | number:'1.2-2' }} / 20</p>
-    </div>
-    <div class="stat-card p-6 rounded-xl shadow-xl transform hover:scale-105 transition duration-300 ease-out">
-      <h3 class="text-base font-semibold text-blue-300 uppercase tracking-wider">Étudiants Réussis</h3>
-      <p class="text-3xl font-bold text-white mt-3">{{ getStudentsAboveThreshold() }}</p>
-    </div>
-   
+  <!-- Quick Actions -->
+  <div class="quick-actions mb-8 flex flex-wrap gap-3">
+    <a routerLink="/enseignant/notes" class="quick-action-btn bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 transition-all duration-300 hover:scale-105">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+      </svg>
+      <span>Gérer les Notes</span>
+    </a>
+    <button (click)="exportData()" class="quick-action-btn bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 transition-all duration-300 hover:scale-105">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+      </svg>
+      <span>Exporter CSV</span>
+    </button>
+    <button (click)="generatePDFReport()" [disabled]="isGeneratingReport" class="quick-action-btn bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+      </svg>
+      <span>{{ isGeneratingReport ? 'Génération...' : 'Rapport PDF' }}</span>
+    </button>
+    <button (click)="refreshData()" class="quick-action-btn bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 transition-all duration-300 hover:scale-105">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+      </svg>
+      <span>Actualiser</span>
+    </button>
   </div>
-   <div class="stat-card p-6 rounded-xl shadow-xl transform hover:scale-105 transition duration-300 ease-out">
-      <h3 class="text-lg font-bold text-white mb-4">Meilleur/Plus Faible</h3>
-      <div class="h-48">
-        <canvas baseChart
-                #topBottomChart
-                [data]="topBottomChartData"
-                [type]="'bar'"
-                [options]="topBottomChartOptions"
-                aria-label="Graphique des meilleurs et moins bons étudiants">
-        </canvas>
-      </div>
-    </div>
 
-  <!-- Main Content -->
-  <main *ngIf="!isLoading && parcours.length > 0" aria-label="Statistiques par parcours et classe" class="space-y-8">
+  <!-- Last Export Indicator -->
+  <div *ngIf="lastExportDate" class="mb-4 flex items-center gap-2 text-sm text-gray-400 bg-gray-800/50 px-4 py-2 rounded-lg inline-flex">
+    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span>{{ getLastExportText() }}</span>
+  </div>
+
+  <!-- Stats Overview -->
+  <div class="stats-grid mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+    <div class="stat-card p-6 rounded-xl shadow-xl transform hover:scale-105 transition duration-300 ease-out bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-500/30">
+      <div class="flex items-center justify-between mb-3">
+        <div class="stat-icon bg-blue-500/20 p-3 rounded-lg">
+          <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+        </div>
+        <span class="stat-trend text-emerald-400 text-sm font-medium">+12%</span>
+      </div>
+      <h3 class="text-base font-semibold text-blue-300 uppercase tracking-wider">Total Étudiants</h3>
+      <p class="text-3xl font-bold text-white mt-2">{{ getTotalStudents() }}</p>
+    </div>
+    
+    <div class="stat-card p-6 rounded-xl shadow-xl transform hover:scale-105 transition duration-300 ease-out bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-500/30">
+      <div class="flex items-center justify-between mb-3">
+        <div class="stat-icon bg-purple-500/20 p-3 rounded-lg">
+          <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+          </svg>
+        </div>
+        <span class="stat-trend text-emerald-400 text-sm font-medium">Actif</span>
+      </div>
+      <h3 class="text-base font-semibold text-purple-300 uppercase tracking-wider">Parcours Actifs</h3>
+      <p class="text-3xl font-bold text-white mt-2">{{ parcours.length }}</p>
+    </div>
+    
+    <div class="stat-card p-6 rounded-xl shadow-xl transform hover:scale-105 transition duration-300 ease-out bg-gradient-to-br from-pink-600/20 to-pink-800/20 border border-pink-500/30">
+      <div class="flex items-center justify-between mb-3">
+        <div class="stat-icon bg-pink-500/20 p-3 rounded-lg">
+          <svg class="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+        </div>
+        <span class="stat-trend text-blue-400 text-sm font-medium">Cours</span>
+      </div>
+      <h3 class="text-base font-semibold text-pink-300 uppercase tracking-wider">Matières Enseignées</h3>
+      <p class="text-3xl font-bold text-white mt-2">{{ getTotalMatieres() }}</p>
+    </div>
+    
+    <div class="stat-card p-6 rounded-xl shadow-xl transform hover:scale-105 transition duration-300 ease-out bg-gradient-to-br from-amber-600/20 to-amber-800/20 border border-amber-500/30">
+      <div class="flex items-center justify-between mb-3">
+        <div class="stat-icon bg-amber-500/20 p-3 rounded-lg">
+          <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+        </div>
+        <span class="stat-trend" [class.text-emerald-400]="getOverallAverage() >= 10" [class.text-red-400]="getOverallAverage() < 10">{{ getOverallAverage() >= 10 ? 'Bien' : 'À améliorer' }}</span>
+      </div>
+      <h3 class="text-base font-semibold text-amber-300 uppercase tracking-wider">Moyenne Générale</h3>
+      <p class="text-3xl font-bold text-white mt-2">{{ getOverallAverage() | number:'1.2-2' }} <span class="text-lg text-gray-400">/ 20</span></p>
+    </div>
+    
+    <div class="stat-card p-6 rounded-xl shadow-xl transform hover:scale-105 transition duration-300 ease-out bg-gradient-to-br from-emerald-600/20 to-emerald-800/20 border border-emerald-500/30">
+      <div class="flex items-center justify-between mb-3">
+        <div class="stat-icon bg-emerald-500/20 p-3 rounded-lg">
+          <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <span class="stat-trend text-emerald-400 text-sm font-medium">{{ (getStudentsAboveThreshold() / getTotalStudents() * 100) | number:'1.0-0' }}%</span>
+      </div>
+      <h3 class="text-base font-semibold text-emerald-300 uppercase tracking-wider">Étudiants Réussis</h3>
+      <p class="text-3xl font-bold text-white mt-2">{{ getStudentsAboveThreshold() }}</p>
+    </div>
+  </div>
+  <!-- Charts Section -->
+  <div class="charts-grid mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Success Rate Chart -->
-    <section class="bg-gray-800 p-6 rounded-xl shadow-xl animate-slideUp">
-      <h3 class="text-2xl font-bold text-white mb-5">Taux de Réussite par Parcours</h3>
-      <div class="overflow-hidden rounded-lg">
+    <section class="chart-card bg-gray-800/80 backdrop-blur-sm p-6 rounded-xl shadow-xl animate-slideUp border border-gray-700/50">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          Taux de Réussite par Parcours
+        </h3>
+        <span class="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded">{{ parcours.length }} parcours</span>
+      </div>
+      <div class="overflow-hidden rounded-lg bg-gray-900/50 p-4">
         <canvas baseChart
                 [data]="successRateChartData"
                 [type]="'bar'"
@@ -63,64 +152,324 @@
       </div>
     </section>
 
-    <!-- Parcours and Classes -->
-    <div *ngFor="let parcour of parcours; let parcourIndex = index" class="parcour-item rounded-xl overflow-hidden shadow-2xl animate-fadeIn">
-      <div class="parcour-header p-6 flex justify-between items-center bg-gradient-to-r from-gray-700 to-gray-800 cursor-pointer transition-all duration-300 hover:bg-opacity-90"
-           (click)="toggleParcour(parcourIndex)"
-           role="button"
-           [attr.aria-expanded]="parcourExpanded[parcourIndex]"
-           [attr.aria-controls]="'parcour-content-' + parcourIndex">
-        <h3 class="text-xl font-bold text-white tracking-tight">
-          {{ parcour.nom }} - {{ parcour.annee }}
+    <!-- Top/Bottom Students Chart -->
+    <section class="chart-card bg-gray-800/80 backdrop-blur-sm p-6 rounded-xl shadow-xl animate-slideUp border border-gray-700/50">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+          </svg>
+          Top & Faible Performance
         </h3>
-        <svg class="w-6 h-6 text-gray-200 transition-transform duration-300" [ngClass]="{'rotate-180': parcourExpanded[parcourIndex]}" aria-hidden="true" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
+        <span class="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded">5 meilleurs / 5 faibles</span>
       </div>
-      <div *ngIf="parcourExpanded[parcourIndex]" [id]="'parcour-content-' + parcourIndex" class="parcour-content bg-gray-800 p-6 rounded-b-xl space-y-6">
-        <div *ngIf="parcour.classes.length === 0" class="no-data p-5 bg-gray-700 rounded-lg">
-          Aucune classe trouvée pour ce parcours.
+      <div class="h-64 bg-gray-900/50 p-4 rounded-lg">
+        <canvas baseChart
+                #topBottomChart
+                [data]="topBottomChartData"
+                [type]="'bar'"
+                [options]="topBottomChartOptions"
+                aria-label="Graphique des meilleurs et moins bons étudiants">
+        </canvas>
+      </div>
+    </section>
+  </div>
+
+  <!-- Additional Charts Row -->
+  <div class="charts-grid mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Trend Chart (Evolution) -->
+    <section class="chart-card bg-gray-800/80 backdrop-blur-sm p-6 rounded-xl shadow-xl animate-slideUp border border-gray-700/50">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+          </svg>
+          Évolution des Moyennes
+        </h3>
+        <button (click)="toggleTrendChart()" class="text-xs bg-gray-700/50 hover:bg-gray-600/50 px-3 py-1.5 rounded-lg text-gray-300 transition-colors">
+          {{ showTrendChart ? 'Masquer' : 'Afficher' }}
+        </button>
+      </div>
+      <div *ngIf="showTrendChart" class="h-64 bg-gray-900/50 p-4 rounded-lg">
+        <canvas baseChart
+                [data]="trendChartData"
+                [type]="'line'"
+                [options]="trendChartOptions"
+                aria-label="Graphique d'évolution des moyennes">
+        </canvas>
+      </div>
+      <div *ngIf="!showTrendChart" class="h-64 bg-gray-900/50 p-4 rounded-lg flex items-center justify-center text-gray-500">
+        <span>Cliquez sur "Afficher" pour voir l'évolution</span>
+      </div>
+    </section>
+
+    <!-- Class Comparison Chart -->
+    <section class="chart-card bg-gray-800/80 backdrop-blur-sm p-6 rounded-xl shadow-xl animate-slideUp border border-gray-700/50">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          Comparaison des Classes
+        </h3>
+        <button (click)="toggleClassComparison()" class="text-xs bg-gray-700/50 hover:bg-gray-600/50 px-3 py-1.5 rounded-lg text-gray-300 transition-colors">
+          {{ showClassComparison ? 'Masquer' : 'Afficher' }}
+        </button>
+      </div>
+      <div *ngIf="showClassComparison && selectedParcour?.classes?.length! > 0" class="h-64 bg-gray-900/50 p-4 rounded-lg">
+        <canvas baseChart
+                [data]="classComparisonChartData"
+                [type]="'radar'"
+                [options]="classComparisonChartOptions"
+                aria-label="Graphique de comparaison des classes">
+        </canvas>
+      </div>
+      <div *ngIf="!showClassComparison || selectedParcour?.classes?.length === 0" class="h-64 bg-gray-900/50 p-4 rounded-lg flex items-center justify-center text-gray-500">
+        <span>{{ selectedParcour?.classes?.length === 0 ? 'Aucune classe à comparer' : 'Cliquez sur "Afficher" pour comparer' }}</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- Main Content - Parcours Tabs -->
+  <main *ngIf="!isLoading && parcours.length > 0" aria-label="Statistiques par parcours et classe" class="space-y-6">
+    
+    <!-- Parcours Tabs -->
+    <div class="parcours-tabs mb-6">
+      <div class="flex flex-wrap gap-2 bg-gray-800/60 p-2 rounded-xl backdrop-blur-sm border border-gray-700/50">
+        <button 
+          *ngFor="let parcour of parcours; let i = index"
+          (click)="selectParcour(i)"
+          class="parcour-tab px-5 py-3 rounded-lg font-semibold text-sm transition-all duration-300 flex items-center gap-2"
+          [class.bg-gradient-to-r]="selectedParcourIndex === i"
+          [class.from-blue-600]="selectedParcourIndex === i"
+          [class.to-blue-700]="selectedParcourIndex === i"
+          [class.text-white]="selectedParcourIndex === i"
+          [class.text-gray-400]="selectedParcourIndex !== i"
+          [class.hover:bg-gray-700]="selectedParcourIndex !== i"
+          [class.shadow-lg]="selectedParcourIndex === i">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+          </svg>
+          {{ parcour.nom }}
+          <span class="text-xs opacity-80 bg-white/20 px-2 py-0.5 rounded-full">{{ parcour.annee }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Selected Parcour Content -->
+    <div *ngIf="selectedParcour" class="selected-parcour animate-fadeIn">
+      
+      <!-- Alert Banner for At-Risk Students -->
+      <div *ngIf="getAtRiskStudents(selectedParcour).length > 0" 
+           class="alert-banner mb-6 p-4 bg-gradient-to-r from-red-600/20 to-orange-600/20 border border-red-500/50 rounded-xl flex items-center gap-4">
+        <div class="alert-icon bg-red-500/30 p-2 rounded-lg">
+          <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
         </div>
-        <div *ngFor="let classe of parcour.classes; let classIndex = index" class="class-item">
-          <div class="class-header p-4 flex justify-between items-center bg-gradient-to-r from-gray-600 to-gray-700 cursor-pointer transition-all duration-300 hover:bg-opacity-90"
-               (click)="toggleClass(parcourIndex, classIndex)"
-               role="button"
-               [attr.aria-expanded]="classExpanded[parcourIndex + '-' + classIndex]"
-               [attr.aria-controls]="'class-content-' + parcourIndex + '-' + classIndex">
-            <h4 class="text-lg font-semibold text-white">
-              {{ classe.nom }} - {{ classe.section }}
-            </h4>
-            <svg class="w-5 h-5 text-gray-200 transition-transform duration-300" [ngClass]="{'rotate-180': classExpanded[parcourIndex + '-' + classIndex]}" aria-hidden="true" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        <div class="flex-1">
+          <h4 class="text-red-300 font-semibold">Attention: {{ getAtRiskStudents(selectedParcour).length }} étudiant(s) en difficulté</h4>
+          <p class="text-red-200/70 text-sm">Moyenne inférieure à 10 - Intervention recommandée</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button (click)="notifyAtRiskStudents()" 
+                  class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
+            Notifier
+          </button>
+          <button (click)="showAtRiskOnly = !showAtRiskOnly" 
+                  class="px-4 py-2 bg-red-500/30 hover:bg-red-500/50 text-red-300 rounded-lg text-sm font-medium transition-colors">
+            {{ showAtRiskOnly ? 'Voir tous' : 'Voir uniquement' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar mb-6 flex flex-wrap items-center gap-3 p-3 bg-gray-800/60 rounded-xl border border-gray-700/50">
+        <span class="text-gray-400 text-sm font-medium">Filtrer:</span>
+        <button (click)="studentFilter = 'all'" 
+                [class.bg-blue-600]="studentFilter === 'all'"
+                [class.text-white]="studentFilter === 'all'"
+                [class.text-gray-400]="studentFilter !== 'all'"
+                [class.hover:bg-gray-700]="studentFilter !== 'all'"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all">
+          Tous
+        </button>
+        <button (click)="studentFilter = 'at-risk'" 
+                [class.bg-red-600]="studentFilter === 'at-risk'"
+                [class.text-white]="studentFilter === 'at-risk'"
+                [class.text-gray-400]="studentFilter !== 'at-risk'"
+                [class.hover:bg-gray-700]="studentFilter !== 'at-risk'"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-red-400"></span>
+          En difficulté (<10)
+        </button>
+        <button (click)="studentFilter = 'good'" 
+                [class.bg-emerald-600]="studentFilter === 'good'"
+                [class.text-white]="studentFilter === 'good'"
+                [class.text-gray-400]="studentFilter !== 'good'"
+                [class.hover:bg-gray-700]="studentFilter !== 'good'"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          Bien (10-14)
+        </button>
+        <button (click)="studentFilter = 'excellent'" 
+                [class.bg-purple-600]="studentFilter === 'excellent'"
+                [class.text-white]="studentFilter === 'excellent'"
+                [class.text-gray-400]="studentFilter !== 'excellent'"
+                [class.hover:bg-gray-700]="studentFilter !== 'excellent'"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+          Excellents (≥14)
+        </button>
+        <div class="ml-auto text-gray-400 text-sm">
+          {{ getFilteredStudentCount(selectedParcour) }} étudiant(s) affiché(s)
+        </div>
+      </div>
+
+      <!-- Parcour Stats -->
+      <div class="parcour-stats grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-mini bg-gray-800/80 backdrop-blur-sm p-4 rounded-xl border border-gray-700/50 flex items-center gap-3">
+          <div class="stat-icon-mini bg-blue-500/20 p-2.5 rounded-lg">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
             </svg>
           </div>
-          <div *ngIf="classExpanded[parcourIndex + '-' + classIndex]" [id]="'class-content-' + parcourIndex + '-' + classIndex" class="class-content bg-gray-800 p-5 rounded-b-lg shadow-inner space-y-4">
-            <div *ngIf="classe.etudiants.length === 0" class="no-data p-4 bg-gray-700 rounded-md">
-              Aucun étudiant trouvé pour cette classe ou accès refusé.
+          <div>
+            <p class="text-xs text-gray-400 uppercase">Étudiants</p>
+            <p class="text-xl font-bold text-white">{{ getParcourStudentCount(selectedParcour) }}</p>
+          </div>
+        </div>
+        <div class="stat-mini bg-gray-800/80 backdrop-blur-sm p-4 rounded-xl border border-gray-700/50 flex items-center gap-3">
+          <div class="stat-icon-mini bg-purple-500/20 p-2.5 rounded-lg">
+            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs text-gray-400 uppercase">Classes</p>
+            <p class="text-xl font-bold text-white">{{ selectedParcour.classes.length || 0 }}</p>
+          </div>
+        </div>
+        <div class="stat-mini bg-gray-800/80 backdrop-blur-sm p-4 rounded-xl border border-gray-700/50 flex items-center gap-3">
+          <div class="stat-icon-mini bg-emerald-500/20 p-2.5 rounded-lg">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs text-gray-400 uppercase">Réussite</p>
+            <p class="text-xl font-bold text-white">{{ getParcourSuccessRate(selectedParcour) }}%</p>
+          </div>
+        </div>
+        <div class="stat-mini bg-gray-800/80 backdrop-blur-sm p-4 rounded-xl border border-gray-700/50 flex items-center gap-3">
+          <div class="stat-icon-mini bg-amber-500/20 p-2.5 rounded-lg">
+            <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs text-gray-400 uppercase">Moyenne</p>
+            <p class="text-xl font-bold text-white">{{ getParcourAverage(selectedParcour) | number:'1.1-1' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Classes Grid -->
+      <div class="classes-grid grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div *ngFor="let classe of selectedParcour.classes; let classIndex = index" 
+             class="class-card bg-gray-800/60 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-700/50 shadow-xl transition-all duration-300 hover:shadow-2xl hover:border-gray-600/50">
+          <!-- Class Header -->
+          <div class="class-card-header p-5 bg-gradient-to-r from-gray-700/80 to-gray-800/80 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+              <div class="class-icon bg-blue-500/20 p-2.5 rounded-lg">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 class="text-lg font-bold text-white">{{ classe.nom }}</h4>
+                <p class="text-sm text-gray-400">Section {{ classe.section }}</p>
+              </div>
             </div>
-            <div *ngIf="classe.etudiants.length > 0" class="table-card bg-gray-900 p-5 rounded-md shadow-inner">
-              <table class="table w-full">
+            <span class="text-xs bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-full">
+              {{ classe.etudiants.length || 0 }} étudiants
+            </span>
+          </div>
+          
+          <!-- Student Table -->
+          <div class="class-content p-5">
+            <div *ngIf="classe.etudiants.length === 0" class="no-data p-4 bg-gray-700/50 rounded-lg text-center text-gray-400">
+              <svg class="w-12 h-12 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              </svg>
+              Aucun étudiant trouvé pour cette classe.
+            </div>
+            
+            <div *ngIf="classe.etudiants.length > 0" class="student-table-wrapper overflow-x-auto">
+              <table class="student-table w-full">
                 <thead>
-                  <tr>
-                    <th class="p-3 text-left text-sm font-semibold text-gray-300 bg-gray-800">Étudiant</th>
-                    <th class="p-3 text-left text-sm font-semibold text-gray-300 bg-gray-800">Numéro d'inscription</th>
-                    <th class="p-3 text-left text-sm font-semibold text-gray-300 bg-gray-800">Moyenne Générale (0-20)</th>
-                    <th *ngFor="let matiere of classe.matieres" class="p-3 text-left text-sm font-semibold text-gray-300 bg-gray-800">{{ matiere.nom }}</th>
+                  <tr class="border-b border-gray-700">
+                    <th class="text-left py-3 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Étudiant</th>
+                    <th class="text-left py-3 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">N° Inscription</th>
+                    <th class="text-center py-3 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Moyenne</th>
+                    <th *ngFor="let matiere of classe.matieres" class="text-center py-3 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                      {{ matiere.nom }}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let etudiant of classe.etudiants" class="border-b border-gray-700 hover:bg-gray-850 transition-colors duration-200">
-                    <td class="p-3 text-gray-200">{{ etudiant.nom }} {{ etudiant.prenom }}</td>
-                    <td class="p-3 text-gray-200">{{ etudiant.numeroInscription || 'N/A' }}</td>
-                    <td class="p-3 text-gray-200">
-                      <ng-container *ngIf="getStudentAverage(classe, etudiant.id!) as studentAverage">
-                        {{ studentAverage !== undefined ? (studentAverage | number:'1.2-2') : 'Non disponible' }}
-                      </ng-container>
+                  <tr *ngFor="let etudiant of getFilteredStudents(classe); let last = last" 
+                      [class]="{
+                        'border-b': !last,
+                        'bg-red-900/20': isAtRisk(classe, etudiant),
+                        'bg-emerald-900/20': isGood(classe, etudiant),
+                        'bg-purple-900/20': isExcellent(classe, etudiant)
+                      }"
+                      class="border-gray-700/50 hover:bg-gray-700/30 transition-colors">
+                    <td class="py-3 px-3">
+                      <div class="flex items-center gap-3">
+                        <div class="student-avatar w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                          {{ getInitials(etudiant.nom, etudiant.prenom) }}
+                        </div>
+                        <div>
+                          <p class="text-white font-medium text-sm">{{ etudiant.nom }} {{ etudiant.prenom }}</p>
+                          <span *ngIf="isAtRisk(classe, etudiant)" class="text-xs text-red-400 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            En difficulté
+                          </span>
+                        </div>
+                      </div>
                     </td>
-                    <td *ngFor="let matiere of classe.matieres" class="p-3 text-gray-200">
-                      <ng-container *ngIf="getMatiereAverage(matiere, etudiant.id!) as matiereAverage">
-                        {{ matiereAverage !== undefined ? (matiereAverage | number:'1.2-2') : 'Non disponible' }}
-                      </ng-container>
+                    <td class="py-3 px-3 text-gray-400 text-sm">{{ etudiant.numeroInscription || 'N/A' }}</td>
+                    <td class="py-3 px-3 text-center">
+                      <span class="inline-flex items-center justify-center min-w-[3rem] h-8 rounded-lg font-bold text-sm px-2" 
+                            [class]="{
+                              'bg-red-500/30': (getStudentAverage(classe, etudiant.id!) || 0) < 10,
+                              'text-red-400': (getStudentAverage(classe, etudiant.id!) || 0) < 10,
+                              'border-red-500/50': (getStudentAverage(classe, etudiant.id!) || 0) < 10,
+                              'bg-emerald-500/20': (getStudentAverage(classe, etudiant.id!) || 0) >= 10 && (getStudentAverage(classe, etudiant.id!) || 0) < 14,
+                              'text-emerald-400': (getStudentAverage(classe, etudiant.id!) || 0) >= 10 && (getStudentAverage(classe, etudiant.id!) || 0) < 14,
+                              'bg-purple-500/20': (getStudentAverage(classe, etudiant.id!) || 0) >= 14,
+                              'text-purple-400': (getStudentAverage(classe, etudiant.id!) || 0) >= 14
+                            }">
+                        {{ getStudentAverage(classe, etudiant.id!) !== undefined ? (getStudentAverage(classe, etudiant.id!) | number:'1.1-1') : '-' }}
+                      </span>
+                    </td>
+                    <td *ngFor="let matiere of classe.matieres" class="py-3 px-3 text-center">
+                      <span class="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-medium" 
+                            [class]="{
+                              'bg-red-500/20': (getMatiereAverage(matiere, etudiant.id!) || 0) < 10,
+                              'text-red-400': (getMatiereAverage(matiere, etudiant.id!) || 0) < 10,
+                              'bg-emerald-500/20': (getMatiereAverage(matiere, etudiant.id!) || 0) >= 10 && (getMatiereAverage(matiere, etudiant.id!) || 0) < 14,
+                              'text-emerald-400': (getMatiereAverage(matiere, etudiant.id!) || 0) >= 10 && (getMatiereAverage(matiere, etudiant.id!) || 0) < 14,
+                              'bg-purple-500/20': (getMatiereAverage(matiere, etudiant.id!) || 0) >= 14,
+                              'text-purple-400': (getMatiereAverage(matiere, etudiant.id!) || 0) >= 14
+                            }">
+                        {{ getMatiereAverage(matiere, etudiant.id!) !== undefined ? (getMatiereAverage(matiere, etudiant.id!) | number:'1.0-0') : '-' }}
+                      </span>
                     </td>
                   </tr>
                 </tbody>

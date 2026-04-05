@@ -1,52 +1,160 @@
 <div class="container" role="main" aria-labelledby="grades-heading">
-  <h2 id="grades-heading">My Grades</h2>
+  <h2 id="grades-heading">Mes Notes & Évaluation</h2>
+
+  <!-- Student Info Card -->
+  <div *ngIf="!isLoading && (parcours.length > 0 || studentClasse)" class="student-info-card">
+    <div class="info-row">
+      <div class="info-item" *ngIf="parcours.length > 0">
+        <mat-icon>school</mat-icon>
+        <div>
+          <span class="label">Parcours</span>
+          <span class="value">{{ parcours[0].nom }} ({{ parcours[0].annee }})</span>
+        </div>
+      </div>
+      <div class="info-item" *ngIf="studentClasse">
+        <mat-icon>class</mat-icon>
+        <div>
+          <span class="label">Classe</span>
+          <span class="value">{{ studentClasse.nom }} - {{ studentClasse.section }}</span>
+        </div>
+      </div>
+      <div class="info-item" *ngIf="totalMatieres > 0">
+        <mat-icon>menu_book</mat-icon>
+        <div>
+          <span class="label">Matières</span>
+          <span class="value">{{ totalMatieres }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Overview -->
+  <div class="stats-overview" *ngIf="!isLoading && !errorMessage && notes.length > 0">
+    <!-- Overall Average -->
+    <div class="stat-box main">
+      <div class="stat-circle" [style.--grade-color]="getGradeColor(overallAverage)">
+        <svg viewBox="0 0 36 36" class="circular-chart">
+          <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+          <path class="circle" [attr.stroke-dasharray]="(overallAverage / 20) * 100 + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+        </svg>
+        <div class="stat-number">{{ overallAverage }}</div>
+      </div>
+      <div class="stat-text">
+        <span class="stat-label">Moyenne Générale</span>
+        <span class="stat-appreciation" [style.color]="getGradeColor(overallAverage)">{{ getGradeLabel(overallAverage) }}</span>
+      </div>
+    </div>
+
+    <!-- Best Matiere -->
+    <div class="stat-box" *ngIf="bestMatiere">
+      <div class="stat-icon success">
+        <mat-icon>trending_up</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Meilleure Matière</span>
+        <span class="stat-name">{{ bestMatiere.matiereName }}</span>
+        <span class="stat-score" style="color: #22c55e">{{ bestMatiere.average }}/20</span>
+      </div>
+    </div>
+
+    <!-- Worst Matiere -->
+    <div class="stat-box" *ngIf="worstMatiere">
+      <div class="stat-icon" [class.danger]="worstMatiere.average < 10" [class.warning]="worstMatiere.average >= 10">
+        <mat-icon>trending_down</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">À Améliorer</span>
+        <span class="stat-name">{{ worstMatiere.matiereName }}</span>
+        <span class="stat-score" [style.color]="getGradeColor(worstMatiere.average)">{{ worstMatiere.average }}/20</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations Section -->
+  <div class="recommendations-section" *ngIf="!isLoading && !errorMessage && recommendations.length > 0">
+    <h3>
+      <mat-icon>lightbulb</mat-icon>
+      Recommandations
+    </h3>
+    <div class="recommendations-list">
+      <div *ngFor="let rec of recommendations" 
+           class="recommendation-item"
+           [class.success]="rec.type === 'success'"
+           [class.warning]="rec.type === 'warning'"
+           [class.danger]="rec.type === 'danger'"
+           [class.info]="rec.type === 'info'">
+        <mat-icon>{{ rec.icon }}</mat-icon>
+        <div class="rec-content">
+          <h4>{{ rec.title }}</h4>
+          <p>{{ rec.message }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart Section -->
+  <div class="chart-section" *ngIf="!isLoading && !errorMessage && matiereStats.length > 0">
+    <h3>
+      <mat-icon>bar_chart</mat-icon>
+      Performances par Matière
+    </h3>
+    <div class="chart-container">
+      <canvas baseChart
+        [data]="barChartData"
+        [options]="barChartOptions"
+        [type]="'bar'">
+      </canvas>
+    </div>
+  </div>
 
   <!-- Loading state -->
   <div *ngIf="isLoading" class="loading" role="alert" aria-live="polite">
     <mat-spinner diameter="24" aria-label="Loading grades"></mat-spinner>
-    <span>Loading grades...</span>
+    <span>Chargement des notes...</span>
   </div>
 
   <!-- Error state -->
   <div *ngIf="errorMessage && !isLoading" class="error" role="alert" aria-live="assertive">
     <mat-icon class="icon" aria-hidden="true">error_outline</mat-icon>
     {{ errorMessage }}
-    <p class="error-action">Please contact support if this issue persists.</p>
+    <p class="error-action">Veuillez contacter le support si le problème persiste.</p>
   </div>
 
   <!-- Grades Table -->
   <div *ngIf="!isLoading && !errorMessage" class="table-container">
+    <h3>Détail des Notes</h3>
     <table class="grades-table" role="grid" aria-label="Student Grades">
       <thead>
         <tr>
-          <th scope="col">Parcours Name</th>
+          <th scope="col">Parcours</th>
           <th scope="col">Date</th>
-          <th scope="col">Panier Name</th>
-          <th scope="col">Panier Coefficient</th>
-          <th scope="col">Matiere Name</th>
-          <th scope="col">Matiere Coefficient</th>
-          <th scope="col">Grade</th>
-          <th scope="col">Type of Note</th>
+          <th scope="col">Panier</th>
+          <th scope="col">Coef. Panier</th>
+          <th scope="col">Matière</th>
+          <th scope="col">Coef. Matière</th>
+          <th scope="col">Note</th>
+          <th scope="col">Type</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let row of getTableRows()" [ngClass]="{'high-grade': row.note && row.note.valeur >= 15, 'low-grade': row.note && row.note.valeur < 10}">
-          <td data-label="Parcours Name">{{ row.parcourName }}</td>
+          <td data-label="Parcours">{{ row.parcourName }}</td>
           <td data-label="Date">{{ row.date }}</td>
-          <td data-label="Panier Name">{{ row.panierName }}</td>
-          <td data-label="Panier Coefficient">{{ row.panierCoefficient | number:'1.1-2' || 'N/A' }}</td>
-          <td data-label="Matiere Name">{{ row.matiereName }}</td>
-          <td data-label="Matiere Coefficient">{{ row.matiereCoefficient | number:'1.1-2' }}</td>
-          <td data-label="Grade">{{ row.note?.valeur || 'N/A' }}</td>
-          <td data-label="Type of Note">{{ row.note?.typeNote || 'N/A' }}</td>
+          <td data-label="Panier">{{ row.panierName }}</td>
+          <td data-label="Coef. Panier">{{ row.panierCoefficient | number:'1.1-2' || 'N/A' }}</td>
+          <td data-label="Matière">{{ row.matiereName }}</td>
+          <td data-label="Coef. Matière">{{ row.matiereCoefficient | number:'1.1-2' }}</td>
+          <td data-label="Note">{{ row.note?.valeur || 'N/A' }}</td>
+          <td data-label="Type">{{ row.note?.typeNote || 'N/A' }}</td>
         </tr>
       </tbody>
     </table>
 
     <!-- No data case -->
     <div *ngIf="getTableRows().length === 0 && !isLoading && !errorMessage" class="no-data" role="alert">
-      <p>No grades or parcours found.</p>
-      <p class="action-text">Please contact your academic advisor to get enrolled or check your grades.</p>
+      <mat-icon>assignment_ind</mat-icon>
+      <p>Aucune note trouvée.</p>
+      <p class="action-text">Contactez votre responsable pédagogique pour plus d'informations.</p>
     </div>
   </div>
 </div>

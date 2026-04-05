@@ -1,0 +1,45 @@
+<div class="theme-toggle">
+  <button 
+    class="btn btn-ghost btn-icon theme-toggle-btn"
+    (click)="toggleTheme()"
+    [attr.aria-label]="'Toggle theme. Current: ' + themeLabel"
+    [attr.title]="'Current theme: ' + themeLabel + '. Click to cycle through themes.'"
+  >
+    <mat-icon>{{ themeIcon }}</mat-icon>
+  </button>
+  
+  <!-- Optional: Theme selector dropdown -->
+  <div class="theme-selector" *ngIf="false">
+    <div class="theme-options">
+      <button 
+        class="theme-option"
+        (click)="setTheme('light')"
+        [class.active]="currentTheme === 'light'"
+        [attr.aria-pressed]="currentTheme === 'light'"
+      >
+        <mat-icon>light_mode</mat-icon>
+        <span>Light</span>
+      </button>
+      
+      <button 
+        class="theme-option"
+        (click)="setTheme('dark')"
+        [class.active]="currentTheme === 'dark'"
+        [attr.aria-pressed]="currentTheme === 'dark'"
+      >
+        <mat-icon>dark_mode</mat-icon>
+        <span>Dark</span>
+      </button>
+      
+      <button 
+        class="theme-option"
+        (click)="setTheme('system')"
+        [class.active]="currentTheme === 'system'"
+        [attr.aria-pressed]="currentTheme === 'system'"
+      >
+        <mat-icon>brightness_auto</mat-icon>
+        <span>System</span>
+      </button>
+    </div>
+  </div>
+</div>

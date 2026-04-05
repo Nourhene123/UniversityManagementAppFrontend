@@ -1,97 +1,249 @@
-<div class="modal-overlay" *ngIf="showForm">
-  <div class="modal-content">
-    <form [formGroup]="matiereForm" (ngSubmit)="onSubmit()" class="semestre-form" #matiereFormElement="ngForm">
-      <div class="form-header">
-        <h3>{{ editMode ? 'Modifier Matière' : 'Ajouter une Nouvelle Matière' }}</h3>
-        <button mat-icon-button (click)="cancelForm()" class="close-button">
-          <mat-icon>close</mat-icon>
-        </button>
+<!-- Modal Form -->
+<div class="modal-overlay" *ngIf="showForm" (click)="cancelForm()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
       </div>
-      <mat-form-field appearance="fill">
-        <mat-label>Nom</mat-label>
-        <input matInput formControlName="nom" required>
-        <mat-error *ngIf="matiereForm.get('nom')?.hasError('required')">
-          Le nom est requis
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Volume Horaire</mat-label>
-        <input matInput type="number" formControlName="volumeHoraire" required>
-        <mat-error *ngIf="matiereForm.get('volumeHoraire')?.hasError('required')">
-          Le volume horaire est requis
-        </mat-error>
-        <mat-error *ngIf="matiereForm.get('volumeHoraire')?.hasError('min')">
-          Le volume horaire doit être supérieur à 0
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Coefficient</mat-label>
-        <input matInput type="number" formControlName="coefficient" required>
-        <mat-error *ngIf="matiereForm.get('coefficient')?.hasError('required')">
-          Le coefficient est requis
-        </mat-error>
-        <mat-error *ngIf="matiereForm.get('coefficient')?.hasError('min')">
-          Le coefficient doit être supérieur à 0
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Enseignant</mat-label>
-        <mat-select formControlName="enseignantId">
-          <mat-option [value]="null">Aucun</mat-option>
-          <mat-option *ngFor="let enseignant of enseignants" [value]="enseignant.id ">
-            {{ enseignant.nom }} {{ enseignant.prenom }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+      <div class="modal-title-section">
+        <h3>{{ editMode ? 'Modifier Matière' : 'Nouvelle Matière' }}</h3>
+        <p class="modal-subtitle">{{ editMode ? 'Mettez à jour les informations de la matière' : 'Créez une nouvelle matière' }}</p>
+      </div>
+      <button mat-icon-button (click)="cancelForm()" class="close-button">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="matiereForm" (ngSubmit)="onSubmit()" class="matiere-form">
+      <div class="form-grid">
+        <mat-form-field appearance="fill" class="form-field-full">
+          <mat-label>Nom de la Matière</mat-label>
+          <input matInput formControlName="nom" placeholder="Ex: Mathématiques">
+          <mat-icon matPrefix>menu_book</mat-icon>
+          <mat-error *ngIf="matiereForm.get('nom')?.hasError('required')">
+            <mat-icon>error</mat-icon> Le nom est requis
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Volume Horaire</mat-label>
+          <input matInput type="number" formControlName="volumeHoraire" placeholder="Ex: 40">
+          <mat-icon matPrefix>schedule</mat-icon>
+          <mat-error *ngIf="matiereForm.get('volumeHoraire')?.hasError('required')">
+            <mat-icon>error</mat-icon> Requis
+          </mat-error>
+          <mat-error *ngIf="matiereForm.get('volumeHoraire')?.hasError('min')">
+            <mat-icon>error</mat-icon> > 0
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Coefficient</mat-label>
+          <input matInput type="number" formControlName="coefficient" placeholder="Ex: 3">
+          <mat-icon matPrefix>calculate</mat-icon>
+          <mat-error *ngIf="matiereForm.get('coefficient')?.hasError('required')">
+            <mat-icon>error</mat-icon> Requis
+          </mat-error>
+          <mat-error *ngIf="matiereForm.get('coefficient')?.hasError('min')">
+            <mat-icon>error</mat-icon> > 0
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="form-field-full">
+          <mat-label>Enseignant</mat-label>
+          <mat-select formControlName="enseignantId" panelClass="dark-select-panel">
+            <mat-option [value]="null">
+              <mat-icon>person_off</mat-icon> Aucun
+            </mat-option>
+            <mat-option *ngFor="let enseignant of enseignants" [value]="enseignant.id">
+              <div class="enseignant-option">
+                <mat-icon>person</mat-icon>
+                <span>{{ enseignant.nom }} {{ enseignant.prenom }}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>school</mat-icon>
+        </mat-form-field>
+      </div>
+
       <div class="form-actions">
-        <button mat-raised-button color="primary" type="submit" [disabled]="matiereForm.invalid || isSubmitting">
-          {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+        <button mat-stroked-button type="button" (click)="cancelForm()" [disabled]="isSubmitting" class="btn-cancel">
+          <mat-icon>close</mat-icon> Annuler
         </button>
-        <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
+        <button mat-stroked-button color="accent" type="button" (click)="onSubmit(true)" [disabled]="matiereForm.invalid || isSubmitting || editMode" class="btn-save-new" *ngIf="!editMode">
+          <mat-icon>add_circle</mat-icon> Enregistrer & Nouveau
+        </button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="matiereForm.invalid || isSubmitting" class="btn-submit">
+          <mat-icon>{{ editMode ? 'save' : 'add' }}</mat-icon>
+          {{ editMode ? 'Enregistrer' : 'Créer' }}
+        </button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- List and add button displayed only when showAddFormOnly is false -->
-<div class="matieres-list" *ngIf="!showAddFormOnly">
-  <h2>Liste des matières</h2>
-  <button mat-raised-button (click)="openForm()">
-    <mat-icon>add</mat-icon> 
-  </button>
-  <mat-table [dataSource]="matieres" class="mat-elevation-z8">
-    <ng-container matColumnDef="id">
-      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="nom">
-      <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="volumeHoraire">
-      <mat-header-cell *matHeaderCellDef>Volume Horaire</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.volumeHoraire }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="coefficient">
-      <mat-header-cell *matHeaderCellDef>Coefficient</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.coefficient }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="enseignantNom">
-      <mat-header-cell *matHeaderCellDef>Enseignant</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ getEnseignantNom(element.enseignantId) }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="actions">
-      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <button mat-icon-button color="accent" (click)="editMatiere(element)">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button color="warn" (click)="deleteMatiere(element.id)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </mat-cell>
-    </ng-container>
-    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-  </mat-table>
+<!-- Main Content -->
+<div class="page-container" *ngIf="!showAddFormOnly">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Gestion des Matières</h1>
+        <p>Organisez et gérez les matières et leurs enseignants</p>
+      </div>
+    </div>
+    <button mat-flat-button color="primary" (click)="openForm()" class="btn-add">
+      <mat-icon>add</mat-icon> Nouvelle Matière
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid" *ngIf="!showAddFormOnly">
+    <div class="stat-card">
+      <div class="stat-icon total">
+        <mat-icon>menu_book</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ matieres.length }}</span>
+        <span class="stat-label">Total Matières</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon volume">
+        <mat-icon>schedule</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ getTotalVolumeHoraire() }}</span>
+        <span class="stat-label">Heures Totales</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon coefficient">
+        <mat-icon>calculate</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ getTotalCoefficient() }}</span>
+        <span class="stat-label">Coefficient Total</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon enseignants">
+        <mat-icon>school</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ enseignants.length }}</span>
+        <span class="stat-label">Enseignants</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filter-card">
+    <div class="filter-icon">
+      <mat-icon>filter_list</mat-icon>
+    </div>
+    <div class="filter-content">
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Filtrer par Enseignant</mat-label>
+        <mat-select [(ngModel)]="selectedEnseignantId" (ngModelChange)="filterByEnseignant($event)">
+          <mat-option [value]="undefined">
+            <mat-icon>all_inclusive</mat-icon> Tous les enseignants
+          </mat-option>
+          <mat-option *ngFor="let enseignant of enseignants" [value]="enseignant.id">
+            <mat-icon>person</mat-icon> {{ enseignant.nom }} {{ enseignant.prenom }}
+          </mat-option>
+        </mat-select>
+        <mat-icon matPrefix>search</mat-icon>
+      </mat-form-field>
+      <button mat-stroked-button class="btn-clear" (click)="clearEnseignantFilter()" *ngIf="selectedEnseignantId">
+        <mat-icon>clear</mat-icon> Effacer
+      </button>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="table-card" *ngIf="filteredMatieres.length > 0">
+    <div class="table-header">
+      <h3>Liste des Matières</h3>
+      <span class="table-badge">{{ filteredMatieres.length }} résultat(s)</span>
+    </div>
+    <mat-table [dataSource]="filteredMatieres" class="modern-table">
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span class="cell-id">#{{ element.id }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="nom">
+        <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="cell-name">
+            <mat-icon class="name-icon">menu_book</mat-icon>
+            <span>{{ element.nom }}</span>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="volumeHoraire">
+        <mat-header-cell *matHeaderCellDef>Volume Horaire</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span class="cell-badge volume">{{ element.volumeHoraire }}h</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="coefficient">
+        <mat-header-cell *matHeaderCellDef>Coefficient</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span class="cell-badge coefficient">{{ element.coefficient }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="enseignantNom">
+        <mat-header-cell *matHeaderCellDef>Enseignant</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="cell-enseignant">
+            <mat-icon>person</mat-icon>
+            <span>{{ getEnseignantNom(element.enseignantId) }}</span>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="action-buttons">
+            <button mat-icon-button class="btn-edit" (click)="editMatiere(element)" matTooltip="Modifier">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button class="btn-delete" (click)="deleteMatiere(element.id)" matTooltip="Supprimer">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    </mat-table>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="filteredMatieres.length === 0">
+    <div class="empty-icon">
+      <mat-icon>inbox</mat-icon>
+    </div>
+    <h3>Aucune matière trouvée</h3>
+    <p>Commencez par créer une nouvelle matière</p>
+    <button mat-flat-button color="primary" (click)="openForm()">
+      <mat-icon>add</mat-icon> Créer une Matière
+    </button>
+  </div>
 </div>

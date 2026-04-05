@@ -352,7 +352,7 @@ private initializeForm(): void {
     );
   }
 
-  createClasse(): void {
+  createClasse(saveAndNew: boolean = false): void {
     if (this.classeForm.valid) {
       this.loading = true;
       const classeData: ClasseDto = {
@@ -387,22 +387,28 @@ private initializeForm(): void {
         next: (response: ClasseDto) => {
           this.successMessage = 'Classe created successfully!';
           this.loading = false;
-          this.classeForm.reset();
-          this.filteredEtudiants = [];
-          this.classeForm.get('etudiantIds')?.setValue([]);
-          if (!this.showAddFormOnly) {
-            this.loadClasses().subscribe();
-            this.expandedClassId = response.id || null;
-          }
           this.classeAdded.emit(response);
           this.chatService.sendClasse(response);
-          this.snackBar.open(this.successMessage, 'Close', { duration: 3000 });
-          setTimeout(() => {
-            this.successMessage = '';
-            if (this.showAddFormOnly) {
-              this.showForm = false;
+          
+          if (saveAndNew) {
+            // Reset form for new entry instead of closing
+            this.resetFormForNew();
+          } else {
+            this.classeForm.reset();
+            this.filteredEtudiants = [];
+            this.classeForm.get('etudiantIds')?.setValue([]);
+            if (!this.showAddFormOnly) {
+              this.loadClasses().subscribe();
+              this.expandedClassId = response.id || null;
             }
-          }, 2000);
+            setTimeout(() => {
+              this.successMessage = '';
+              if (this.showAddFormOnly) {
+                this.showForm = false;
+              }
+            }, 2000);
+          }
+          this.snackBar.open(this.successMessage, 'Close', { duration: 3000 });
         },
         error: (err) => {
           console.error('Error creating class:', err);
@@ -418,11 +424,14 @@ private initializeForm(): void {
     }
   }
 
-  onSubmit(): void {
+  onSubmit(event?: Event, saveAndNew: boolean = false): void {
+    if (event) {
+      event.preventDefault();
+    }
     if (this.editingClassId) {
       this.updateClasse();
     } else {
-      this.createClasse();
+      this.createClasse(saveAndNew);
     }
   }
 
@@ -606,6 +615,16 @@ private initializeForm(): void {
     }
   }
 
+  resetFormForNew(): void {
+    this.classeForm.reset();
+    this.editingClassId = null;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.filteredEtudiants = [];
+    this.classeForm.get('etudiantIds')?.setValue([]);
+    this.snackBar.open('Prêt pour l\'entrée suivante !', 'OK', { duration: 2000 });
+  }
+
   openAssignStudentsModal(classeId: number, parcourId: number): void {
     this.selectedClasse = this.classes.find(c => c.id === classeId) || null;
     this.showAssignModal = true;
@@ -748,5 +767,15 @@ private initializeForm(): void {
     const start = this.pageIndex * this.pageSize;
     const end = start + this.pageSize;
     this.pagedClasses = this.filteredClasses.slice(start, end);
+  }
+
+  // Stats helper methods
+  getTotalEtudiants(): number {
+    return Object.values(this.etudiantsByClasse).reduce((total, etudiants) => total + etudiants.length, 0);
+  }
+
+  getUniqueSections(): number {
+    const sections = new Set(this.classes.map(c => c.section));
+    return sections.size;
   }
 }

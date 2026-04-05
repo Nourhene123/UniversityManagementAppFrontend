@@ -194,7 +194,7 @@ export class PanierComponent implements OnInit, OnChanges {
     });
   }
 
-  onSubmit(): void {
+  onSubmit(saveAndNew: boolean = false): void {
     if (this.panierForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
       const panier: PanierDto = { ...this.selectedPanier, ...this.panierForm.value };
@@ -205,13 +205,18 @@ export class PanierComponent implements OnInit, OnChanges {
       operation.subscribe({
         next: (response) => {
           if (!this.editMode) {
-            this.panierAdded.emit(response); // Emit server response
-            this.chatService.sendPanier(response); // Notify with server response
+            this.panierAdded.emit(response);
+            this.chatService.sendPanier(response);
           }
           if (!this.showAddFormOnly) {
             this.loadPaniers();
           }
-          this.cancelForm();
+          
+          if (saveAndNew && !this.editMode) {
+            this.resetFormForNew();
+          } else {
+            this.cancelForm();
+          }
           this.snackBar.open(`Panier ${this.editMode ? 'mis à jour' : 'créé'} avec succès !`, 'Fermer', { duration: 3000 });
         },
         error: (err: HttpErrorResponse) => {
@@ -229,6 +234,14 @@ export class PanierComponent implements OnInit, OnChanges {
     } else {
       this.snackBar.open('Veuillez remplir tous les champs requis correctement.', 'Fermer', { duration: 3000 });
     }
+  }
+
+  resetFormForNew(): void {
+    this.selectedPanier = { nom: '', coefficientTotal: 0, semestreId: undefined, matiereIds: [] };
+    this.editMode = false;
+    this.isSubmitting = false;
+    this.panierForm.reset({ nom: '', coefficientTotal: '', semestreId: '', matiereIds: [] });
+    this.snackBar.open('Prêt pour l\'entrée suivante !', 'OK', { duration: 2000 });
   }
 
   deletePanier(id: number): void {

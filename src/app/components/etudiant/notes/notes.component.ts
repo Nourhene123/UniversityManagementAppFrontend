@@ -6,10 +6,28 @@ import { NoteService } from 'src/app/Services/NoteService/note.service';
 import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
 import { PanierService } from 'src/app/Services/PanierService/panier.service';
 import { ParcourService } from 'src/app/Services/ParcourService/parcour.service';
+import { ClasseService } from 'src/app/Services/Classe/classe.service';
 import { NoteDto } from 'src/app/models/NoteDto';
 import { MatiereDto } from 'src/app/models/MatiereDto';
 import { PanierDto } from 'src/app/models/PanierDto';
 import { ParcourDto } from 'src/app/models/ParcourDto';
+import { ClasseDto } from 'src/app/models/ClasseDto';
+import { ChartConfiguration, ChartData } from 'chart.js';
+
+interface Recommendation {
+  type: 'success' | 'warning' | 'danger' | 'info';
+  title: string;
+  message: string;
+  icon: string;
+}
+
+interface MatiereStats {
+  matiereId: number;
+  matiereName: string;
+  average: number;
+  coefficient: number;
+  notesCount: number;
+}
 
 @Component({
   selector: 'app-notes',
@@ -21,15 +39,39 @@ export class NotesComponent implements OnInit {
   matieres: { [key: number]: { nom: string; coefficient: number } } = {};
   paniers: PanierDto[] = [];
   parcours: ParcourDto[] = [];
+  studentClasse: ClasseDto | null = null;
   isLoading = true;
   errorMessage: string | null = null;
-  currentDate: Date = new Date('2025-08-25T16:25:00+02:00'); // Updated to 04:25 PM CET, August 25, 2025
+  currentDate: Date = new Date('2025-08-25T16:25:00+02:00');
+
+  // Statistics
+  overallAverage: number = 0;
+  totalMatieres: number = 0;
+  bestMatiere: MatiereStats | null = null;
+  worstMatiere: MatiereStats | null = null;
+  matiereStats: MatiereStats[] = [];
+  
+  // Recommendations
+  recommendations: Recommendation[] = [];
+  
+  // Charts
+  barChartData: ChartData<'bar'> = { labels: [], datasets: [] };
+  barChartOptions: ChartConfiguration<'bar'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { min: 0, max: 20, ticks: { color: 'rgba(255, 255, 255, 0.7)' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+      x: { ticks: { color: 'rgba(255, 255, 255, 0.7)' }, grid: { display: false } }
+    }
+  };
 
   constructor(
     private noteService: NoteService,
     private matiereService: MatiereService,
     private panierService: PanierService,
     private parcourService: ParcourService,
+    private classeService: ClasseService,
     private http: HttpClient
   ) {}
 
@@ -109,6 +151,7 @@ export class NotesComponent implements OnInit {
       next: (parcours) => {
         console.log('Fetched parcours for student ID:', studentId, parcours);
         this.parcours = parcours || [];
+        this.loadStudentClasse();
         this.loadMatiereNames();
       },
       error: (error) => {
@@ -116,9 +159,29 @@ export class NotesComponent implements OnInit {
         this.errorMessage = error.status === 403
           ? 'You are not authorized to view parcours for this student. Please ensure you are logged in with the correct account.'
           : 'Failed to load parcours. Please try again.';
+        this.loadStudentClasse();
         this.loadMatiereNames();
       }
     });
+  }
+
+  private loadStudentClasse(): void {
+    if (this.parcours.length > 0 && this.parcours[0].id) {
+      const parcourId = this.parcours[0].id;
+      this.classeService.getClassesByParcour(parcourId).subscribe({
+        next: (classes) => {
+          console.log('Fetched classes for parcour:', parcourId, classes);
+          // Get the first class associated with the parcour
+          this.studentClasse = classes && classes.length > 0 ? classes[0] : null;
+        },
+        error: (error) => {
+          console.error('Error fetching classes for parcour:', parcourId, error);
+          this.studentClasse = null;
+        }
+      });
+    } else {
+      this.studentClasse = null;
+    }
   }
 
   private loadMatiereNames(): void {
@@ -154,15 +217,107 @@ export class NotesComponent implements OnInit {
   private checkIfAllDataLoaded(): void {
     const uniqueMatiereIds = [...new Set(this.notes.map(note => note.matiereId))];
     const allMatieresLoaded = uniqueMatiereIds.every(id => this.matieres[id] !== undefined);
-    console.log('Check if all data loaded:', {
-      allMatieresLoaded,
-      paniersLoaded: this.paniers !== undefined,
-      parcoursLoaded: this.parcours !== undefined,
-      parcours: this.parcours
-    });
     if (allMatieresLoaded && this.paniers !== undefined && this.parcours !== undefined) {
+      this.calculateStats();
       this.isLoading = false;
     }
+  }
+
+  private calculateStats(): void {
+    if (this.notes.length === 0) {
+      this.generateRecommendations();
+      return;
+    }
+
+    const notesByMatiere: { [key: number]: NoteDto[] } = {};
+    this.notes.forEach(note => {
+      if (!notesByMatiere[note.matiereId]) notesByMatiere[note.matiereId] = [];
+      notesByMatiere[note.matiereId].push(note);
+    });
+
+    this.matiereStats = Object.keys(notesByMatiere).map(matiereId => {
+      const id = Number(matiereId);
+      const notes = notesByMatiere[id];
+      const sum = notes.reduce((acc, note) => acc + note.valeur, 0);
+      const average = sum / notes.length;
+      const matiereData = this.matieres[id];
+      return {
+        matiereId: id,
+        matiereName: matiereData?.nom || `Matière ${id}`,
+        average: Math.round(average * 100) / 100,
+        coefficient: matiereData?.coefficient || 1.0,
+        notesCount: notes.length
+      };
+    });
+
+    this.totalMatieres = this.matiereStats.length;
+
+    let weightedSum = 0, totalCoefficient = 0;
+    this.matiereStats.forEach(stat => {
+      weightedSum += stat.average * stat.coefficient;
+      totalCoefficient += stat.coefficient;
+    });
+    this.overallAverage = totalCoefficient > 0 ? Math.round((weightedSum / totalCoefficient) * 100) / 100 : 0;
+
+    if (this.matiereStats.length > 0) {
+      this.bestMatiere = this.matiereStats.reduce((best, current) => current.average > best.average ? current : best);
+      this.worstMatiere = this.matiereStats.reduce((worst, current) => current.average < worst.average ? current : worst);
+    }
+
+    this.updateCharts();
+    this.generateRecommendations();
+  }
+
+  private updateCharts(): void {
+    if (this.matiereStats.length === 0) return;
+    const topMatieres = this.matiereStats.slice(0, 6);
+    const labels = topMatieres.map(m => m.matiereName.substring(0, 15));
+    const data = topMatieres.map(m => m.average);
+    const colors = data.map(v => v >= 14 ? 'rgba(34, 197, 94, 0.8)' : v >= 10 ? 'rgba(234, 179, 8, 0.8)' : 'rgba(239, 68, 68, 0.8)');
+    this.barChartData = { labels, datasets: [{ data, label: 'Moyenne', backgroundColor: colors, borderColor: colors.map(c => c.replace('0.8', '1')), borderWidth: 1, borderRadius: 4 }] };
+  }
+
+  private generateRecommendations(): void {
+    this.recommendations = [];
+    if (this.notes.length === 0) {
+      this.recommendations.push({ type: 'info', title: 'Aucune note disponible', message: 'Vos recommandations apparaîtront dès que vos évaluations seront saisies.', icon: 'info' });
+      return;
+    }
+    if (this.overallAverage >= 16) {
+      this.recommendations.push({ type: 'success', title: 'Excellente performance !', message: `Votre moyenne de ${this.overallAverage}/20 est excellente. Continuez ainsi !`, icon: 'emoji_events' });
+    } else if (this.overallAverage >= 14) {
+      this.recommendations.push({ type: 'success', title: 'Très bon travail', message: `Avec ${this.overallAverage}/20, vous êtes sur la bonne voie.`, icon: 'thumb_up' });
+    } else if (this.overallAverage >= 10) {
+      this.recommendations.push({ type: 'warning', title: 'Moyenne à consolider', message: `Votre moyenne de ${this.overallAverage}/20 peut être améliorée.`, icon: 'trending_up' });
+    } else {
+      this.recommendations.push({ type: 'danger', title: 'Attention nécessaire', message: `Votre moyenne de ${this.overallAverage}/20 nécessite une attention immédiate.`, icon: 'warning' });
+    }
+    if (this.bestMatiere && this.bestMatiere.average >= 16) {
+      this.recommendations.push({ type: 'success', title: `Force: ${this.bestMatiere.matiereName}`, message: `Vous excellez avec ${this.bestMatiere.average}/20.`, icon: 'star' });
+    }
+    if (this.worstMatiere && this.worstMatiere.average < 10) {
+      this.recommendations.push({ type: 'danger', title: `À améliorer: ${this.worstMatiere.matiereName}`, message: `Moyenne faible (${this.worstMatiere.average}/20). Envisagez du tutorat.`, icon: 'school' });
+    }
+    const highCoeffLowScore = this.matiereStats.find(m => m.coefficient >= 3 && m.average < 12);
+    if (highCoeffLowScore) {
+      this.recommendations.push({ type: 'warning', title: 'Matière importante', message: `${highCoeffLowScore.matiereName} (coef. ${highCoeffLowScore.coefficient}) impacte votre moyenne.`, icon: 'priority_high' });
+    }
+  }
+
+  getGradeColor(average: number): string {
+    if (average >= 16) return '#22c55e';
+    if (average >= 14) return '#84cc16';
+    if (average >= 12) return '#eab308';
+    if (average >= 10) return '#f97316';
+    return '#ef4444';
+  }
+
+  getGradeLabel(average: number): string {
+    if (average >= 16) return 'Très Bien';
+    if (average >= 14) return 'Bien';
+    if (average >= 12) return 'Assez Bien';
+    if (average >= 10) return 'Passable';
+    return 'Insuffisant';
   }
 
   getTableRows(): { parcourName: string; date: string; panierName: string; panierCoefficient: number | undefined; matiereName: string; matiereCoefficient: number; note: NoteDto | null }[] {
@@ -178,17 +333,22 @@ export class NotesComponent implements OnInit {
         .flatMap(panier => panier.matiereIds ?? [])
     );
 
+    // If no parcours/paniers linked, fall back to showing all notes with their matieres
+    const matiereIdsToShow = validMatiereIds.size > 0 
+      ? validMatiereIds 
+      : new Set(this.notes.map(note => note.matiereId));
+
     // For each matiere, create rows for each note or a row with no note if none exist
-    validMatiereIds.forEach(matiereId => {
+    matiereIdsToShow.forEach(matiereId => {
       const matiereNotes = this.notes.filter(note => note.matiereId === matiereId);
       const relatedPaniers = this.paniers.filter(panier => panier.matiereIds?.includes(matiereId) ?? false);
       const relatedParcours = this.parcours.filter(parcour => parcour.panierIds?.some(panierId => relatedPaniers.some(p => p.id === panierId)) ?? false);
       
-      const panierName = relatedPaniers.length > 0 ? relatedPaniers.map(p => p.nom).join(', ') : 'None';
+      const panierName = relatedPaniers.length > 0 ? relatedPaniers.map(p => p.nom).join(', ') : 'Non assigné';
       const panierCoefficient = relatedPaniers.length > 0 ? relatedPaniers[0].coefficientTotal : undefined;
-      const parcourName = relatedParcours.length > 0 ? relatedParcours.map(p => p.nom).join(', ') : 'None';
+      const parcourName = relatedParcours.length > 0 ? relatedParcours.map(p => p.nom).join(', ') : 'Non assigné';
       const date = relatedParcours.length > 0 ? relatedParcours[0].annee : 'N/A';
-      const matiereData = this.matieres[matiereId] || { nom: `Unknown Subject (${matiereId})`, coefficient: 1.0 };
+      const matiereData = this.matieres[matiereId] || { nom: `Matière inconnue (${matiereId})`, coefficient: 1.0 };
 
       if (matiereNotes.length === 0) {
         rows.push({

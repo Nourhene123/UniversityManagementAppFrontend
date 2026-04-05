@@ -144,6 +144,7 @@ export class NotesComponent implements OnInit {
           tap(matieresWithClasses => {
             console.log('Final matieres with classes and etudiants:', matieresWithClasses);
             this.matieres = matieresWithClasses;
+            this.filteredMatieres = [...this.matieres];
             this.matiereExpanded = this.matieres.reduce((acc, _, index) => ({ ...acc, [index]: true }), {});
             this.classExpanded = {};
             this.matieres.forEach((matiere, mi) => {
@@ -516,5 +517,77 @@ export class NotesComponent implements OnInit {
       this.errorMessage = message;
       console.error(message, err);
     }
+  }
+
+  // Search functionality
+  searchTerm: string = '';
+  filteredMatieres: MatiereWithClasses[] = [];
+
+  onSearch(term: string): void {
+    this.searchTerm = term.toLowerCase();
+    this.filterMatieres();
+  }
+
+  filterMatieres(): void {
+    if (!this.searchTerm) {
+      this.filteredMatieres = [...this.matieres];
+      return;
+    }
+
+    this.filteredMatieres = this.matieres.filter(matiere => {
+      // Search in matiere name
+      if (matiere.nom?.toLowerCase().includes(this.searchTerm)) {
+        return true;
+      }
+
+      // Search in classes
+      return matiere.classes.some(classe => {
+        if (classe.nom?.toLowerCase().includes(this.searchTerm) ||
+            classe.section?.toLowerCase().includes(this.searchTerm)) {
+          return true;
+        }
+
+        // Search in students
+        return classe.etudiants.some(etudiant =>
+          `${etudiant.nom} ${etudiant.prenom}`.toLowerCase().includes(this.searchTerm) ||
+          etudiant.numeroInscription?.toLowerCase().includes(this.searchTerm)
+        );
+      });
+    });
+  }
+
+  isMatiereVisible(matiere: MatiereWithClasses): boolean {
+    if (!this.searchTerm) return true;
+    return this.filteredMatieres.some(m => m.id === matiere.id);
+  }
+
+  getFilteredCount(): number {
+    return this.filteredMatieres.length;
+  }
+
+  // Expand/Collapse functionality
+  expandAll(): void {
+    this.matiereExpanded = this.matieres.reduce((acc, _, index) => ({ ...acc, [index]: true }), {});
+    this.matieres.forEach((matiere, mi) => {
+      matiere.classes.forEach((_, ci) => {
+        this.classExpanded[`${mi}-${ci}`] = true;
+      });
+    });
+  }
+
+  collapseAll(): void {
+    this.matiereExpanded = {};
+    this.classExpanded = {};
+  }
+
+  // Refresh functionality
+  refreshData(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.loadMatieres();
+    this.loadNotesAndCoefficients();
+    this.successMessage = 'Données actualisées avec succès !';
+    setTimeout(() => this.successMessage = '', 2000);
   }
 }

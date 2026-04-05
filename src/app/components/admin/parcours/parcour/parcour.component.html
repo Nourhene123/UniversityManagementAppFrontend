@@ -1,98 +1,236 @@
-
-<div class="modal-overlay" *ngIf="showForm">
-  <div class="modal-content">
-    <form [formGroup]="parcourForm" (ngSubmit)="onSubmit()" class="parcour-form">
-      <div class="form-header">
-        <h3>{{ editMode ? 'Modifier Parcours' : 'Ajouter un Nouveau Parcours' }}</h3>
-        <button mat-icon-button (click)="cancelForm()" class="close-button">
-          <mat-icon>close</mat-icon>
-        </button>
+<!-- Modal Form -->
+<div class="modal-overlay" *ngIf="showForm" (click)="cancelForm()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+        </svg>
       </div>
-      <mat-form-field appearance="fill">
-        <mat-label>Nom</mat-label>
-        <input matInput formControlName="nom" required>
-        <mat-error *ngIf="parcourForm.get('nom')?.hasError('required') && parcourForm.get('nom')?.touched">
-          Le nom est requis
-        </mat-error>
-        <mat-error *ngIf="parcourForm.get('nom')?.hasError('minlength') && parcourForm.get('nom')?.touched">
-          Le nom doit contenir au moins 2 caractères
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Année</mat-label>
-        <input matInput formControlName="annee" required>
-        <mat-error *ngIf="parcourForm.get('annee')?.hasError('required') && parcourForm.get('annee')?.touched">
-          L'année est requise
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Libellé</mat-label>
-        <input matInput formControlName="libelle" required>
-        <mat-error *ngIf="parcourForm.get('libelle')?.hasError('required') && parcourForm.get('libelle')?.touched">
-          Le libellé est requis
-        </mat-error>
-        <mat-error *ngIf="parcourForm.get('libelle')?.hasError('minlength') && parcourForm.get('libelle')?.touched">
-          Le libellé doit contenir au moins 2 caractères
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Paniers</mat-label>
-        <mat-select formControlName="panierIds" multiple>
-          <mat-option *ngFor="let panier of paniers" [value]="panier.id ">{{ panier.nom }}</mat-option>
-        </mat-select>
-      </mat-form-field>
+      <div class="modal-title-section">
+        <h3>{{ editMode ? 'Modifier Parcours' : 'Nouveau Parcours' }}</h3>
+        <p class="modal-subtitle">{{ editMode ? 'Mettez à jour les informations du parcours' : 'Créez un nouveau parcours' }}</p>
+      </div>
+      <button mat-icon-button (click)="cancelForm()" class="close-button">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="parcourForm" (ngSubmit)="onSubmit()" class="parcour-form">
+      <div class="form-grid">
+        <mat-form-field appearance="fill">
+          <mat-label>Nom du Parcours</mat-label>
+          <input matInput formControlName="nom" placeholder="Ex: Licence Informatique">
+          <mat-icon matPrefix>school</mat-icon>
+          <mat-error *ngIf="parcourForm.get('nom')?.hasError('required')">
+            <mat-icon>error</mat-icon> Le nom est requis
+          </mat-error>
+          <mat-error *ngIf="parcourForm.get('nom')?.hasError('minlength')">
+            <mat-icon>error</mat-icon> Min. 2 caractères
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Année</mat-label>
+          <input matInput formControlName="annee" placeholder="Ex: 2024-2025">
+          <mat-icon matPrefix>calendar_today</mat-icon>
+          <mat-error *ngIf="parcourForm.get('annee')?.hasError('required')">
+            <mat-icon>error</mat-icon> L'année est requise
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="form-field-full">
+          <mat-label>Libellé</mat-label>
+          <input matInput formControlName="libelle" placeholder="Ex: L1, L2, L3">
+          <mat-icon matPrefix>label</mat-icon>
+          <mat-error *ngIf="parcourForm.get('libelle')?.hasError('required')">
+            <mat-icon>error</mat-icon> Le libellé est requis
+          </mat-error>
+          <mat-error *ngIf="parcourForm.get('libelle')?.hasError('minlength')">
+            <mat-icon>error</mat-icon> Min. 2 caractères
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="form-field-full">
+          <mat-label>Paniers</mat-label>
+          <mat-select formControlName="panierIds" multiple panelClass="dark-select-panel">
+            <mat-option *ngFor="let panier of paniers" [value]="panier.id">
+              <div class="panier-option">
+                <mat-icon>inventory_2</mat-icon>
+                <span>{{ panier.nom }}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>inventory_2</mat-icon>
+        </mat-form-field>
+      </div>
+
       <div class="form-actions">
-        <button mat-raised-button color="primary" type="submit" [disabled]="parcourForm.invalid || isSubmitting">
-          {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+        <button mat-stroked-button type="button" (click)="cancelForm()" [disabled]="isSubmitting" class="btn-cancel">
+          <mat-icon>close</mat-icon> Annuler
         </button>
-        <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
+        <button mat-stroked-button color="accent" type="button" (click)="onSubmit(true)" [disabled]="parcourForm.invalid || isSubmitting || editMode" class="btn-save-new" *ngIf="!editMode">
+          <mat-icon>add_circle</mat-icon> Enregistrer & Nouveau
+        </button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="parcourForm.invalid || isSubmitting" class="btn-submit">
+          <mat-icon>{{ editMode ? 'save' : 'add' }}</mat-icon>
+          {{ editMode ? 'Enregistrer' : 'Créer' }}
+        </button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- List and add button displayed only when showAddFormOnly is false -->
-<div class="parcours-list" *ngIf="!showAddFormOnly">
-  <h2>Gestion des Parcours</h2>
-  <button  mat-flat-button   (click)="openForm()">
-    <mat-icon>add</mat-icon> 
-  </button>
-  <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
-  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
-  <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-    <ng-container matColumnDef="id">
-      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="nom">
-      <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="annee">
-      <mat-header-cell *matHeaderCellDef>Année</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.annee }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="libelle">
-      <mat-header-cell *matHeaderCellDef>Libellé</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.libelle }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="paniers">
-      <mat-header-cell *matHeaderCellDef>Paniers</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ getPanierNames(element.panierIds) }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="actions">
-      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <button mat-icon-button color="accent" (click)="editParcour(element)">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button color="warn" (click)="deleteParcour(element.id)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      
-      </mat-cell>
-    </ng-container>
-    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-  </mat-table>
+<!-- Main Content -->
+<div class="page-container" *ngIf="!showAddFormOnly">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Gestion des Parcours</h1>
+        <p>Organisez et gérez les parcours académiques</p>
+      </div>
+    </div>
+    <button mat-flat-button color="primary" (click)="openForm()" class="btn-add">
+      <mat-icon>add</mat-icon> Nouveau Parcours
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid" *ngIf="!showAddFormOnly">
+    <div class="stat-card">
+      <div class="stat-icon total">
+        <mat-icon>school</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ dataSource.data.length }}</span>
+        <span class="stat-label">Total Parcours</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon annees">
+        <mat-icon>calendar_today</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ getUniqueAnnees() }}</span>
+        <span class="stat-label">Années</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon paniers">
+        <mat-icon>inventory_2</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ paniers.length }}</span>
+        <span class="stat-label">Paniers Disponibles</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filter-card">
+    <div class="filter-icon">
+      <mat-icon>filter_list</mat-icon>
+    </div>
+    <div class="filter-content">
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Filtrer par Année</mat-label>
+        <mat-select [(ngModel)]="selectedAnnee" (ngModelChange)="filterByAnnee($event)">
+          <mat-option [value]="undefined">
+            <mat-icon>all_inclusive</mat-icon> Toutes les années
+          </mat-option>
+          <mat-option *ngFor="let annee of getAnneesList()" [value]="annee">
+            <mat-icon>calendar_today</mat-icon> {{ annee }}
+          </mat-option>
+        </mat-select>
+        <mat-icon matPrefix>search</mat-icon>
+      </mat-form-field>
+      <button mat-stroked-button class="btn-clear" (click)="clearAnneeFilter()" *ngIf="selectedAnnee">
+        <mat-icon>clear</mat-icon> Effacer
+      </button>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="table-card" *ngIf="filteredParcours.length > 0">
+    <div class="table-header">
+      <h3>Liste des Parcours</h3>
+      <span class="table-badge">{{ filteredParcours.length }} résultat(s)</span>
+    </div>
+    <mat-table [dataSource]="filteredParcours" class="modern-table">
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span class="cell-id">#{{ element.id }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="nom">
+        <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="cell-name">
+            <mat-icon class="name-icon">school</mat-icon>
+            <span>{{ element.nom }}</span>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="annee">
+        <mat-header-cell *matHeaderCellDef>Année</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span class="cell-badge annee">{{ element.annee }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="libelle">
+        <mat-header-cell *matHeaderCellDef>Libellé</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span class="cell-badge libelle">{{ element.libelle }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="paniers">
+        <mat-header-cell *matHeaderCellDef>Paniers</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="cell-paniers">
+            <span class="paniers-text">{{ getPanierNames(element.panierIds) }}</span>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="action-buttons">
+            <button mat-icon-button class="btn-edit" (click)="editParcour(element)" matTooltip="Modifier">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button class="btn-delete" (click)="deleteParcour(element.id)" matTooltip="Supprimer">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    </mat-table>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="filteredParcours.length === 0">
+    <div class="empty-icon">
+      <mat-icon>inbox</mat-icon>
+    </div>
+    <h3>Aucun parcours trouvé</h3>
+    <p>Commencez par créer un nouveau parcours</p>
+    <button mat-flat-button color="primary" (click)="openForm()">
+      <mat-icon>add</mat-icon> Créer un Parcours
+    </button>
+  </div>
 </div>

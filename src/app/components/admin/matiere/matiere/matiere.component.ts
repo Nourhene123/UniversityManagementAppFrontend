@@ -8,6 +8,7 @@ import { MatiereDto } from 'src/app/models/MatiereDto';
 import { EnseignantService } from 'src/app/Services/EnseignantService/enseignant.service';
 import { MatiereService } from 'src/app/Services/MatierService/matiere.service';
 import { ChatService } from 'src/app/Services/ChatService';
+import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
   selector: 'app-matiere',
@@ -16,6 +17,8 @@ import { ChatService } from 'src/app/Services/ChatService';
 })
 export class MatiereComponent implements OnInit, OnChanges {
   matieres: MatiereDto[] = [];
+  filteredMatieres: MatiereDto[] = [];
+  dataSource = new MatTableDataSource<MatiereDto>([]);
   displayedColumns: string[] = ['id', 'nom', 'volumeHoraire', 'coefficient', 'enseignantNom', 'actions'];
   matiereForm: FormGroup;
   showForm: boolean = false;
@@ -24,6 +27,7 @@ export class MatiereComponent implements OnInit, OnChanges {
   selectedMatiere: MatiereDto = { nom: '', volumeHoraire: 0, coefficient: 0 };
   enseignants: EnseignantDto[] = [];
   enseignantNomMap: { [key: number]: string } = {};
+  selectedEnseignantId: number | undefined;
 
   @Input() showAddFormOnly: boolean = false;
   @Input() enseignantsInput: EnseignantDto[] = [];
@@ -103,11 +107,15 @@ export class MatiereComponent implements OnInit, OnChanges {
     this.matiereService.getAllMatieres().subscribe({
       next: (matieres) => {
         this.matieres = matieres || [];
+        this.filteredMatieres = this.matieres;
+        this.dataSource.data = this.matieres;
         this.cdr.detectChanges();
       },
       error: (err: HttpErrorResponse) => {
         this.snackBar.open('Échec du chargement des matières.', 'Fermer', { duration: 3000 });
         this.matieres = [];
+        this.filteredMatieres = [];
+        this.dataSource.data = [];
         this.cdr.detectChanges();
       }
     });
@@ -142,7 +150,7 @@ export class MatiereComponent implements OnInit, OnChanges {
     this.matiereForm.patchValue(matiere);
   }
 
-  onSubmit(): void {
+  onSubmit(saveAndNew: boolean = false): void {
     if (this.matiereForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
       const matiere: MatiereDto = { ...this.selectedMatiere, ...this.matiereForm.value };
@@ -153,13 +161,18 @@ export class MatiereComponent implements OnInit, OnChanges {
       operation.subscribe({
         next: (response) => {
           if (!this.editMode) {
-            this.matiereAdded.emit(response); // Emit server response
-            this.chatService.sendMatiere(response); // Notify with server response
+            this.matiereAdded.emit(response);
+            this.chatService.sendMatiere(response);
           }
           if (!this.showAddFormOnly) {
             this.loadMatieres();
           }
-          this.cancelForm();
+          
+          if (saveAndNew && !this.editMode) {
+            this.resetFormForNew();
+          } else {
+            this.cancelForm();
+          }
           this.snackBar.open(`Matière ${this.editMode ? 'mise à jour' : 'créée'} avec succès !`, 'Fermer', { duration: 3000 });
         },
         error: (err: HttpErrorResponse) => {
@@ -173,6 +186,14 @@ export class MatiereComponent implements OnInit, OnChanges {
     } else {
       this.snackBar.open('Veuillez remplir tous les champs requis correctement.', 'Fermer', { duration: 3000 });
     }
+  }
+
+  resetFormForNew(): void {
+    this.selectedMatiere = { nom: '', volumeHoraire: 0, coefficient: 0 };
+    this.editMode = false;
+    this.isSubmitting = false;
+    this.matiereForm.reset({ nom: '', volumeHoraire: 0, coefficient: 0, enseignantId: null });
+    this.snackBar.open('Prêt pour l\'entrée suivante !', 'OK', { duration: 2000 });
   }
 
   deleteMatiere(id: number | undefined): void {
@@ -195,5 +216,31 @@ export class MatiereComponent implements OnInit, OnChanges {
     this.isSubmitting = false;
     this.selectedMatiere = { nom: '', volumeHoraire: 0, coefficient: 0 };
     this.matiereForm.reset({ nom: '', volumeHoraire: 0, coefficient: 0, enseignantId: null });
+  }
+
+  getTotalVolumeHoraire(): number {
+    return this.filteredMatieres.reduce((sum, m) => sum + (m.volumeHoraire || 0), 0);
+  }
+
+  getTotalCoefficient(): number {
+    return this.filteredMatieres.reduce((sum, m) => sum + (m.coefficient || 0), 0);
+  }
+
+  filterByEnseignant(enseignantId: number | undefined): void {
+    this.selectedEnseignantId = enseignantId;
+    if (enseignantId === undefined || enseignantId === null) {
+      this.filteredMatieres = this.matieres;
+    } else {
+      this.filteredMatieres = this.matieres.filter(m => m.enseignantId === enseignantId);
+    }
+    this.dataSource.data = this.filteredMatieres;
+    this.cdr.detectChanges();
+  }
+
+  clearEnseignantFilter(): void {
+    this.selectedEnseignantId = undefined;
+    this.filteredMatieres = this.matieres;
+    this.dataSource.data = this.filteredMatieres;
+    this.cdr.detectChanges();
   }
 }

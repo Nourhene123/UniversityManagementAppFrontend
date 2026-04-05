@@ -1,114 +1,219 @@
-<div class="etudiants-management">
-  
-
- <div class="modal-overlay" *ngIf="showForm">
-  <div class="modal-content">
-    <form #etudiantForm="ngForm" (ngSubmit)="onSubmit(etudiantForm.value)" class="etudiant-form">
-      <div class="form-header">
-        <h3>{{ editMode ? 'Modifier Étudiant' : 'Ajouter un Nouvel Étudiant' }}</h3>
-        <button mat-icon-button (click)="cancelForm()" class="close-button">
-          <mat-icon>close</mat-icon>
-        </button>
+<!-- Modal Form -->
+<div class="modal-overlay" *ngIf="showForm" (click)="cancelForm()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
       </div>
-      <mat-form-field appearance="fill">
-        <mat-label>Nom</mat-label>
-        <input matInput name="nom" [(ngModel)]="selectedEtudiant.nom" required>
-        <mat-error *ngIf="etudiantForm.controls['nom']?.hasError('required')">
-          Le nom est requis
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Prénom</mat-label>
-        <input matInput name="prenom" [(ngModel)]="selectedEtudiant.prenom" required>
-        <mat-error *ngIf="etudiantForm.controls['prenom']?.hasError('required')">
-          Le prénom est requis
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Email</mat-label>
-        <input matInput name="email" [(ngModel)]="selectedEtudiant.email" required email>
-        <mat-error *ngIf="etudiantForm.controls['email']?.hasError('required')">
-          L'email est requis
-        </mat-error>
-        <mat-error *ngIf="etudiantForm.controls['email']?.hasError('email')">
-          Format d'email invalide
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill" *ngIf="!editMode">
-        <mat-label>Mot de passe</mat-label>
-        <input matInput type="password" name="password" [(ngModel)]="selectedEtudiant.password" required>
-        <mat-error *ngIf="etudiantForm.controls['password']?.hasError('required')">
-          Le mot de passe est requis
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Numéro d'Inscription</mat-label>
-        <input matInput name="numeroInscription" [(ngModel)]="selectedEtudiant.numeroInscription" required>
-        <mat-error *ngIf="etudiantForm.controls['numeroInscription']?.hasError('required')">
-          Le numéro d'inscription est requis
-        </mat-error>
-      </mat-form-field>
+      <div class="modal-title-section">
+        <h3>{{ editMode ? 'Modifier Étudiant' : 'Nouvel Étudiant' }}</h3>
+        <p class="modal-subtitle">{{ editMode ? 'Mettez à jour les informations de l\'étudiant' : 'Créez un nouvel étudiant' }}</p>
+      </div>
+      <button mat-icon-button (click)="cancelForm()" class="close-button">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <form #etudiantForm="ngForm" (ngSubmit)="onSubmit(etudiantForm.value)" class="etudiant-form">
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Nom</mat-label>
+          <input matInput name="nom" [(ngModel)]="selectedEtudiant.nom" required>
+          <mat-icon matPrefix>person</mat-icon>
+          <mat-error *ngIf="etudiantForm.controls['nom']?.hasError('required')">
+            <mat-icon>error</mat-icon> Le nom est requis
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Prénom</mat-label>
+          <input matInput name="prenom" [(ngModel)]="selectedEtudiant.prenom" required>
+          <mat-icon matPrefix>person_outline</mat-icon>
+          <mat-error *ngIf="etudiantForm.controls['prenom']?.hasError('required')">
+            <mat-icon>error</mat-icon> Le prénom est requis
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="form-field-full">
+          <mat-label>Email</mat-label>
+          <input matInput name="email" [(ngModel)]="selectedEtudiant.email" required email>
+          <mat-icon matPrefix>email</mat-icon>
+          <mat-error *ngIf="etudiantForm.controls['email']?.hasError('required')">
+            <mat-icon>error</mat-icon> L'email est requis
+          </mat-error>
+          <mat-error *ngIf="etudiantForm.controls['email']?.hasError('email')">
+            <mat-icon>error</mat-icon> Format d'email invalide
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" *ngIf="!editMode">
+          <mat-label>Mot de passe</mat-label>
+          <input matInput type="password" name="password" [(ngModel)]="selectedEtudiant.password" required>
+          <mat-icon matPrefix>lock</mat-icon>
+          <mat-error *ngIf="etudiantForm.controls['password']?.hasError('required')">
+            <mat-icon>error</mat-icon> Le mot de passe est requis
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Numéro d'Inscription</mat-label>
+          <input matInput name="numeroInscription" [(ngModel)]="selectedEtudiant.numeroInscription" required>
+          <mat-icon matPrefix>confirmation_number</mat-icon>
+          <mat-error *ngIf="etudiantForm.controls['numeroInscription']?.hasError('required')">
+            <mat-icon>error</mat-icon> Le numéro d'inscription est requis
+          </mat-error>
+        </mat-form-field>
+      </div>
+
       <input type="hidden" name="role" [(ngModel)]="selectedEtudiant.role" value="Etudiant">
+
       <div class="form-actions">
-        <button mat-raised-button color="primary" type="submit" [disabled]="etudiantForm.invalid || isSubmitting">
-          {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+        <button mat-stroked-button type="button" (click)="cancelForm()" [disabled]="isSubmitting" class="btn-cancel">
+          <mat-icon>close</mat-icon> Annuler
         </button>
-        <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
+        <button mat-stroked-button color="accent" type="button" (click)="onSubmit(etudiantForm.value, true)" [disabled]="etudiantForm.invalid || isSubmitting || editMode" class="btn-save-new" *ngIf="!editMode">
+          <mat-icon>add_circle</mat-icon> Enregistrer & Nouveau
+        </button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="etudiantForm.invalid || isSubmitting" class="btn-submit">
+          <mat-icon>{{ editMode ? 'save' : 'add' }}</mat-icon>
+          {{ editMode ? 'Enregistrer' : 'Créer' }}
+        </button>
       </div>
     </form>
   </div>
 </div>
 
-<div class="etudiants-list" *ngIf="!showAddFormOnly">
-  <h2>Liste des étudiants</h2>
-  <button mat-raised-button color="primary" (click)="openForm()">
-    <mat-icon>add</mat-icon> 
-  </button>
-  <button mat-raised-button color="primary" (click)="openAffectationDialog()" [disabled]="selectedEtudiantIds.length === 0">
-    <mat-icon>assignment</mat-icon> Affecter Parcours
-  </button>
-  <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-    <ng-container matColumnDef="select">
-      <mat-header-cell *matHeaderCellDef>
-        <mat-checkbox (change)="toggleAll($event.checked)" [checked]="isAllSelected()"></mat-checkbox>
-      </mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <mat-checkbox (change)="toggleSelection(element.id, $event.checked)" [checked]="selectedEtudiantIds.includes(element.id)"></mat-checkbox>
-      </mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="id">
-      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="nom">
-      <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="prenom">
-      <mat-header-cell *matHeaderCellDef>Prénom</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.prenom }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="email">
-      <mat-header-cell *matHeaderCellDef>Email</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.email }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="numeroInscription">
-      <mat-header-cell *matHeaderCellDef>Numéro d'Inscription</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.numeroInscription }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="actions">
-      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <button mat-icon-button color="accent" (click)="editEtudiant(element)">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button color="warn" (click)="deleteEtudiant(element.id)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </mat-cell>
-    </ng-container>
-    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-  </mat-table>
-</div>
+<!-- Main Content -->
+<div class="page-container" *ngIf="!showAddFormOnly">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Gestion des Étudiants</h1>
+        <p>Gérez les étudiants et leurs inscriptions</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-flat-button color="primary" (click)="openForm()" class="btn-add">
+        <mat-icon>add</mat-icon> Nouvel Étudiant
+      </button>
+      <button mat-flat-button class="btn-affecter" (click)="openAffectationDialog()" [disabled]="selectedEtudiantIds.length === 0">
+        <mat-icon>assignment</mat-icon> Affecter Parcours ({{ selectedEtudiantIds.length }})
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid" *ngIf="!showAddFormOnly">
+    <div class="stat-card">
+      <div class="stat-icon total">
+        <mat-icon>people</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ dataSource.data.length }}</span>
+        <span class="stat-label">Total Étudiants</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon selected">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ selectedEtudiantIds.length }}</span>
+        <span class="stat-label">Sélectionnés</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="table-card" *ngIf="dataSource.data.length > 0">
+    <div class="table-header">
+      <h3>Liste des Étudiants</h3>
+      <span class="table-badge">{{ dataSource.data.length }} résultat(s)</span>
+    </div>
+    <mat-table [dataSource]="dataSource" class="modern-table">
+      <ng-container matColumnDef="select">
+        <mat-header-cell *matHeaderCellDef>
+          <mat-checkbox (change)="toggleAll($event.checked)" [checked]="isAllSelected()"></mat-checkbox>
+        </mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <mat-checkbox (change)="toggleSelection(element.id, $event.checked)" [checked]="selectedEtudiantIds.includes(element.id)"></mat-checkbox>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span class="cell-id">#{{ element.id }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="nom">
+        <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="cell-name">
+            <mat-icon class="name-icon">person</mat-icon>
+            <span>{{ element.nom }}</span>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="prenom">
+        <mat-header-cell *matHeaderCellDef>Prénom</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span>{{ element.prenom }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="email">
+        <mat-header-cell *matHeaderCellDef>Email</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span>{{ element.email }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="numeroInscription">
+        <mat-header-cell *matHeaderCellDef>N° Inscription</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span class="cell-badge">{{ element.numeroInscription }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="action-buttons">
+            <button mat-icon-button class="btn-edit" (click)="editEtudiant(element)" matTooltip="Modifier">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button class="btn-delete" (click)="deleteEtudiant(element.id)" matTooltip="Supprimer">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    </mat-table>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="dataSource.data.length === 0">
+    <div class="empty-icon">
+      <mat-icon>inbox</mat-icon>
+    </div>
+    <h3>Aucun étudiant trouvé</h3>
+    <p>Commencez par créer un nouvel étudiant</p>
+    <button mat-flat-button color="primary" (click)="openForm()">
+      <mat-icon>add</mat-icon> Créer un Étudiant
+    </button>
+  </div>
 </div>

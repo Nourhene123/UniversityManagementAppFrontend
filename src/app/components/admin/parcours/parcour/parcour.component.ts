@@ -20,6 +20,7 @@ import { AffectationDialogComponent } from './affectation-dialog/affectation-dia
 export class ParcourComponent implements OnInit, OnChanges {
   displayedColumns: string[] = ['id', 'nom', 'annee', 'libelle', 'paniers', 'actions'];
   dataSource = new MatTableDataSource<ParcourDto>();
+  filteredParcours: ParcourDto[] = [];
   parcourForm: FormGroup;
   showForm: boolean = false;
   editMode: boolean = false;
@@ -27,6 +28,7 @@ export class ParcourComponent implements OnInit, OnChanges {
   paniers: PanierDto[] = [];
   errorMessage: string = '';
   successMessage: string = '';
+  selectedAnnee: string | undefined;
 
   @Input() showAddFormOnly: boolean = false;
   @Input() paniersInput: PanierDto[] = [];
@@ -67,6 +69,7 @@ export class ParcourComponent implements OnInit, OnChanges {
     this.parcourService.getAllParcours().subscribe({
       next: (data) => {
         this.dataSource.data = data;
+        this.filteredParcours = data;
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -119,7 +122,7 @@ export class ParcourComponent implements OnInit, OnChanges {
     this.successMessage = '';
   }
 
-  onSubmit(): void {
+  onSubmit(saveAndNew: boolean = false): void {
     if (this.parcourForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
       const parcour: ParcourDto = this.parcourForm.value;
@@ -133,13 +136,18 @@ export class ParcourComponent implements OnInit, OnChanges {
       operation.subscribe({
         next: (response) => {
           if (!this.editMode) {
-            this.parcourAdded.emit(response); // Emit server response
-            this.chatService.sendParcour(response); // Notify with server response
+            this.parcourAdded.emit(response);
+            this.chatService.sendParcour(response);
           }
           if (!this.showAddFormOnly) {
             this.loadParcours();
           }
-          this.cancelForm();
+          
+          if (saveAndNew && !this.editMode) {
+            this.resetFormForNew();
+          } else {
+            this.cancelForm();
+          }
           this.snackBar.open(`Parcours ${this.editMode ? 'mis à jour' : 'créé'} avec succès !`, 'Fermer', { duration: 3000 });
         },
         error: (err: HttpErrorResponse) => {
@@ -157,6 +165,13 @@ export class ParcourComponent implements OnInit, OnChanges {
     } else {
       this.snackBar.open('Veuillez remplir tous les champs requis correctement.', 'Fermer', { duration: 3000 });
     }
+  }
+
+  resetFormForNew(): void {
+    this.parcourForm.reset({ nom: '', annee: '', libelle: '', panierIds: [] });
+    this.editMode = false;
+    this.isSubmitting = false;
+    this.snackBar.open('Prêt pour l\'entrée suivante !', 'OK', { duration: 2000 });
   }
 
   editParcour(parcour: ParcourDto): void {
@@ -187,7 +202,7 @@ export class ParcourComponent implements OnInit, OnChanges {
       });
     }
   }
-openAffectationDialog(parcourId: number) {
+  openAffectationDialog(parcourId: number) {
     const dialogRef = this.dialog.open(AffectationDialogComponent, {
       width: '400px',
       data: { parcourId }
@@ -195,7 +210,7 @@ openAffectationDialog(parcourId: number) {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result?.success) {
-        this.loadParcours(); // Refresh data on successful assignment
+        this.loadParcours();
         this.snackBar.open('Students assigned successfully!', 'Close', {
           duration: 3000,
         });
@@ -205,5 +220,31 @@ openAffectationDialog(parcourId: number) {
         });
       }
     });
+  }
+
+  getUniqueAnnees(): number {
+    const annees = new Set(this.dataSource.data.map(p => p.annee));
+    return annees.size;
+  }
+
+  getAnneesList(): string[] {
+    const annees = new Set(this.dataSource.data.map(p => p.annee).filter(a => a));
+    return Array.from(annees).sort();
+  }
+
+  filterByAnnee(annee: string | undefined): void {
+    this.selectedAnnee = annee;
+    if (!annee) {
+      this.filteredParcours = this.dataSource.data;
+    } else {
+      this.filteredParcours = this.dataSource.data.filter(p => p.annee === annee);
+    }
+    this.cdr.detectChanges();
+  }
+
+  clearAnneeFilter(): void {
+    this.selectedAnnee = undefined;
+    this.filteredParcours = this.dataSource.data;
+    this.cdr.detectChanges();
   }
 }

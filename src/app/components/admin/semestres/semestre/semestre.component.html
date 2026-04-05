@@ -1,57 +1,134 @@
-
-<div class="modal-overlay" *ngIf="showForm">
-  <div class="modal-content">
-    <form [formGroup]="semestreForm" (ngSubmit)="onSubmit()" class="semestre-form">
-      <div class="form-header">
-        <h3>{{ editMode ? 'Modifier Semestre' : 'Ajouter un Nouveau Semestre' }}</h3>
-        <button mat-icon-button (click)="cancelForm()" class="close-button">
-          <mat-icon>close</mat-icon>
-        </button>
+<!-- Modal Form -->
+<div class="modal-overlay" *ngIf="showForm" (click)="cancelForm()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
       </div>
-      <mat-form-field appearance="fill">
-        <mat-label>Nom</mat-label>
-        <input matInput formControlName="nom" required>
-        <mat-error *ngIf="semestreForm.get('nom')?.hasError('required')">
-          Le nom est requis
-        </mat-error>
-      </mat-form-field>
+      <div class="modal-title-section">
+        <h3>{{ editMode ? 'Modifier Semestre' : 'Nouveau Semestre' }}</h3>
+        <p class="modal-subtitle">{{ editMode ? 'Mettez à jour les informations du semestre' : 'Créez un nouveau semestre' }}</p>
+      </div>
+      <button mat-icon-button (click)="cancelForm()" class="close-button">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="semestreForm" (ngSubmit)="onSubmit()" class="semestre-form">
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Nom du Semestre</mat-label>
+          <input matInput formControlName="nom" placeholder="Ex: Semestre 1">
+          <mat-icon matPrefix>calendar_today</mat-icon>
+          <mat-error *ngIf="semestreForm.get('nom')?.hasError('required')">
+            <mat-icon>error</mat-icon> Le nom est requis
+          </mat-error>
+        </mat-form-field>
+      </div>
+
       <div class="form-actions">
-        <button mat-raised-button color="primary" type="submit" [disabled]="semestreForm.invalid || isSubmitting">
-          {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+        <button mat-stroked-button type="button" (click)="cancelForm()" [disabled]="isSubmitting" class="btn-cancel">
+          <mat-icon>close</mat-icon> Annuler
         </button>
-        <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
+        <button mat-stroked-button color="accent" type="button" (click)="onSubmit(true)" [disabled]="semestreForm.invalid || isSubmitting || editMode" class="btn-save-new" *ngIf="!editMode">
+          <mat-icon>add_circle</mat-icon> Enregistrer & Nouveau
+        </button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="semestreForm.invalid || isSubmitting" class="btn-submit">
+          <mat-icon>{{ editMode ? 'save' : 'add' }}</mat-icon>
+          {{ editMode ? 'Enregistrer' : 'Créer' }}
+        </button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- List and add button displayed only when showAddFormOnly is false -->
-<div class="semestres-list" *ngIf="!showAddFormOnly">
-  <h2>Liste des semestres</h2>
-  <button mat-raised-button (click)="openForm()" style="margin-top: 10px;">
-    <mat-icon>add</mat-icon>
-  </button>
-  <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-    <ng-container matColumnDef="id">
-      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="nom">
-      <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="actions">
-      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <button mat-icon-button color="accent" (click)="editSemestre(element)">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button color="warn" (click)="deleteSemestre(element.id)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </mat-cell>
-    </ng-container>
-    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-  </mat-table>
+<!-- Main Content -->
+<div class="page-container" *ngIf="!showAddFormOnly">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Gestion des Semestres</h1>
+        <p>Organisez et gérez les semestres académiques</p>
+      </div>
+    </div>
+    <button mat-flat-button color="primary" (click)="openForm()" class="btn-add">
+      <mat-icon>add</mat-icon> Nouveau Semestre
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid" *ngIf="!showAddFormOnly">
+    <div class="stat-card">
+      <div class="stat-icon total">
+        <mat-icon>calendar_today</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ dataSource.data.length }}</span>
+        <span class="stat-label">Total Semestres</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="table-card" *ngIf="dataSource.data.length > 0">
+    <div class="table-header">
+      <h3>Liste des Semestres</h3>
+      <span class="table-badge">{{ dataSource.data.length }} résultat(s)</span>
+    </div>
+    <mat-table [dataSource]="dataSource" class="modern-table">
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span class="cell-id">#{{ element.id }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="nom">
+        <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="cell-name">
+            <mat-icon class="name-icon">calendar_today</mat-icon>
+            <span>{{ element.nom }}</span>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="action-buttons">
+            <button mat-icon-button class="btn-edit" (click)="editSemestre(element)" matTooltip="Modifier">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button class="btn-delete" (click)="deleteSemestre(element.id)" matTooltip="Supprimer">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    </mat-table>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="dataSource.data.length === 0">
+    <div class="empty-icon">
+      <mat-icon>inbox</mat-icon>
+    </div>
+    <h3>Aucun semestre trouvé</h3>
+    <p>Commencez par créer un nouveau semestre</p>
+    <button mat-flat-button color="primary" (click)="openForm()">
+      <mat-icon>add</mat-icon> Créer un Semestre
+    </button>
+  </div>
 </div>

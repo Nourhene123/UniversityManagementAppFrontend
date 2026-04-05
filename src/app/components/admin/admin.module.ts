@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { AdminRoutingModule } from './admin-routing.module';
@@ -43,6 +43,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 
 
 @NgModule({
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   declarations: [
     PanierComponent,
     SemestreComponent,
@@ -82,7 +83,7 @@ import { MatPaginatorModule } from '@angular/material/paginator';
     MatSelectModule,
       MatListModule,
       MatCheckboxModule,
- MatSnackBarModule ,
+    MatSnackBarModule ,
     SharedModule
   ],
   providers: [MatiereService,  {

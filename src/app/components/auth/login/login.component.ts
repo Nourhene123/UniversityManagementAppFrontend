@@ -13,6 +13,7 @@ import { TokenService } from 'src/app/Services/token.service';
 export class LoginComponent {
   loginForm: FormGroup;
   errorMessage: string | null = null;
+  showPassword: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -25,6 +26,10 @@ export class LoginComponent {
       password: ['', [Validators.required, Validators.minLength(6)]],
       staySignedIn: [false]
     });
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 
   onSubmit(): void {

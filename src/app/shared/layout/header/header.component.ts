@@ -75,6 +75,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private loadThemePreference(): void {
     this.isDarkTheme = localStorage.getItem('theme') === 'dark';
+    this.applyTheme();
   }
 
   private checkMobileView(): void {
@@ -94,9 +95,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // This would typically interact with the sidebar component
   }
 
+  private applyTheme(): void {
+    if (this.isDarkTheme) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }
+
   toggleTheme(): void {
     this.isDarkTheme = !this.isDarkTheme;
     localStorage.setItem('theme', this.isDarkTheme ? 'dark' : 'light');
+    this.applyTheme();
   }
 
   onSearchInput(): void {

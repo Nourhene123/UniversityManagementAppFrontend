@@ -12,6 +12,7 @@ export class RegisterComponent implements OnInit {
   registerForm: FormGroup;
   errorMessage: string | null = null;
   successMessage: string | null = null;
+  showPassword: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -25,11 +26,15 @@ export class RegisterComponent implements OnInit {
       prenom: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
       departement: [''],
       numeroInscription: [''],
-      role: ['', Validators.required] // Fixed to Etudiant as per backend restriction
+      role: ['', Validators.required]
     });
   }
 
   ngOnInit(): void {}
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
 
   onSubmit(): void {
     if (this.registerForm.valid) {

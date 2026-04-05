@@ -10,7 +10,8 @@ body {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: #e2e8f0;
   line-height: 1.6;
-  font-smoothing: antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Container Styling */
@@ -76,6 +77,72 @@ body {
 
 .header .date:hover {
   transform: scale(1.05);
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.quick-action-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.quick-action-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Search Section */
+.search-section {
+  backdrop-filter: blur(10px);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.search-section:focus-within {
+  border-color: rgba(147, 51, 234, 0.5);
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+/* Loading Skeleton */
+.loading-container {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.skeleton-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.skeleton-card {
+  background: linear-gradient(90deg, rgba(55, 65, 81, 0.6) 25%, rgba(75, 85, 99, 0.6) 50%, rgba(55, 65, 81, 0.6) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Loading Indicator */
@@ -308,14 +375,26 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(90deg, #4b5563, #6b7280);
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(90deg, #374151, #4b5563);
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(75, 85, 99, 0.5);
 }
 
 .matiere-header:hover {
-  background: linear-gradient(90deg, #5a6373, #8b94a3);
+  background: linear-gradient(90deg, #4b5563, #6b7280);
+}
+
+.matiere-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.matiere-header:hover .matiere-icon {
+  transform: scale(1.1);
 }
 
 .matiere-header h3 {

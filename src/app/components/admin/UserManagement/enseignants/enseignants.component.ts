@@ -17,6 +17,7 @@ import { ChatService } from 'src/app/Services/ChatService';
 export class EnseignantsComponent implements OnInit {
   enseignants$: Observable<EnseignantDto[] | null> = this.enseignantService.getAllEnseignants();
   dataSource = new MatTableDataSource<EnseignantDto>();
+  filteredEnseignants: EnseignantDto[] = [];
   displayedColumns: string[] = ['id', 'nom', 'prenom', 'email', 'departement', 'actions'];
   showForm: boolean = false;
   editMode: boolean = false;
@@ -24,6 +25,7 @@ export class EnseignantsComponent implements OnInit {
   errorMessage: string = '';
   successMessage: string = '';
   isSubmitting: boolean = false;
+  selectedDepartement: string | undefined;
 
   @ViewChild(MatTable) table!: MatTable<EnseignantDto>;
   @ViewChild('enseignantForm') enseignantForm!: NgForm;
@@ -56,6 +58,7 @@ export class EnseignantsComponent implements OnInit {
     this.enseignants$.subscribe({
       next: (data) => {
         this.dataSource.data = data ? data.filter(e => e.role === 'Enseignant') : [];
+        this.filteredEnseignants = this.dataSource.data;
         this.table?.renderRows();
       },
       error: (error) => {
@@ -94,7 +97,7 @@ export class EnseignantsComponent implements OnInit {
     this.successMessage = '';
   }
 
-  onSubmit(formValue: any) {
+  onSubmit(formValue: any, saveAndNew: boolean = false) {
     if (!this.enseignantForm.valid || this.isSubmitting) {
       this.errorMessage = 'Veuillez remplir correctement tous les champs requis.';
       this.snackBar.open(this.errorMessage, 'Fermer', { duration: 3000 });
@@ -132,13 +135,18 @@ export class EnseignantsComponent implements OnInit {
         this.errorMessage = '';
         this.snackBar.open(this.successMessage, 'Fermer', { duration: 3000 });
         if (!this.editMode) {
-          this.enseignantAdded.emit(response); // Emit server response with real ID
-          this.chatService.sendEnseignant(response); // Notify via ChatService
+          this.enseignantAdded.emit(response);
+          this.chatService.sendEnseignant(response);
         }
         if (!this.showAddFormOnly) {
           this.loadEnseignants();
         }
-        this.cancelForm();
+        
+        if (saveAndNew && !this.editMode) {
+          this.resetFormForNew();
+        } else {
+          this.cancelForm();
+        }
       },
       error: (error) => {
         this.errorMessage = error.error?.error || error.message || `Échec de la ${this.editMode ? 'mise à jour' : 'création'} de l'enseignant.`;
@@ -149,6 +157,20 @@ export class EnseignantsComponent implements OnInit {
         this.isSubmitting = false;
       }
     });
+  }
+
+  resetFormForNew() {
+    this.selectedEnseignant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Enseignant', departement: '' };
+    this.editMode = false;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.isSubmitting = false;
+    
+    setTimeout(() => {
+      this.enseignantForm?.resetForm();
+    }, 0);
+    
+    this.snackBar.open('Prêt pour l\'entrée suivante !', 'OK', { duration: 2000 });
   }
 
   deleteEnseignant(id: number) {
@@ -166,5 +188,29 @@ export class EnseignantsComponent implements OnInit {
         }
       });
     }
+  }
+
+  getUniqueDepartements(): number {
+    const departements = new Set(this.dataSource.data.map(e => e.departement));
+    return departements.size;
+  }
+
+  getDepartementsList(): string[] {
+    const departements = new Set(this.dataSource.data.map(e => e.departement).filter((d): d is string => !!d));
+    return Array.from(departements).sort();
+  }
+
+  filterByDepartement(departement: string | undefined): void {
+    this.selectedDepartement = departement;
+    if (!departement) {
+      this.filteredEnseignants = this.dataSource.data;
+    } else {
+      this.filteredEnseignants = this.dataSource.data.filter(e => e.departement === departement);
+    }
+  }
+
+  clearDepartementFilter(): void {
+    this.selectedDepartement = undefined;
+    this.filteredEnseignants = this.dataSource.data;
   }
 }

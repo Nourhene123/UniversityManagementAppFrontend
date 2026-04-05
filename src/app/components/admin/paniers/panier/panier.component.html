@@ -1,113 +1,243 @@
-
-<div class="modal-overlay" *ngIf="showForm">
-  <div class="modal-content">
-    <form [formGroup]="panierForm" (ngSubmit)="onSubmit()" class="panier-form">
-      <div class="form-header">
-        <h3>{{ editMode ? 'Modifier Panier' : 'Ajouter un Nouveau Panier' }}</h3>
-        <button mat-icon-button (click)="cancelForm()" class="close-button">
-          <mat-icon>close</mat-icon>
-        </button>
+<!-- Modal Form -->
+<div class="modal-overlay" *ngIf="showForm" (click)="cancelForm()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-icon">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
       </div>
-      <mat-form-field appearance="fill">
-        <mat-label>Nom</mat-label>
-        <input matInput formControlName="nom" required>
-        <mat-error *ngIf="panierForm.get('nom')?.hasError('required')">
-          Le nom est requis
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Coefficient Total</mat-label>
-        <input matInput type="number" formControlName="coefficientTotal" required>
-        <mat-error *ngIf="panierForm.get('coefficientTotal')?.hasError('required')">
-          Le coefficient total est requis
-        </mat-error>
-        <mat-error *ngIf="panierForm.get('coefficientTotal')?.hasError('min')">
-          Le coefficient total doit être supérieur à 0
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Semestre</mat-label>
-        <mat-select formControlName="semestreId" required>
-          <mat-option *ngFor="let semestre of allSemestres" [value]="semestre.id ">
-            {{ semestre.nom }}
-          </mat-option>
-        </mat-select>
-        <mat-error *ngIf="panierForm.get('semestreId')?.hasError('required')">
-          Le semestre est requis
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Matières</mat-label>
-        <mat-select formControlName="matiereIds" multiple required>
-          <mat-option *ngFor="let matiere of allMatieres" [value]="matiere.id ">
-            {{ matiere.nom }}
-          </mat-option>
-        </mat-select>
-        <mat-error *ngIf="panierForm.get('matiereIds')?.hasError('required')">
-          Au moins une matière est requise
-        </mat-error>
-      </mat-form-field>
+      <div class="modal-title-section">
+        <h3>{{ editMode ? 'Modifier Panier' : 'Nouveau Panier' }}</h3>
+        <p class="modal-subtitle">{{ editMode ? 'Mettez à jour les informations du panier' : 'Créez un nouveau panier de matières' }}</p>
+      </div>
+      <button mat-icon-button (click)="cancelForm()" class="close-button">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="panierForm" (ngSubmit)="onSubmit()" class="panier-form">
+      <div class="form-grid">
+        <mat-form-field appearance="fill" class="form-field-full">
+          <mat-label>Nom du Panier</mat-label>
+          <input matInput formControlName="nom" placeholder="Ex: Panier Sciences">
+          <mat-icon matPrefix>shopping_basket</mat-icon>
+          <mat-error *ngIf="panierForm.get('nom')?.hasError('required')">
+            <mat-icon>error</mat-icon> Le nom est requis
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Coefficient Total</mat-label>
+          <input matInput type="number" formControlName="coefficientTotal" placeholder="Ex: 30">
+          <mat-icon matPrefix>calculate</mat-icon>
+          <mat-error *ngIf="panierForm.get('coefficientTotal')?.hasError('required')">
+            <mat-icon>error</mat-icon> Requis
+          </mat-error>
+          <mat-error *ngIf="panierForm.get('coefficientTotal')?.hasError('min')">
+            <mat-icon>error</mat-icon> > 0
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Semestre</mat-label>
+          <mat-select formControlName="semestreId" panelClass="dark-select-panel">
+            <mat-option *ngFor="let semestre of allSemestres" [value]="semestre.id">
+              <mat-icon>calendar_today</mat-icon> {{ semestre.nom }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>school</mat-icon>
+          <mat-error *ngIf="panierForm.get('semestreId')?.hasError('required')">
+            <mat-icon>error</mat-icon> Requis
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="form-field-full">
+          <mat-label>Matières</mat-label>
+          <mat-select formControlName="matiereIds" multiple panelClass="dark-select-panel">
+            <mat-option *ngFor="let matiere of allMatieres" [value]="matiere.id">
+              <div class="matiere-option">
+                <mat-icon>menu_book</mat-icon>
+                <span>{{ matiere.nom }}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>library_books</mat-icon>
+          <mat-error *ngIf="panierForm.get('matiereIds')?.hasError('required')">
+            <mat-icon>error</mat-icon> Au moins une matière
+          </mat-error>
+        </mat-form-field>
+      </div>
+
       <div class="form-actions">
-        <button mat-raised-button color="primary" type="submit" [disabled]="panierForm.invalid || isSubmitting">
-          {{ editMode ? 'Mettre à jour' : 'Ajouter' }}
+        <button mat-stroked-button type="button" (click)="cancelForm()" [disabled]="isSubmitting" class="btn-cancel">
+          <mat-icon>close</mat-icon> Annuler
         </button>
-        <button mat-raised-button (click)="cancelForm()" [disabled]="isSubmitting">Annuler</button>
+        <button mat-stroked-button color="accent" type="button" (click)="onSubmit(true)" [disabled]="panierForm.invalid || isSubmitting || editMode" class="btn-save-new" *ngIf="!editMode">
+          <mat-icon>add_circle</mat-icon> Enregistrer & Nouveau
+        </button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="panierForm.invalid || isSubmitting" class="btn-submit">
+          <mat-icon>{{ editMode ? 'save' : 'add' }}</mat-icon>
+          {{ editMode ? 'Enregistrer' : 'Créer' }}
+        </button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- List, filter, and add button displayed only when showAddFormOnly is false -->
-<div class="paniers-list" *ngIf="!showAddFormOnly">
-  <h2>Gestion des Paniers</h2>
-  <div class="filter-container">
-    <mat-form-field  class="filter-semestre">
-      <mat-label>Filtrer par Semestre</mat-label>
-      <mat-select [(ngModel)]="selectedSemestreId" (ngModelChange)="filterBySemestre($event)">
-        <mat-option [value]="undefined">Tous les semestres</mat-option>
-        <mat-option *ngFor="let semestre of allSemestres" [value]="semestre.id">
-          {{ semestre.nom }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-    <button mat-stroked-button class="clear-filter-button" (click)="clearSemestreFilter()">Effacer le filtre</button>
+<!-- Main Content -->
+<div class="page-container" *ngIf="!showAddFormOnly">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Gestion des Paniers</h1>
+        <p>Organisez et gérez les paniers de matières par semestre</p>
+      </div>
+    </div>
+    <button mat-flat-button color="primary" (click)="openForm()" class="btn-add">
+      <mat-icon>add</mat-icon> Nouveau Panier
+    </button>
   </div>
-  <button mat-flat-button color="primary" (click)="openForm()" style="margin-top: 10px;">
-    <mat-icon>add</mat-icon>
-  </button>
-  <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-    <ng-container matColumnDef="id">
-      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.id }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="nom">
-      <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.nom }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="coefficientTotal">
-      <mat-header-cell *matHeaderCellDef>Coefficient Total</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ element.coefficientTotal }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="semestre">
-      <mat-header-cell *matHeaderCellDef>Semestre</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ getSemestreNom(element.semestreId) }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="listeMatieres">
-      <mat-header-cell *matHeaderCellDef>Liste des Matières</mat-header-cell>
-      <mat-cell *matCellDef="let element">{{ getListeMatieres(element.id) }}</mat-cell>
-    </ng-container>
-    <ng-container matColumnDef="actions">
-      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <button mat-icon-button color="accent" (click)="editPanier(element)">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button color="warn" (click)="deletePanier(element.id)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </mat-cell>
-    </ng-container>
-    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-  </mat-table>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid" *ngIf="!showAddFormOnly">
+    <div class="stat-card">
+      <div class="stat-icon total">
+        <mat-icon>shopping_basket</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ dataSource.data.length }}</span>
+        <span class="stat-label">Total Paniers</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon semestres">
+        <mat-icon>calendar_today</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ allSemestres.length }}</span>
+        <span class="stat-label">Semestres</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon matieres">
+        <mat-icon>menu_book</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ allMatieres.length }}</span>
+        <span class="stat-label">Matières</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="filter-card">
+    <div class="filter-icon">
+      <mat-icon>filter_list</mat-icon>
+    </div>
+    <div class="filter-content">
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Filtrer par Semestre</mat-label>
+        <mat-select [(ngModel)]="selectedSemestreId" (ngModelChange)="filterBySemestre($event)">
+          <mat-option [value]="undefined">
+            <mat-icon>all_inclusive</mat-icon> Tous les semestres
+          </mat-option>
+          <mat-option *ngFor="let semestre of allSemestres" [value]="semestre.id">
+            <mat-icon>calendar_today</mat-icon> {{ semestre.nom }}
+          </mat-option>
+        </mat-select>
+        <mat-icon matPrefix>search</mat-icon>
+      </mat-form-field>
+      <button mat-stroked-button class="btn-clear" (click)="clearSemestreFilter()" *ngIf="selectedSemestreId">
+        <mat-icon>clear</mat-icon> Effacer
+      </button>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="table-card" *ngIf="dataSource.data.length > 0">
+    <div class="table-header">
+      <h3>Liste des Paniers</h3>
+      <span class="table-badge">{{ dataSource.data.length }} résultat(s)</span>
+    </div>
+    <mat-table [dataSource]="dataSource" class="modern-table">
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span class="cell-id">#{{ element.id }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="nom">
+        <mat-header-cell *matHeaderCellDef>Nom</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="cell-name">
+            <mat-icon class="name-icon">shopping_basket</mat-icon>
+            <span>{{ element.nom }}</span>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="coefficientTotal">
+        <mat-header-cell *matHeaderCellDef>Coefficient</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <span class="cell-badge coefficient">{{ element.coefficientTotal }}</span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="semestre">
+        <mat-header-cell *matHeaderCellDef>Semestre</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="cell-semestre">
+            <mat-icon>calendar_today</mat-icon>
+            <span>{{ getSemestreNom(element.semestreId) }}</span>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="listeMatieres">
+        <mat-header-cell *matHeaderCellDef>Matières</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="cell-matieres" [title]="getListeMatieres(element.id)">
+            <span class="matieres-text">{{ getListeMatieres(element.id) }}</span>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <div class="action-buttons">
+            <button mat-icon-button class="btn-edit" (click)="editPanier(element)" matTooltip="Modifier">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button class="btn-delete" (click)="deletePanier(element.id)" matTooltip="Supprimer">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    </mat-table>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="dataSource.data.length === 0">
+    <div class="empty-icon">
+      <mat-icon>inbox</mat-icon>
+    </div>
+    <h3>Aucun panier trouvé</h3>
+    <p>Commencez par créer un nouveau panier de matières</p>
+    <button mat-flat-button color="primary" (click)="openForm()">
+      <mat-icon>add</mat-icon> Créer un Panier
+    </button>
+  </div>
 </div>

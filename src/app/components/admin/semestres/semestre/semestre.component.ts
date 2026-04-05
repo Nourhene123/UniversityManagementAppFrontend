@@ -88,7 +88,7 @@ export class SemestreComponent implements OnInit {
     this.semestreForm.patchValue(semestre);
   }
 
-  onSubmit(): void {
+  onSubmit(saveAndNew: boolean = false): void {
     if (this.semestreForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
       const semestre: SemestreDto = { ...this.selectedSemestre, ...this.semestreForm.value };
@@ -99,13 +99,18 @@ export class SemestreComponent implements OnInit {
       operation.subscribe({
         next: (response) => {
           if (!this.editMode) {
-            this.semestreAdded.emit(response); // Emit server response
-            this.chatService.sendSemestre(response); // Notify with server response
+            this.semestreAdded.emit(response);
+            this.chatService.sendSemestre(response);
           }
           if (!this.showAddFormOnly) {
             this.loadSemestres();
           }
-          this.cancelForm();
+          
+          if (saveAndNew && !this.editMode) {
+            this.resetFormForNew();
+          } else {
+            this.cancelForm();
+          }
           this.snackBar.open(`Semestre ${this.editMode ? 'mis à jour' : 'créé'} avec succès !`, 'Fermer', { duration: 3000 });
         },
         error: (err: HttpErrorResponse) => {
@@ -119,6 +124,14 @@ export class SemestreComponent implements OnInit {
     } else {
       this.snackBar.open('Veuillez remplir tous les champs requis correctement.', 'Fermer', { duration: 3000 });
     }
+  }
+
+  resetFormForNew(): void {
+    this.selectedSemestre = { nom: '' };
+    this.editMode = false;
+    this.isSubmitting = false;
+    this.semestreForm.reset({ nom: '' });
+    this.snackBar.open('Prêt pour l\'entrée suivante !', 'OK', { duration: 2000 });
   }
 
   deleteSemestre(id: number): void {

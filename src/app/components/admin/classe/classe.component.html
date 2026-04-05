@@ -49,10 +49,16 @@
           </mat-select>
         </mat-form-field>
         <div class="form-actions">
-          <button mat-raised-button color="primary" type="submit" [disabled]="classeForm.invalid || loading">
+          <button mat-stroked-button type="button" (click)="toggleForm()" [disabled]="loading" class="btn-cancel">
+            <mat-icon>close</mat-icon> Annuler
+          </button>
+          <button mat-stroked-button color="accent" type="button" (click)="onSubmit($event, true)" [disabled]="classeForm.invalid || loading || editingClassId" class="btn-save-new" *ngIf="!editingClassId">
+            <mat-icon>add_circle</mat-icon> Enregistrer & Nouveau
+          </button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="classeForm.invalid || loading" class="btn-submit">
+            <mat-icon>{{ editingClassId ? 'save' : 'add' }}</mat-icon>
             {{ editingClassId ? 'Mettre à jour' : 'Ajouter' }}
           </button>
-          <button mat-raised-button (click)="toggleForm()" [disabled]="loading">Annuler</button>
         </div>
       </form>
     </div>
@@ -63,10 +69,62 @@
 <!-- Template for the full class management view -->
 <ng-template #fullView>
   <div class="container">
-    <!-- Header section -->
-    <div class="header">
-      <h2 class="header-title">Gestion des Classes</h2>
-      <span class="header-date">{{ today | date:'mediumDate' }}</span>
+    <!-- Header section with icon and stats -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-icon">
+          <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h1>Gestion des Classes</h1>
+          <p>Organisez et gérez les classes et leurs étudiants</p>
+        </div>
+      </div>
+      <button mat-flat-button color="primary" (click)="toggleForm()" class="btn-add">
+        <mat-icon>add</mat-icon> {{ showForm ? 'Annuler' : 'Ajouter une classe' }}
+      </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid" *ngIf="!loading">
+      <div class="stat-card">
+        <div class="stat-icon total">
+          <mat-icon>class</mat-icon>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ filteredClasses.length }}</span>
+          <span class="stat-label">Total Classes</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon students">
+          <mat-icon>school</mat-icon>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ getTotalEtudiants() }}</span>
+          <span class="stat-label">Total Étudiants</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon parcours">
+          <mat-icon>account_tree</mat-icon>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ parcours.length }}</span>
+          <span class="stat-label">Parcours</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon sections">
+          <mat-icon>folder_open</mat-icon>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value">{{ getUniqueSections() }}</span>
+          <span class="stat-label">Sections</span>
+        </div>
+      </div>
     </div>
 
     <!-- Loading indicator for main view -->
@@ -87,20 +145,21 @@
       {{ successMessage }}
     </div>
 
-    <!-- Search bar -->
-    <div class="search-download">
-      <mat-form-field appearance="fill" class="search-input">
-        <mat-label>Rechercher par nom ou section</mat-label>
-        <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{standalone: true}">
-      </mat-form-field>
-    </div>
-
-    <!-- Toggle form button -->
-    <div class="toggle-form">
-      <button mat-raised-button color="primary" (click)="toggleForm()" class="toggle-form-button">
-        {{ showForm ? 'Annuler' : '' }}
-        <mat-icon>add</mat-icon>
-      </button>
+    <!-- Search and Actions -->
+    <div class="search-actions-container">
+      <div class="search-download">
+        <mat-form-field appearance="fill" class="search-input">
+          <mat-label>Rechercher par nom ou section</mat-label>
+          <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)" [ngModelOptions]="{standalone: true}">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+      <div class="toggle-form">
+        <button mat-raised-button color="primary" (click)="toggleForm()" class="toggle-form-button">
+          <mat-icon>add</mat-icon>
+          {{ showForm ? 'Annuler' : 'Ajouter une classe' }}
+        </button>
+      </div>
     </div>
 
     <!-- Add/edit class form -->

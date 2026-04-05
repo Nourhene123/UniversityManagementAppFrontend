@@ -1,0 +1,215 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Tableau de Bord - Évaluation</h1>
+    <p class="subtitle">Suivez vos progrès et recevez des recommandations personnalisées</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Chargement de vos données...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="error-state">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading && !errorMessage" class="dashboard-content">
+    
+    <!-- Student Info Card -->
+    <div class="info-card" *ngIf="parcours.length > 0 || studentClasse">
+      <div class="info-header">
+        <mat-icon>person</mat-icon>
+        <span>Mes Informations</span>
+      </div>
+      <div class="info-grid">
+        <div class="info-item" *ngIf="parcours.length > 0">
+          <mat-icon>school</mat-icon>
+          <div>
+            <label>Parcours</label>
+            <span>{{ parcours[0].nom }} ({{ parcours[0].annee }})</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="studentClasse">
+          <mat-icon>class</mat-icon>
+          <div>
+            <label>Classe</label>
+            <span>{{ studentClasse.nom }} - {{ studentClasse.section }}</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="notes.length > 0">
+          <mat-icon>assignment</mat-icon>
+          <div>
+            <label>Total Notes</label>
+            <span>{{ notes.length }}</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="totalMatieres > 0">
+          <mat-icon>menu_book</mat-icon>
+          <div>
+            <label>Matières</label>
+            <span>{{ totalMatieres }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid" *ngIf="notes.length > 0">
+      <!-- Overall Average -->
+      <div class="stat-card main-stat">
+        <div class="stat-circle" [style.--grade-color]="getGradeColor(overallAverage)">
+          <svg viewBox="0 0 36 36" class="circular-chart">
+            <path class="circle-bg"
+              d="M18 2.0845
+                a 15.9155 15.9155 0 0 1 0 31.831
+                a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+            <path class="circle"
+              [attr.stroke-dasharray]="(overallAverage / 20) * 100 + ', 100'"
+              d="M18 2.0845
+                a 15.9155 15.9155 0 0 1 0 31.831
+                a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+          </svg>
+          <div class="stat-value">{{ overallAverage }}</div>
+        </div>
+        <div class="stat-info">
+          <h3>Moyenne Générale</h3>
+          <span class="stat-label" [style.color]="getGradeColor(overallAverage)">
+            {{ getGradeLabel(overallAverage) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Best Matiere -->
+      <div class="stat-card" *ngIf="bestMatiere">
+        <div class="stat-icon success">
+          <mat-icon>trending_up</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h4>Meilleure Matière</h4>
+          <p class="stat-name">{{ bestMatiere.matiereName }}</p>
+          <span class="stat-score" style="color: #22c55e">{{ bestMatiere.average }}/20</span>
+        </div>
+      </div>
+
+      <!-- Worst Matiere -->
+      <div class="stat-card" *ngIf="worstMatiere">
+        <div class="stat-icon" [class.danger]="worstMatiere.average < 10" [class.warning]="worstMatiere.average >= 10">
+          <mat-icon>trending_down</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h4>Matière à Travailler</h4>
+          <p class="stat-name">{{ worstMatiere.matiereName }}</p>
+          <span class="stat-score" [style.color]="getGradeColor(worstMatiere.average)">
+            {{ worstMatiere.average }}/20
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations Section -->
+    <div class="recommendations-section" *ngIf="recommendations.length > 0">
+      <h2>
+        <mat-icon>lightbulb</mat-icon>
+        Recommandations Personnalisées
+      </h2>
+      <div class="recommendations-grid">
+        <div *ngFor="let rec of recommendations" 
+             class="recommendation-card"
+             [class.success]="rec.type === 'success'"
+             [class.warning]="rec.type === 'warning'"
+             [class.danger]="rec.type === 'danger'"
+             [class.info]="rec.type === 'info'">
+          <div class="rec-header">
+            <mat-icon>{{ rec.icon }}</mat-icon>
+            <h4>{{ rec.title }}</h4>
+          </div>
+          <p class="rec-message">{{ rec.message }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section" *ngIf="matiereStats.length > 0">
+      <h2>
+        <mat-icon>insights</mat-icon>
+        Analyse des Performances
+      </h2>
+      <div class="charts-grid">
+        <!-- Radar Chart -->
+        <div class="chart-card">
+          <h3>Profil par Matière</h3>
+          <div class="chart-container">
+            <canvas baseChart
+              [data]="radarChartData"
+              [options]="radarChartOptions"
+              [type]="'radar'">
+            </canvas>
+          </div>
+        </div>
+
+        <!-- Bar Chart -->
+        <div class="chart-card">
+          <h3>Moyennes par Matière</h3>
+          <div class="chart-container bar-chart">
+            <canvas baseChart
+              [data]="barChartData"
+              [options]="barChartOptions"
+              [type]="'bar'">
+            </canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Matieres Detail Table -->
+    <div class="matieres-section" *ngIf="matiereStats.length > 0">
+      <h2>
+        <mat-icon>format_list_numbered</mat-icon>
+        Détail par Matière
+      </h2>
+      <div class="table-container">
+        <table class="matieres-table">
+          <thead>
+            <tr>
+              <th>Matière</th>
+              <th>Coefficient</th>
+              <th>Nb. Notes</th>
+              <th>Moyenne</th>
+              <th>Appréciation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let mat of matiereStats" 
+                [class.highlight-good]="mat.average >= 14"
+                [class.highlight-warning]="mat.average < 10">
+              <td class="matiere-name">{{ mat.matiereName }}</td>
+              <td>{{ mat.coefficient }}</td>
+              <td>{{ mat.notesCount }}</td>
+              <td class="average-cell">
+                <span class="average-badge" [style.background-color]="getGradeColor(mat.average)">
+                  {{ mat.average }}
+                </span>
+              </td>
+              <td>{{ getGradeLabel(mat.average) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="notes.length === 0" class="empty-state">
+      <mat-icon>assignment_ind</mat-icon>
+      <h3>Aucune note disponible</h3>
+      <p>Vos notes et recommandations apparaîtront ici une fois que vos évaluations seront saisies par vos enseignants.</p>
+    </div>
+
+  </div>
+</div>

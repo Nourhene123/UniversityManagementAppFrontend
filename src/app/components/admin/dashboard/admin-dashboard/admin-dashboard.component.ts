@@ -3,8 +3,9 @@ import { Router } from '@angular/router';
 import { AuthService } from 'src/app/Services/Auth/auth.service';
 import { EnseignantService } from 'src/app/Services/EnseignantService/enseignant.service';
 import { EtudiantService } from 'src/app/Services/EtudiantService/etudiant.service';
+import { ThemeService } from 'src/app/shared/services/theme.service';
 import { forkJoin } from 'rxjs';
-import { Chart, registerables } from 'chart.js';
+import { Chart, registerables, ChartType } from 'chart.js';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -21,6 +22,7 @@ export class AdminDashboardComponent implements OnInit {
   parcourCount: number = 0;
   isLoading: boolean = true;
   parcourStats: { parcourNom: string, studentCount: number }[] = [];
+  currentChartType: ChartType = 'bar' as ChartType;
 
   // Chart configuration
   public barChartData: any = {
@@ -45,47 +47,80 @@ export class AdminDashboardComponent implements OnInit {
       x: {
         title: {
           display: true,
-          text: 'Parcours',
-          color: '#ffffff',
-          font: { size: 16 }
+          text: 'Parcours Académique',
+          color: '#6366f1',
+          font: { size: 14, weight: 'bold' }
         },
-        ticks: { color: '#ffffff' },
-        grid: { color: 'var(--border-color)', drawOnChartArea: false }
+        ticks: { 
+          color: '#475569',
+          font: { size: 12 }
+        },
+        grid: { 
+          color: '#e2e8f0',
+          drawOnChartArea: false 
+        }
       },
       y: {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Nombre d\'étudiants',
-          color: '#ffffff',
-          font: { size: 14 }
+          text: 'Nombre d\'Étudiants',
+          color: '#6366f1',
+          font: { size: 14, weight: 'bold' }
         },
-        ticks: { color: 'var(--text-secondary)', stepSize: 1 },
-        grid: { color: 'var(--border-color)' }
+        ticks: { 
+          color: '#475569',
+          font: { size: 12 },
+          stepSize: 1 
+        },
+        grid: { 
+          color: '#e2e8f0'
+        }
       }
     },
     plugins: {
       legend: {
-        labels: { color: '#ffffff', font: { size: 14 } }
+        display: true,
+        position: 'top',
+        labels: { 
+          color: '#1e293b',
+          font: { size: 14, weight: 'bold' },
+          padding: 20
+        }
       },
       tooltip: {
-        backgroundColor: 'var(--bg-secondary)',
+        backgroundColor: 'rgba(30, 41, 59, 0.95)',
         titleColor: '#ffffff',
-        bodyColor: 'var(--primary-gradient)',
-        borderColor: 'var(--primary-gradient)',
-        borderWidth: 1,
+        bodyColor: '#ffffff',
+        borderColor: '#6366f1',
+        borderWidth: 2,
         caretPadding: 10,
-        bodyFont: { size: 12 }
+        bodyFont: { size: 12 },
+        titleFont: { size: 14, weight: 'bold' },
+        padding: 12,
+        displayColors: true,
+        callbacks: {
+          label: function(context: any) {
+            return `Étudiants: ${context.parsed.y}`;
+          }
+        }
       }
     },
-    hover: { animationDuration: 200 }
+    hover: { 
+      animationDuration: 200 
+    },
+    animation: {
+      duration: 1000,
+      easing: 'easeInOutQuart'
+    }
   };
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private enseignantService: EnseignantService,
-    private etudiantService: EtudiantService
+    private etudiantService: EtudiantService,
+    private themeService: ThemeService
   ) {}
 
   ngOnInit() {
@@ -100,47 +135,64 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
-  private loadCounts(): void {
+  public loadCounts(): void {
     this.isLoading = true;
+    console.log('Loading counts...');
+    
     forkJoin({
       enseignant: this.enseignantService.getEnseignantCount(),
       etudiant: this.etudiantService.getEtudiantCount(),
       parcourStats: this.etudiantService.getStudentCountByParcour()
     }).subscribe({
       next: ({ enseignant, etudiant, parcourStats }) => {
+        console.log('Raw data received:', { enseignant, etudiant, parcourStats });
+        
         this.enseignantCount = enseignant || 0;
         this.etudiantCount = etudiant || 0;
         this.parcourStats = parcourStats || [];
         console.log('Parcour Stats:', this.parcourStats);
+        console.log('Parcour Stats length:', this.parcourStats.length);
 
         // Update chart data
-        this.barChartData.labels = this.parcourStats.map(stat => stat.parcourNom);
-        this.barChartData.datasets[0].data = this.parcourStats.map(stat => stat.studentCount);
+        this.barChartData.labels = this.parcourStats.map(stat => stat.parcourNom || 'Inconnu');
+        this.barChartData.datasets[0].data = this.parcourStats.map(stat => stat.studentCount || 0);
 
-        // Assign dynamic colors
-        const gradients = [
-          'var(--primary-gradient)',
-          'var(--success-gradient)',
-          'var(--danger-gradient)',
-          'var(--warning-gradient)'
+        // Assign dynamic colors - use solid colors instead of gradients for better compatibility
+        const colors = [
+          '#6366f1', // Primary blue
+          '#10b981', // Success green  
+          '#f59e0b', // Warning orange
+          '#ef4444', // Danger red
+          '#8b5cf6', // Purple
+          '#06b6d4', // Cyan
+          '#ec4899', // Pink
+          '#84cc16'  // Lime
         ];
+        
         this.barChartData.datasets[0].backgroundColor = this.barChartData.labels.map((_: any, index: number) =>
-          `linear-gradient(45deg, ${gradients[index % gradients.length]})`
+          colors[index % colors.length]
         );
         this.barChartData.datasets[0].borderColor = this.barChartData.datasets[0].backgroundColor.map((color: string) =>
-          color.replace('0.7', '1')
+          color
         );
         this.barChartData.datasets[0].hoverBackgroundColor = this.barChartData.datasets[0].backgroundColor.map((color: string) =>
-          color.replace('0.7', '0.9')
+          color + 'dd' // Add transparency for hover
         );
         this.barChartData.datasets[0].hoverBorderColor = this.barChartData.datasets[0].borderColor.map((color: string) =>
-          color.replace('1', '1.2')
+          color
         );
+
+        console.log('Chart data updated:', {
+          labels: this.barChartData.labels,
+          data: this.barChartData.datasets[0].data,
+          colors: this.barChartData.datasets[0].backgroundColor
+        });
 
         this.isLoading = false;
       },
       error: (err) => {
         console.error('Error fetching counts:', err);
+        console.error('Error details:', err.status, err.message);
         this.enseignantCount = 0;
         this.etudiantCount = 0;
         this.parcourStats = [];
@@ -149,5 +201,115 @@ export class AdminDashboardComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  getCurrentDate(): string {
+    const today = new Date();
+    const options: Intl.DateTimeFormatOptions = { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    return today.toLocaleDateString('fr-FR', options);
+  }
+
+  changeChartType(type: ChartType): void {
+    this.currentChartType = type;
+    console.log('Chart type changed to:', type);
+    
+    // Update chart options based on type
+    if (type === 'pie' || type === 'doughnut') {
+      // For pie charts, remove y-axis and adjust options
+      this.barChartOptions.scales = {};
+      this.barChartOptions.plugins.legend.display = true;
+      this.barChartOptions.plugins.legend.position = 'right';
+    } else if (type === 'line') {
+      // For line charts, restore axes and adjust for line display
+      this.barChartOptions.scales = {
+        x: {
+          title: {
+            display: true,
+            text: 'Parcours Académique',
+            color: '#6366f1',
+            font: { size: 14, weight: 'bold' }
+          },
+          ticks: { 
+            color: '#475569',
+            font: { size: 12 }
+          },
+          grid: { 
+            color: '#e2e8f0',
+            drawOnChartArea: false 
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Nombre d\'Étudiants',
+            color: '#6366f1',
+            font: { size: 14, weight: 'bold' }
+          },
+          ticks: { 
+            color: '#475569',
+            font: { size: 12 },
+            stepSize: 1 
+          },
+          grid: { 
+            color: '#e2e8f0'
+          }
+        }
+      };
+      this.barChartOptions.plugins.legend.position = 'top';
+      // Add tension for smooth lines
+      this.barChartData.datasets[0].tension = 0.4;
+      this.barChartData.datasets[0].fill = true;
+    } else {
+      // For bar charts, restore default options
+      this.barChartOptions.scales = {
+        x: {
+          title: {
+            display: true,
+            text: 'Parcours Académique',
+            color: '#6366f1',
+            font: { size: 14, weight: 'bold' }
+          },
+          ticks: { 
+            color: '#475569',
+            font: { size: 12 }
+          },
+          grid: { 
+            color: '#e2e8f0',
+            drawOnChartArea: false 
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Nombre d\'Étudiants',
+            color: '#6366f1',
+            font: { size: 14, weight: 'bold' }
+          },
+          ticks: { 
+            color: '#475569',
+            font: { size: 12 },
+            stepSize: 1 
+          },
+          grid: { 
+            color: '#e2e8f0'
+          }
+        }
+      };
+      this.barChartOptions.plugins.legend.position = 'top';
+      // Remove line-specific properties
+      delete this.barChartData.datasets[0].tension;
+      delete this.barChartData.datasets[0].fill;
+    }
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 }

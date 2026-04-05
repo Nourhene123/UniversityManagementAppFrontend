@@ -102,7 +102,7 @@ export class EtudiantsComponent implements OnInit {
     this.successMessage = '';
   }
 
-  onSubmit(formValue: any) {
+  onSubmit(formValue: any, saveAndNew: boolean = false) {
     if (!this.etudiantForm.valid || this.isSubmitting) {
       this.errorMessage = 'Veuillez remplir correctement tous les champs requis.';
       console.warn('Formulaire invalide:', this.etudiantForm.value);
@@ -150,7 +150,12 @@ export class EtudiantsComponent implements OnInit {
         if (!this.showAddFormOnly) {
           this.loadEtudiants();
         }
-        this.cancelForm();
+        
+        if (saveAndNew && !this.editMode) {
+          this.resetFormForNew();
+        } else {
+          this.cancelForm();
+        }
       },
       error: (error) => {
         console.error(`Erreur de ${this.editMode ? 'mise à jour' : 'création'}:`, error);
@@ -162,6 +167,20 @@ export class EtudiantsComponent implements OnInit {
         this.isSubmitting = false;
       }
     });
+  }
+
+  resetFormForNew() {
+    this.selectedEtudiant = { id: 0, nom: '', prenom: '', email: '', password: '', role: 'Etudiant', numeroInscription: '', parcourId: null };
+    this.editMode = false;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.isSubmitting = false;
+    
+    setTimeout(() => {
+      this.etudiantForm?.resetForm();
+    }, 0);
+    
+    this.snackBar.open('Prêt pour l\'entrée suivante !', 'OK', { duration: 2000 });
   }
 
   deleteEtudiant(id: number) {

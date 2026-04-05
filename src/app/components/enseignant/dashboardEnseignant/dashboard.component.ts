@@ -48,6 +48,56 @@ export class DashboardComponent implements OnInit {
   currentDate: Date = new Date();
   parcourExpanded: { [key: number]: boolean } = {};
   classExpanded: { [key: string]: boolean } = {};
+  
+  // New tabbed interface properties
+  selectedParcourIndex: number = 0;
+  get selectedParcour(): ParcourWithClasses | null {
+    return this.parcours[this.selectedParcourIndex] || null;
+  }
+  
+  // Filter properties
+  studentFilter: 'all' | 'at-risk' | 'good' | 'excellent' = 'all';
+  showAtRiskOnly: boolean = false;
+  
+  // New enhancement properties
+  lastExportDate: Date | null = null;
+  showTrendChart: boolean = true;
+  showClassComparison: boolean = false;
+  isGeneratingReport: boolean = false;
+  
+  // Trend Chart (Evolution over time)
+  trendChartData: ChartData<'line'> = { labels: [], datasets: [] };
+  trendChartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    plugins: {
+      legend: { display: true, labels: { color: '#fff' } },
+      title: { display: true, text: 'Évolution des Moyennes par Semestre', color: '#fff', font: { size: 16 } }
+    },
+    scales: {
+      y: { beginAtZero: true, max: 20, title: { display: true, text: 'Moyenne', color: '#fff' }, ticks: { color: '#fff' } },
+      x: { title: { display: true, text: 'Période', color: '#fff' }, ticks: { color: '#fff' } }
+    }
+  };
+  
+  // Class Comparison Chart
+  classComparisonChartData: ChartData<'radar'> = { labels: [], datasets: [] };
+  classComparisonChartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    plugins: {
+      legend: { display: true, labels: { color: '#fff' } },
+      title: { display: true, text: 'Comparaison entre Classes', color: '#fff', font: { size: 16 } }
+    },
+    scales: {
+      r: {
+        min: 0,
+        max: 20,
+        ticks: { color: 'rgba(255, 255, 255, 0.7)', backdropColor: 'transparent' },
+        pointLabels: { color: 'rgba(255, 255, 255, 0.9)' },
+        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+      }
+    }
+  };
+  
   successRateChartData: ChartData<'bar'> = { labels: [], datasets: [] };
   successRateChartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -377,5 +427,403 @@ export class DashboardComponent implements OnInit {
         borderWidth: 1
       }]
     };
+  }
+
+  exportData(): void {
+    const data = this.parcours.map(parcour => ({
+      parcour: `${parcour.nom} (${parcour.annee})`,
+      classes: parcour.classes.map(classe => ({
+        nom: classe.nom,
+        section: classe.section,
+        etudiants: classe.etudiants.map(etudiant => ({
+          nom: `${etudiant.nom} ${etudiant.prenom}`,
+          numeroInscription: etudiant.numeroInscription,
+          moyenne: this.getStudentAverage(classe, etudiant.id!)
+        }))
+      }))
+    }));
+
+    const csvContent = this.convertToCSV(data);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `donnees_enseignant_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Track last export
+    this.lastExportDate = new Date();
+    
+    this.successMessage = 'Données exportées avec succès !';
+    setTimeout(() => this.successMessage = '', 3000);
+  }
+
+  // Generate PDF Report
+  generatePDFReport(): void {
+    this.isGeneratingReport = true;
+    this.successMessage = 'Génération du rapport PDF en cours...';
+    
+    // Simulate PDF generation (in real app, use a library like jsPDF or html2canvas)
+    setTimeout(() => {
+      const reportData = {
+        title: 'Rapport de Performance - Enseignant',
+        date: new Date().toLocaleDateString('fr-FR'),
+        parcours: this.parcours.map(p => ({
+          nom: p.nom,
+          annee: p.annee,
+          totalStudents: this.getParcourStudentCount(p),
+          successRate: this.getParcourSuccessRate(p),
+          average: this.getParcourAverage(p)
+        })),
+        overallStats: {
+          totalStudents: this.getTotalStudents(),
+          totalMatieres: this.getTotalMatieres(),
+          overallAverage: this.getOverallAverage(),
+          studentsAbove10: this.getStudentsAboveThreshold(10)
+        }
+      };
+      
+      console.log('PDF Report generated:', reportData);
+      
+      // Create a printable HTML version
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(this.generateReportHTML(reportData));
+        printWindow.document.close();
+        printWindow.print();
+      }
+      
+      this.isGeneratingReport = false;
+      this.successMessage = 'Rapport généré avec succès !';
+      setTimeout(() => this.successMessage = '', 3000);
+    }, 1500);
+  }
+
+  private generateReportHTML(reportData: any): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${reportData.title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; }
+          h1 { color: #333; border-bottom: 3px solid #8b5cf6; padding-bottom: 10px; }
+          h2 { color: #666; margin-top: 30px; }
+          .stat-box { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 8px; }
+          .stat-label { font-weight: bold; color: #888; }
+          .stat-value { font-size: 24px; color: #333; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+          th { background: #8b5cf6; color: white; }
+          .success-rate { font-weight: bold; }
+          .high { color: #22c55e; }
+          .medium { color: #eab308; }
+          .low { color: #ef4444; }
+        </style>
+      </head>
+      <body>
+        <h1>${reportData.title}</h1>
+        <p><strong>Date:</strong> ${reportData.date}</p>
+        
+        <h2>Statistiques Globales</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+          <div class="stat-box">
+            <div class="stat-label">Total Étudiants</div>
+            <div class="stat-value">${reportData.overallStats.totalStudents}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Moyenne Générale</div>
+            <div class="stat-value">${reportData.overallStats.overallAverage.toFixed(2)}/20</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Matières Enseignées</div>
+            <div class="stat-value">${reportData.overallStats.totalMatieres}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Étudiants Réussis (≥10)</div>
+            <div class="stat-value">${reportData.overallStats.studentsAbove10}</div>
+          </div>
+        </div>
+        
+        <h2>Performance par Parcours</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Parcours</th>
+              <th>Année</th>
+              <th>Étudiants</th>
+              <th>Taux de Réussite</th>
+              <th>Moyenne</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${reportData.parcours.map((p: any) => `
+              <tr>
+                <td>${p.nom}</td>
+                <td>${p.annee}</td>
+                <td>${p.totalStudents}</td>
+                <td class="success-rate ${p.successRate >= 70 ? 'high' : p.successRate >= 50 ? 'medium' : 'low'}">${p.successRate}%</td>
+                <td>${p.average.toFixed(2)}/20</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <footer style="margin-top: 40px; text-align: center; color: #888; font-size: 12px;">
+          Généré par la Plateforme Universitaire - © ${new Date().getFullYear()}
+        </footer>
+      </body>
+      </html>
+    `;
+  }
+
+  // Notify At-Risk Students
+  notifyAtRiskStudents(): void {
+    if (!this.selectedParcour) return;
+    
+    const atRiskStudents = this.getAtRiskStudents(this.selectedParcour);
+    if (atRiskStudents.length === 0) {
+      this.successMessage = 'Aucun étudiant en difficulté à notifier.';
+      setTimeout(() => this.successMessage = '', 3000);
+      return;
+    }
+    
+    // Simulate notification sending
+    this.successMessage = `Envoi de notifications à ${atRiskStudents.length} étudiant(s)...`;
+    
+    setTimeout(() => {
+      console.log('Notifications sent to at-risk students:', atRiskStudents.map(s => ({
+        etudiant: `${s.etudiant.nom} ${s.etudiant.prenom}`,
+        email: s.etudiant.email,
+        average: s.average
+      })));
+      
+      this.successMessage = `${atRiskStudents.length} notification(s) envoyée(s) avec succès !`;
+      setTimeout(() => this.successMessage = '', 4000);
+    }, 2000);
+  }
+
+  // Toggle Chart Visibility
+  toggleTrendChart(): void {
+    this.showTrendChart = !this.showTrendChart;
+    if (this.showTrendChart) {
+      this.updateTrendChart();
+    }
+  }
+
+  toggleClassComparison(): void {
+    this.showClassComparison = !this.showClassComparison;
+    if (this.showClassComparison) {
+      this.updateClassComparisonChart();
+    }
+  }
+
+  // Update Trend Chart (Simulated data - in real app, fetch historical data)
+  updateTrendChart(): void {
+    // Simulated semester data
+    const semesters = ['S1 2023', 'S2 2023', 'S1 2024', 'S2 2024'];
+    
+    this.trendChartData = {
+      labels: semesters,
+      datasets: this.parcours.map((parcour, index) => ({
+        label: parcour.nom,
+        data: semesters.map(() => {
+          // Simulated trend data based on current average with some variation
+          const baseAvg = this.getParcourAverage(parcour);
+          return Math.max(0, Math.min(20, baseAvg + (Math.random() - 0.5) * 4));
+        }),
+        borderColor: this.getChartColor(index),
+        backgroundColor: this.getChartColor(index, 0.2),
+        tension: 0.4,
+        fill: false
+      }))
+    };
+  }
+
+  // Update Class Comparison Chart
+  updateClassComparisonChart(): void {
+    if (!this.selectedParcour || this.selectedParcour.classes.length === 0) return;
+    
+    // Get all unique matieres across classes
+    const allMatieres = new Set<string>();
+    this.selectedParcour.classes.forEach(classe => {
+      classe.matieres.forEach(m => allMatieres.add(m.nom));
+    });
+    
+    const matiereLabels = Array.from(allMatieres);
+    
+    this.classComparisonChartData = {
+      labels: matiereLabels,
+      datasets: this.selectedParcour.classes.map((classe, index) => ({
+        label: classe.nom,
+        data: matiereLabels.map(matiereName => {
+          const matiere = classe.matieres.find(m => m.nom === matiereName);
+          if (!matiere) return 0;
+          
+          // Calculate average for this matiere in this class
+          const averages = classe.etudiants
+            .map(e => this.getMatiereAverage(matiere, e.id!))
+            .filter((avg): avg is number => avg !== undefined);
+          
+          return averages.length > 0 
+            ? averages.reduce((sum, avg) => sum + avg, 0) / averages.length 
+            : 0;
+        }),
+        borderColor: this.getChartColor(index),
+        backgroundColor: this.getChartColor(index, 0.2),
+        borderWidth: 2
+      }))
+    };
+  }
+
+  private getChartColor(index: number, alpha: number = 1): string {
+    const colors = [
+      `rgba(139, 92, 246, ${alpha})`,   // Purple
+      `rgba(59, 130, 246, ${alpha})`,  // Blue
+      `rgba(34, 197, 94, ${alpha})`,    // Green
+      `rgba(234, 179, 8, ${alpha})`,   // Yellow
+      `rgba(239, 68, 68, ${alpha})`,   // Red
+      `rgba(236, 72, 153, ${alpha})`   // Pink
+    ];
+    return colors[index % colors.length];
+  }
+
+  // Get Last Export Text
+  getLastExportText(): string {
+    if (!this.lastExportDate) return 'Aucun export récent';
+    
+    const now = new Date();
+    const diff = now.getTime() - this.lastExportDate.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 1) return 'Exporté à l\'instant';
+    if (minutes < 60) return `Exporté il y a ${minutes} min`;
+    if (hours < 24) return `Exporté il y a ${hours}h`;
+    return `Exporté il y a ${days} jour(s)`;
+  }
+
+  private convertToCSV(data: any[]): string {
+    const headers = ['Parcours', 'Classe', 'Section', 'Étudiant', 'N° Inscription', 'Moyenne'];
+    const rows: string[] = [headers.join(',')];
+
+    data.forEach(parcour => {
+      parcour.classes.forEach((classe: any) => {
+        classe.etudiants.forEach((etudiant: any) => {
+          rows.push([
+            parcour.parcour,
+            classe.nom,
+            classe.section,
+            etudiant.nom,
+            etudiant.numeroInscription || 'N/A',
+            etudiant.moyenne?.toFixed(2) || 'N/A'
+          ].join(','));
+        });
+      });
+    });
+
+    return rows.join('\n');
+  }
+
+  refreshData(): void {
+    this.loadDashboardData();
+    this.successMessage = 'Données actualisées !';
+    setTimeout(() => this.successMessage = '', 2000);
+  }
+
+  // New tabbed interface methods
+  selectParcour(index: number): void {
+    this.selectedParcourIndex = index;
+  }
+
+  getParcourStudentCount(parcour: ParcourWithClasses): number {
+    return parcour.classes.reduce((total, classe) => total + (classe.etudiants?.length || 0), 0);
+  }
+
+  getParcourSuccessRate(parcour: ParcourWithClasses): number {
+    const validStudents = parcour.classes.flatMap(classe => 
+      classe.etudiants.filter(e => {
+        const avg = this.getStudentAverage(classe, e.id!);
+        return avg !== undefined && avg >= 10;
+      })
+    );
+    const totalStudents = this.getParcourStudentCount(parcour) || 1;
+    return Math.round((validStudents.length / totalStudents) * 100);
+  }
+
+  getParcourAverage(parcour: ParcourWithClasses): number {
+    const allAverages = parcour.classes.flatMap(classe =>
+      classe.etudiants
+        .map(e => this.getStudentAverage(classe, e.id!))
+        .filter((avg): avg is number => avg !== undefined)
+    );
+    return allAverages.length > 0 
+      ? allAverages.reduce((sum, avg) => sum + avg, 0) / allAverages.length 
+      : 0;
+  }
+
+  getInitials(nom: string, prenom: string): string {
+    const firstInitial = prenom?.charAt(0)?.toUpperCase() || '';
+    const lastInitial = nom?.charAt(0)?.toUpperCase() || '';
+    return firstInitial + lastInitial;
+  }
+
+  // Filter and At-Risk Student Methods
+  getAtRiskStudents(parcour: ParcourWithClasses): { classe: ClasseWithEtudiants, etudiant: EtudiantDto, average: number }[] {
+    const atRisk: { classe: ClasseWithEtudiants, etudiant: EtudiantDto, average: number }[] = [];
+    parcour.classes.forEach(classe => {
+      classe.etudiants.forEach(etudiant => {
+        const avg = this.getStudentAverage(classe, etudiant.id!);
+        if (avg !== undefined && avg < 10) {
+          atRisk.push({ classe, etudiant, average: avg });
+        }
+      });
+    });
+    return atRisk.sort((a, b) => a.average - b.average);
+  }
+
+  isAtRisk(classe: ClasseWithEtudiants, etudiant: EtudiantDto): boolean {
+    const avg = this.getStudentAverage(classe, etudiant.id!);
+    return avg !== undefined && avg < 10;
+  }
+
+  isGood(classe: ClasseWithEtudiants, etudiant: EtudiantDto): boolean {
+    const avg = this.getStudentAverage(classe, etudiant.id!);
+    return avg !== undefined && avg >= 10 && avg < 14;
+  }
+
+  isExcellent(classe: ClasseWithEtudiants, etudiant: EtudiantDto): boolean {
+    const avg = this.getStudentAverage(classe, etudiant.id!);
+    return avg !== undefined && avg >= 14;
+  }
+
+  getFilteredStudents(classe: ClasseWithEtudiants): EtudiantDto[] {
+    // If showAtRiskOnly is toggled, override filter
+    if (this.showAtRiskOnly) {
+      return classe.etudiants.filter(e => this.isAtRisk(classe, e));
+    }
+
+    switch (this.studentFilter) {
+      case 'at-risk':
+        return classe.etudiants.filter(e => this.isAtRisk(classe, e));
+      case 'good':
+        return classe.etudiants.filter(e => this.isGood(classe, e));
+      case 'excellent':
+        return classe.etudiants.filter(e => this.isExcellent(classe, e));
+      default:
+        return classe.etudiants;
+    }
+  }
+
+  getFilteredStudentCount(parcour: ParcourWithClasses): number {
+    let count = 0;
+    parcour.classes.forEach(classe => {
+      count += this.getFilteredStudents(classe).length;
+    });
+    return count;
   }
 }
