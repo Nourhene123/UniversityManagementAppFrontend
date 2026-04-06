@@ -36,16 +36,20 @@
             </div>
             <div class="stat-metrics">
               <p class="stat-value" aria-label="Total enseignants">{{ enseignantCount }}</p>
-              <div class="stat-change positive">
-                <mat-icon aria-hidden="true">trending_up</mat-icon>
-                <span class="change-text">+12% depuis le mois dernier</span>
+              <div class="stat-change positive" *ngIf="enseignantCount > 0">
+                <mat-icon aria-hidden="true">groups</mat-icon>
+                <span class="change-text">{{ enseignantCount }} enseignants actifs</span>
+              </div>
+              <div class="stat-change neutral" *ngIf="enseignantCount === 0">
+                <mat-icon aria-hidden="true">info</mat-icon>
+                <span class="change-text">Aucun enseignant enregistré</span>
               </div>
             </div>
-            <div class="stat-progress">
-              <div class="progress-bar" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
-                <div class="progress-fill" style="width: 75%"></div>
+            <div class="stat-progress" *ngIf="enseignantCount > 0">
+              <div class="progress-bar" role="progressbar" [attr.aria-valuenow]="enseignantCount" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-fill" [style.width.%]="getProgressWidth(enseignantCount, 50)"></div>
               </div>
-              <span class="progress-label">75% de capacité</span>
+              <span class="progress-label">{{ enseignantCount }} enseignants</span>
             </div>
           </div>
         </article>
@@ -63,16 +67,20 @@
             </div>
             <div class="stat-metrics">
               <p class="stat-value" aria-label="Total étudiants">{{ etudiantCount }}</p>
-              <div class="stat-change positive">
-                <mat-icon aria-hidden="true">trending_up</mat-icon>
-                <span class="change-text">+8% depuis le mois dernier</span>
+              <div class="stat-change positive" *ngIf="etudiantCount > 0">
+                <mat-icon aria-hidden="true">school</mat-icon>
+                <span class="change-text">{{ etudiantCount }} étudiants inscrits</span>
+              </div>
+              <div class="stat-change neutral" *ngIf="etudiantCount === 0">
+                <mat-icon aria-hidden="true">info</mat-icon>
+                <span class="change-text">Aucun étudiant inscrit</span>
               </div>
             </div>
-            <div class="stat-progress">
-              <div class="progress-bar progress-success" role="progressbar" aria-valuenow="82" aria-valuemin="0" aria-valuemax="100">
-                <div class="progress-fill" style="width: 82%"></div>
+            <div class="stat-progress" *ngIf="etudiantCount > 0">
+              <div class="progress-bar progress-success" role="progressbar" [attr.aria-valuenow]="etudiantCount" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-fill" [style.width.%]="getProgressWidth(etudiantCount, 200)"></div>
               </div>
-              <span class="progress-label">82% inscrits</span>
+              <span class="progress-label">{{ etudiantCount }} inscrits</span>
             </div>
           </div>
         </article>
@@ -94,7 +102,7 @@
             <mat-icon>filter_list</mat-icon>
             Filtrer
           </button>
-          <button class="btn btn-primary btn-sm" aria-label="Exporter le rapport">
+          <button class="btn btn-primary btn-sm" (click)="exportReport()" aria-label="Exporter le rapport">
             <mat-icon>download</mat-icon>
             Exporter le Rapport
           </button>
@@ -138,7 +146,7 @@
         </div>
 
         <!-- Barre Latérale Statistiques Rapides -->
-        <aside class="quick-stats-sidebar" aria-label="Aperçus rapides">
+        <aside class="quick-stats-sidebar" aria-label="Aperçus rapides" *ngIf="parcourStats.length > 0">
           <div class="sidebar-card card card-compact">
             <h4 class="sidebar-title">Aperçus Rapides</h4>
             <div class="insight-list">
@@ -147,8 +155,8 @@
                   <mat-icon>arrow_upward</mat-icon>
                 </div>
                 <div class="insight-content">
-                  <p class="insight-label">Croissance Totale</p>
-                  <p class="insight-value">+15,3%</p>
+                  <p class="insight-label">Total Étudiants</p>
+                  <p class="insight-value">{{ totalCount }}</p>
                 </div>
               </div>
               <div class="insight-item">
@@ -157,7 +165,7 @@
                 </div>
                 <div class="insight-content">
                   <p class="insight-label">Taille Moyenne de Classe</p>
-                  <p class="insight-value">24 étudiants</p>
+                  <p class="insight-value">{{ averageClassSize }} étudiants</p>
                 </div>
               </div>
               <div class="insight-item">
@@ -165,35 +173,21 @@
                   <mat-icon>schedule</mat-icon>
                 </div>
                 <div class="insight-content">
-                  <p class="insight-label">Activité de Pointe</p>
-                  <p class="insight-value">14h-16h</p>
+                  <p class="insight-label">Heure d'Activité</p>
+                  <p class="insight-value">{{ currentActivityHour }}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="sidebar-card card card-compact">
-            <h4 class="sidebar-title">Activité Récente</h4>
+          <div class="sidebar-card card card-compact" *ngIf="parcourStats.length > 0">
+            <h4 class="sidebar-title">Parcours Actifs</h4>
             <div class="activity-list">
-              <article class="activity-item">
+              <article class="activity-item" *ngFor="let stat of parcourStats.slice(0, 3)">
                 <div class="activity-dot activity-success"></div>
                 <div class="activity-content">
-                  <p class="activity-text">Nouvelle inscription d'étudiant</p>
-                  <time class="activity-time" datetime="2 hours ago">il y a 2 heures</time>
-                </div>
-              </article>
-              <article class="activity-item">
-                <div class="activity-dot activity-info"></div>
-                <div class="activity-content">
-                  <p class="activity-text">Emploi du temps mis à jour</p>
-                  <time class="activity-time" datetime="5 hours ago">il y a 5 heures</time>
-                </div>
-              </article>
-              <article class="activity-item">
-                <div class="activity-dot activity-warning"></div>
-                <div class="activity-content">
-                  <p class="activity-text">Maintenance du système</p>
-                  <time class="activity-time" datetime="1 day ago">il y a 1 jour</time>
+                  <p class="activity-text">{{ stat.parcourNom }}</p>
+                  <p class="activity-time">{{ stat.studentCount }} étudiants</p>
                 </div>
               </article>
             </div>
